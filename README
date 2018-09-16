@@ -1,0 +1,106 @@
+
+
+                 _______          _____ ___        ______
+                    |      ||    |         |    | |      |
+                    |      ||    |         |    | |      |
+                    |   ___||___ |         |___ | |______|
+
+                      Copyleft AiO Secure Teletronics
+
+
+This is Tarsio
+==============
+
+Tarsio is mainly developed to provide an auto-mocking, super-fast platform and
+compiler agnostic unit testing framework for C-coders.
+
+... Wait, what... Let's go through that again, but slower.
+
+Auto-mocking
+------------
+
+The Tarsio tool-chain provide means to automatically generate mock-up functions
+for all functions/library calls you might use in your programs. It mimics the
+function signature of every single function that is used and replace the calls
+to the original functions and instead a kind-of controllable proxy function is
+used instead. This is a mock-up. The programmer can then choose to just control
+the return values (if applicable) or check that functions within your other
+functions were called a specific number of times, and with what arguments. This
+is done in a unit-test.
+
+Super-fast
+----------
+
+Well... Maybe not ultra-fast, but super-fast. Tarsio rely on your compiler being
+able to produce a source-file that is a pre-processed version of your design
+under test. This means all pre-processor directives has been sorted out and only
+pure C-code remain. Most compilers support this output format. Then in one pass
+the Tarsio tool-chain is able to do all its magic by scanning source-files and
+test cases to generate a test-runner that execute all your tests within a suite
+and keep track of test verdicts.
+
+Platform agnostic
+-----------------
+
+The idea behind this is that most tools of this sort have quite a few
+dependencies to other, 3rd party tools. These are not always available on the
+platform you intend to work with, or are difficult to compile or port to that
+specific system. Tarsio is written to compile with most C compilers, following
+pretty old C standards and very few system calls to frameworks usually enjoyed
+in the OS. This makes it highly portable.
+
+Compiler agnostic
+-----------------
+
+Since Tarsio operate on source-code level with figuring out what code is needed
+to be generated to make life easier for you as a programmer. There are no binary
+inspection, and no need for specific features in your favorite compiler, only
+that is supports outputting a pre-processed version of your source code and that
+the code is in a neat way. Too much poking around in the backwaters of your
+compiler feature set will probably make things harder for Tarsio (and you) to
+read your code.
+
+Components and artifacts
+------------------------
+
+This a simplified picture on what's going on and what artifacts and tools your
+build system would need to take into account when compiling an executable test
+runner from your C-source and Unit-tests.
+
+ .-------------.   .------------.   .---------------.
+ |  C-source   |   | C-compiler |   | Pre-processed |
+ |             |-->|            |-->|               |
+ |'Your design'|   |            |   |   C-source    |
+ '-------------'   '------------'   '---------------'
+                                            |
+                                            V
+ .-------------.                    .----------------.
+ | Unit-tests  |                    | Tarsio command |
+ |             |------------------->|    line tool   |
+ |  C-source   |                    |   dark magic   |
+ '-------------'                    '----------------'
+                                        | |    | |
+        .-------------------------------' |    | '---------.
+        |                .----------------' .--'           |
+        |                |                  |              |
+        V                V                  V              V
+ .-------------.   .------------.   .-------------.  .------------.
+ | Mock-ups of |   | Storestruct|   | Test runner |  |  Modified  |
+ | all function|   | for every  |   |    code     |  |            |
+ | signatures  |   | mock-up    |   |             |  |  C-source  |
+ '-------------'   '------------'   '-------------'  '------------'
+        |                |                 |               |
+        |                '-----. .---------'               |
+        '--------------------. | | .-----------------------'
+                             | | | |
+                             V V V V
+ .-------------.         .--------------.
+ |  libtarsio  |-------->|  C-compiler  |
+ '-------------'         '--------------'
+                                |
+                                V
+                         .--------------.
+                         |  Executable  |
+                         | program with |
+                         |  test-suite  |
+                         '--------------'
