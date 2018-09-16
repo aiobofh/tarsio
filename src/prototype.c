@@ -206,7 +206,7 @@ size_t prototype_get_first_function_implementation_line(prototype_list_t* list) 
   prototype_node_t* node = NULL;
   for (node = list->first; NULL != node; node = node->next) {
     if (node->info.is_function_implementation) {
-      return node->info.is_function_implementation;
+      return (size_t)node->info.is_function_implementation;
     }
   }
   return 0;

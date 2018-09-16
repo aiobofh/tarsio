@@ -86,4 +86,4 @@ ttg: ttg.o file.o testcase.o
 
 
 clean:
-	${RM} *~ *.o protoparse symbolparse mockables proxify select implement *.pre *.all *.sym *.moc *.prx *.sel *.mod *.imp gts tsg tcg tmg tam gent *_test ${TMP}*.pre ${TMP}*.pp* ${TMP}*_suite.c ${TMP}*_tarsio* ${TMP}*_test.o
+	${RM} *~ *.o protoparse symbolparse mockables proxify select implement *.pre *.all *.sym *.moc *.prx *.sel *.mod *.imp gts tsg tcg tmg tam ttg gent *_test ${TMP}*.pre ${TMP}*.pp* ${TMP}*_suite.c ${TMP}*_tarsio* ${TMP}*_test.o
