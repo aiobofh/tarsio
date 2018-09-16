@@ -1,0 +1,28 @@
+all: tcg tsg tmg tam ttg
+
+check: testcase_test
+
+tcg: tcg.o prototype.o file.o argument.o symbol_usage.o datatype.o symbol_cache.o
+	$(CC) tcg.o prototype.o file.o argument.o symbol_usage.o datatype.o symbol_cache.o link to tcg
+
+tsg: tsg.o prototype.o cpp.o symbol_cache.o file.o argument.o symbol_usage.o datatype.o
+	$(CC) tsg.o prototype.o cpp.o symbol_cache.o file.o argument.o symbol_usage.o datatype.o link to tsg
+
+tmg: tmg.o prototype.o symbol_cache.o file.o argument.o symbol_usage.o datatype.o
+	$(CC) tsg.o prototype.o cpp.o symbol_cache.o file.o argument.o symbol_usage.o datatype.o link to tmg
+
+tam: tam.o prototype.o symbol_cache.o file.o argument.o symbol_usage.o datatype.o
+	$(CC) tam.o prototype.o cpp.o symbol_cache.o file.o argument.o symbol_usage.o datatype.o link to tam
+
+ttg: ttg.o file.o testcase.o
+	$(CC) ttg.o file.o testcase.o link to ttg
+
+testcase.p: testcase.c
+	$(CC) testcase.c preprocessoronly to testcase.p
+
+testcase.sym: testcase.p
+	tcg testcase.p testcase.sym
+
+clean:
+	delete cpp.o prototype.o file.o argument.o symbol_usage.o datatype.o symbol_cache.o tcg tcg.o tcg.lnk tcg.info tsg tsg.o tsg.lnk tsg.info tmg tmg.o tmg.lnk tmg.info tam tam.o tam.lnk tam.info ttg ttg.o ttg.lnk ttg.info
+
