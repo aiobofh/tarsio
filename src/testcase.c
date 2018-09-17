@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <assert.h>
 #include <string.h>
-#include <strings.h>
 
 #include "debug.h"
 #include "error.h"
@@ -61,6 +60,13 @@ static int testcase_append(testcase_list_t* list, const char* name, const testca
   return retval;
 }
 
+static char *index_of(const char* buf, char c) {
+  while (*buf != c) {
+    buf++;
+  }
+  return (char*)buf;
+}
+
 static int extract_testcase(testcase_list_t* list, char* buf) {
   int retval = 0;
   char* name = NULL;
@@ -81,7 +87,7 @@ static int extract_testcase(testcase_list_t* list, char* buf) {
   }
 
 
-  if (NULL == (ptr = index(name, ')'))) {
+  if (NULL == (ptr = index_of(name, ')'))) {
     error1("Could not find testcase name length in '%s'", name);
     retval = -1;
     goto index_failed;
