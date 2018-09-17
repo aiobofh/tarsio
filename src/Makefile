@@ -3,7 +3,7 @@
 #
 
 TMP=/tmp/
-CFLAGS=-Wall -std=c11 -pedantic -O2
+CFLAGS=-Wall -std=c11 -pedantic -O2 -DNODEBUG
 TARSIO_CFLAGS=-O0 -Wall -std=c11 -pedantic -g -I. -I${TMP}
 LDFLAGS=-flto
 TESTDIR=./
