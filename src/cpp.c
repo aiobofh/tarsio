@@ -64,8 +64,14 @@ static int extract_cpp_directives(void* list_ptr, file_parse_state_t* state, con
 
   if ('\n' == c) {
     if ('#' == state->buf[0]) {
-      debug1("%s", state->buf);
-      cpp_list_append(list, state->buf);
+      if (strstr(state->buf, "#ifndef _TARSIO_DATA_")) {
+	debug1("%s", state->buf);
+	cpp_list_append(list, "#ifdef _TARSIO_DATA_");
+      }
+      else {
+	debug1("%s", state->buf);
+	cpp_list_append(list, state->buf);
+      }
     }
     state->buf[0] = '\0';
     state->idx = 0;
