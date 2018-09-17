@@ -139,8 +139,9 @@ static void generate_proxies(prototype_list_t* list, const char* file) {
          " * This function is only generated to reduce warnings about unused\n"
          " * funcitons. :)\n"
          " */\n"
-         "typedef void (*__tarsio_fake_function_pointer)();\n"
-         "void __tarsio_make_fake_dependency_to_compile_functions() {\n"
+         "typedef void (*__tarsio_fake_function_pointer)(void);\n\n"
+         "void __tarsio_make_fake_dependency(void);\n\n"
+         "void __tarsio_make_fake_dependency(void) {\n"
          "  __tarsio_fake_function_pointer func = NULL;\n");
   for (node = list->first; NULL != node; node = node->next) {
     printf("  func = (__tarsio_fake_function_pointer)__tarsio_proxy_%s;\n", node->info.symbol);

@@ -29,7 +29,7 @@ void __tarsio_assert_eq(int res, const char* testcase_name) {
   }
 }
 
-void __tarsio_init() {
+void __tarsio_init(void) {
   memset(&__tarsio_stats, 0, sizeof(__tarsio_stats));
 }
 
@@ -43,11 +43,10 @@ void __tarsio_skip(const char* reason, const char* test_name) {
 }
 
 void __tarsio_unit_test_execute(__tarsio_data_t* __tarsio_mock_data, int (*func)(void* __tarsio_mock_data, const char* __tarsio_test_name), const char* name, size_t mock_data_size) {
-  (void)name;
-  memset(__tarsio_mock_data, 0, mock_data_size);
   size_t skip = __tarsio_stats.skip;
   size_t fail = __tarsio_stats.fail;
   size_t error = __tarsio_stats.error;
+  memset(__tarsio_mock_data, 0, mock_data_size);
   func(__tarsio_mock_data, name);
   if (1 == __tarsio_options.verbose) {
     if (skip != __tarsio_stats.skip) {
@@ -79,6 +78,6 @@ void __tarsio_unit_test_execute(__tarsio_data_t* __tarsio_mock_data, int (*func)
   }
 }
 
-void __tarsio_summary() {
+void __tarsio_summary(void) {
   putc('\n', stdout);
 }
