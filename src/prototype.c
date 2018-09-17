@@ -408,6 +408,9 @@ static int extract_arguments(prototype_node_t* node) {
   int dummy_cnt = 0;
   char* last_start = NULL;
   char* last_space = NULL;
+
+  debug1("Extracting arguments for '%s'", node->info.symbol);
+
   raw = (char*)symbol_start + strlen(symbol);
 
   /*
@@ -459,6 +462,8 @@ static int extract_arguments(prototype_node_t* node) {
       memcpy(arg_name, last_space, len);
       arg_name[len] = '\0';
 
+      debug1(" Located arg name '%s'", arg_name);
+
       if (0 == strcmp("...", arg_name)) {
         is_variadic = 1;
         type_name = arg_name;
@@ -469,15 +474,23 @@ static int extract_arguments(prototype_node_t* node) {
         /*
          * Datatype name length
          */
+        debug1(" Eliminating other compiler specific keywords in '%s'", last_start);
         if (strstr(last_start, "*__restrict")) {
           last_space -= strlen("*__restrict");
         }
 
         last_space--;
-        while ((' ' == *last_space) || ('*' == *last_space)) {
+        while ((' ' == *last_space) || ('*' == *last_space) || (')' == *last_space)) {
           last_space--;
         }
         len = last_space - last_start + 1;
+
+        debug1(" Type name len %lu", len);
+
+        if (0 > last_space - last_start + 1) {
+          debug0(" Probably the last (anonymous) argument...");
+          len = 0;
+        }
 
         type_name = malloc(len + 1);
         if (NULL == type_name) {
@@ -485,15 +498,29 @@ static int extract_arguments(prototype_node_t* node) {
           return -2;
         }
 
-        memcpy(type_name, last_start, len);
+        if (len > 0) {
+          memcpy(type_name, last_start, len);
+        }
         type_name[len] = '\0';
 
+        debug1(" Located type-name '%s'", type_name);
+
         /*
-         * Name-less agrument.
+         * Name-less agrument. TODO: Should this be??
          */
         if (0 == strcmp("", type_name)) {
           free(type_name);
           type_name = arg_name;
+          arg_name = malloc(strlen("dummyXX") + 1 + 8);
+          sprintf(arg_name, "dummy%02d", dummy_cnt);
+          dummy_cnt++;
+        }
+
+        /*
+         * Name-less agrument.
+         */
+        if (0 == strcmp("", arg_name)) {
+          free(arg_name);
           arg_name = malloc(strlen("dummyXX") + 1 + 8);
           sprintf(arg_name, "dummy%02d", dummy_cnt);
           dummy_cnt++;
@@ -505,10 +532,12 @@ static int extract_arguments(prototype_node_t* node) {
         free(arg_name);
       }
       else {
+        debug2(" Appending '%s' '%s' to list", type_name, arg_name);
         if (0 != argument_list_append(&node->info.argument_list, type_name, arg_name, is_const, is_variadic, astrisks)) {
           error2("Could not append argument '%s' to '%s'", arg_name, symbol);
           return -3;
         }
+        debug0(" All good");
       }
 
       last_start = raw;
