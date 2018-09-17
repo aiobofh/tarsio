@@ -25,8 +25,15 @@ int file_parse(file_parse_cb_t func, void* list_ptr, const file_t* file, parse_p
   int num_paren = 0;
   int in_function_body = 0;
   int in_string = 0;
+  int in_comment = 0;
   file_parse_state_t state = EMPTY_FILE_PARSE_STATE;
   char last_c = 0;
+
+  int last_do_parse = -1;
+  int last_in_string = -1;
+  int last_in_comment = -1;
+  int last_in_function_body = -1;
+  int last_is_code_block_start = -1;
 
   assert((0 == ('0' == ' ')) && "This code assumes that bool false is 0 for mathematical operations");
   assert((1 == ('0' == '0')) && "This code assumes that bool true is 1 for mathematical operations");
@@ -35,12 +42,14 @@ int file_parse(file_parse_cb_t func, void* list_ptr, const file_t* file, parse_p
 
   for (i = 0; i < file->len; i++) {
     const char c = file->buf[i];
-    const int is_string_start = (!in_string && (('"' == c) || ('\'' == c)));
+    const int is_comment_start = (!in_string && !in_comment && (('*' == c) && ('/' == last_c)));
+    const int is_comment_end = (in_comment && (('/' == c) && ('*' == last_c)));
+    const int is_string_start = (!in_comment && !in_string && (('"' == c) || ('\'' == c)));
     const int is_string_end = (in_string && ((('"' == c) || ('\'' == c)) && '\\' != last_c));
-    const int is_code_block_start = (!in_string && ('{' == c));
-    const int is_code_block_end = (!in_string && ('}' == c));
-    const int is_left_parentheis = (!in_string && ('(' == c));
-    const int is_right_parentheis = (!in_string && (')' == c));
+    const int is_code_block_start = (!in_comment && !in_string && ('{' == c));
+    const int is_code_block_end = (!in_comment && !in_string && ('}' == c));
+    const int is_left_parentheis = (!in_comment && !in_string && ('(' == c));
+    const int is_right_parentheis = (!in_comment && !in_string && (')' == c));
     const int no_parenthesis_count = (num_paren == 0);
     const int no_braces_count = (num_braces == 0);
     const int one_braces_count = (num_braces == 1);
@@ -53,15 +62,24 @@ int file_parse(file_parse_cb_t func, void* list_ptr, const file_t* file, parse_p
     in_string += is_string_start;
     in_string -= is_string_end;
 
+    in_comment += is_comment_start;
+    in_comment -= is_comment_end;
+
     in_function_body += is_entering_function_body;
     in_function_body -= is_exiting_function_body;
 
     /*
     do_parse = (!in_string && ((parse_function_bodies && in_function_body) || (parse_declarations && !in_function_body) || is_code_block_start));
     */
-    do_parse = ((parse_function_bodies && in_function_body) || (parse_declarations && !in_function_body) || is_code_block_start);
+    do_parse = (!in_comment && ((parse_function_bodies && in_function_body) || (parse_declarations && !in_function_body) || is_code_block_start));
 
-    debug4("do_parse? %d is string? %d in function body? %d is code block start %d", do_parse, in_string, in_function_body, is_code_block_start);
+    if ((last_do_parse != do_parse) ||
+        (last_in_string != in_string) ||
+        (last_in_comment != in_comment) ||
+        (last_in_function_body != in_function_body) ||
+        (last_is_code_block_start != is_code_block_start)) {
+      debug5("do_parse? %d is string? %d in comment? %d in function body? %d is code block start %d", do_parse, in_string, in_comment, in_function_body, is_code_block_start);
+    }
 
     if (do_parse) {
       func(list_ptr, &state, c, line_count, column_count, i);
@@ -74,6 +92,11 @@ int file_parse(file_parse_cb_t func, void* list_ptr, const file_t* file, parse_p
     num_paren += is_left_parentheis;
     num_paren -= is_right_parentheis;
     last_c = c;
+    last_do_parse = do_parse;
+    last_in_string = in_string;
+    last_in_comment = in_comment;
+    last_in_function_body = in_function_body;
+    last_is_code_block_start = is_code_block_start;
   }
 
   free(state.buf);
