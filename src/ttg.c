@@ -60,7 +60,7 @@ static int generate_test_runner(testcase_list_t* list, const char* file) {
   printf("#include \"%s\"\n", file);
 
   for (node = list->first; NULL != node; node = node->next) {
-    printf("extern int __tarsio_test_%s(void*);\n", node->name);
+    printf("extern int __tarsio_test_%s(void*, const char*);\n", node->name);
   }
   printf("\n"
          "__tarsio_data_t __tarsio_mock_data;\n");
@@ -69,6 +69,7 @@ static int generate_test_runner(testcase_list_t* list, const char* file) {
          "int main(int argc, char* argv[]) {\n"
          "  int retval = EXIT_SUCCESS;\n"
          "\n"
+         "  __tarsio_init();\n"
          "  __tarsio_handle_arguments(argc, argv);\n");
   for (node = list->first; NULL != node; node = node->next) {
     switch (node->type) {
@@ -83,6 +84,7 @@ static int generate_test_runner(testcase_list_t* list, const char* file) {
       break;
     }
   }
+  printf("  __tarsio_summary();\n");
   printf("  return retval;\n"
          "}\n");
 
