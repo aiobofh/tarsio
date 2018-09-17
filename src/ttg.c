@@ -54,8 +54,9 @@ static int generate_test_runner(testcase_list_t* list, const char* file) {
   int retval = 0;
   testcase_node_t* node = NULL;
 
-  printf("#include <stdio.h>\n\n");
-  printf("#include <tarsio.h>\n");
+  printf("#include <stdio.h>\n");
+  printf("#include <stdlib.h>\n\n");
+  printf("#include \"tarsio.h\"\n");
 
   printf("#include \"%s\"\n", file);
 
