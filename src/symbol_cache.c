@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "debug.h"
 #include "error.h"
 
 #include "symbol_cache.h"
@@ -39,6 +40,8 @@ static void transform_structs(prototype_list_t* list, char* buf) {
 
   /* Move offset into the first node */
   buf += sizeof(*l);
+
+  debug0("Transforming prototype list pointer to first node");
   l->first = (prototype_node_t*)buf;
 
 
@@ -54,6 +57,7 @@ static void transform_structs(prototype_list_t* list, char* buf) {
 
     buf += sizeof(*pn);
 
+    debug0(" Transforming argument list pointer to first node");
     al->first = (argument_node_t*)buf;
     for (j = 0; j < pn->info.argument_list.cnt; j++) {
       an = (argument_node_t*)buf;
@@ -63,6 +67,7 @@ static void transform_structs(prototype_list_t* list, char* buf) {
     }
     an->next = NULL;
 
+    debug0(" Transforming symbol usage list pointer to first node");
     sl->first = (symbol_usage_node_t*)buf;
     for (j = 0; j < pn->info.symbol_usage_list.cnt; j++) {
       sn = (symbol_usage_node_t*)buf;
@@ -80,15 +85,19 @@ static void transform_structs(prototype_list_t* list, char* buf) {
 
   *list = *l;
 
+  debug0("Setting up all string pointers to strings, located at the end");
+
   for (n = list->first; NULL != n; n = n->next) {
     n->info.datatype.name = buf;
     buf += strlen(n->info.datatype.name) + 1;
     n->info.symbol = buf;
     buf += strlen(n->info.symbol) + 1;
+    debug2(" '%s' '%s'", n->info.datatype.name, n->info.symbol);
   }
 
   for (n = list->first; NULL != n; n = n->next) {
     argument_node_t* an;
+    debug1("Finding usages for '%s'", n->info.symbol);
     for (an = n->info.argument_list.first; NULL != an; an = an->next) {
       an->info.name = buf;
       buf += strlen(an->info.name) + 1;
@@ -100,6 +109,7 @@ static void transform_structs(prototype_list_t* list, char* buf) {
       if (0 == strlen(an->info.datatype.name)) {
         an->info.datatype.name = NULL;
       }
+      debug2(" '%s' '%s'", n->info.datatype.name, n->info.symbol);
     }
   }
 }
