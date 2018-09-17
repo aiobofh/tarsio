@@ -8,9 +8,15 @@ TARSIO_CFLAGS=-O0 -Wall -std=c11 -pedantic -g -I. -I${TMP}
 LDFLAGS=-flto
 TESTDIR=./
 
+#ifeq(CC,vbccm68k)
+#  PPFLAGS=-O=0 -noasm -I/etc/vcm68k-amigaos/include/ -I. -I${TMP} -Dmain=__tarsio_replace_main -E
+#endif
+#ifeq(CC,gcc)
+#  PPFLAGS=-O0 -Wall -std=c11 -pedantic -I. -I${TMP} -Dmain=__tarsio_replace_main -E
+#endif
+
 .SUFFIXES:
 
-.NOTPARALELL:
 all: tcg tsg tmg tam ttg
 
 check: testcase_test
