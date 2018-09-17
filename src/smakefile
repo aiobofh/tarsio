@@ -1,28 +1,67 @@
+CFLAGS=define NODEBUG cpu 68060 noicons noversion
+LDFLAGS=noicons noversion
+CPU=68060
+
 all: tcg tsg tmg tam ttg
+
+check: testcase_test
+	testcase_test
 
 check: testcase_test
 
 tcg: tcg.o prototype.o file.o argument.o symbol_usage.o datatype.o symbol_cache.o
-	$(CC) tcg.o prototype.o file.o argument.o symbol_usage.o datatype.o symbol_cache.o link to tcg
+	$(CC) noicons noversion tcg.o prototype.o file.o argument.o symbol_usage.o datatype.o symbol_cache.o link to tcg
 
 tsg: tsg.o prototype.o cpp.o symbol_cache.o file.o argument.o symbol_usage.o datatype.o
-	$(CC) tsg.o prototype.o cpp.o symbol_cache.o file.o argument.o symbol_usage.o datatype.o link to tsg
+	$(CC) noicons noversion  tsg.o prototype.o cpp.o symbol_cache.o file.o argument.o symbol_usage.o datatype.o link to tsg
 
 tmg: tmg.o prototype.o symbol_cache.o file.o argument.o symbol_usage.o datatype.o
-	$(CC) tsg.o prototype.o cpp.o symbol_cache.o file.o argument.o symbol_usage.o datatype.o link to tmg
+	$(CC) noicons noversion tmg.o prototype.o symbol_cache.o file.o argument.o symbol_usage.o datatype.o link to tmg
 
 tam: tam.o prototype.o symbol_cache.o file.o argument.o symbol_usage.o datatype.o
-	$(CC) tam.o prototype.o cpp.o symbol_cache.o file.o argument.o symbol_usage.o datatype.o link to tam
+	$(CC) noicons noversion tam.o prototype.o cpp.o symbol_cache.o file.o argument.o symbol_usage.o datatype.o link to tam
 
 ttg: ttg.o file.o testcase.o
-	$(CC) ttg.o file.o testcase.o link to ttg
+	$(CC) noicons noversion ttg.o file.o testcase.o link to ttg
 
 testcase.p: testcase.c
-	$(CC) testcase.c preprocessoronly to testcase.p
+	$(CC) noicons noversion testcase.c preprocessoronly to testcase.p
 
 testcase.sym: testcase.p
 	tcg testcase.p testcase.sym
 
+testcase_data.h: testcase.sym testcase_test.c
+	tsg testcase.sym testcase_test.c > testcase_data.h
+
+testcase_mocks.c: testcase.sym testcase_data.h
+	tmg testcase.sym testcase_data.h > testcase_mocks.c
+
+testcase_proxified.p: testcase.sym testcase.p
+	tam testcase.sym testcase.p > testcase_proxified.p
+
+testcase_runner.c: testcase_test.c testcase_data.h
+	ttg testcase_test.c testcase_data.h > testcase_runner.c
+
+testcase_mocks.o: testcase_mocks.c
+	$(CC) noicons noversion testcase_mocks.c
+
+testcase_proxified.o: testcase_proxified.p
+	$(CC) noicons noversion testcase_proxified.p
+
+testcase_test.o: testcase_test.c testcase_data.h
+	$(CC) noicons noversion testcase_test.c
+
+testcase_runner.o: testcase_runner.c
+	$(CC) noicons noversion testcase_runner.c
+
+testcase_test: testcase_test.o testcase_proxified.o testcase_runner.o testcase_mocks.o tarsio.o
+	$(CC) noicons noversion testcase_test.o testcase_proxified.o testcase_runner.o testcase_mocks.o tarsio.o link to testcase_test
+
 clean:
-	delete cpp.o prototype.o file.o argument.o symbol_usage.o datatype.o symbol_cache.o tcg tcg.o tcg.lnk tcg.info tsg tsg.o tsg.lnk tsg.info tmg tmg.o tmg.lnk tmg.info tam tam.o tam.lnk tam.info ttg ttg.o ttg.lnk ttg.info
+	delete force cpp.o prototype.o file.o argument.o symbol_usage.o datatype.o symbol_cache.o
+        delete force tcg tcg.o tcg.lnk tcg.info tsg tsg.o tsg.lnk tsg.info tmg tmg.o tmg.lnk tmg.info tam tam.o tam.lnk tam.info ttg ttg.o ttg.lnk ttg.info
+        delete force testcase_mocks.c testcase_mocks.o testcase_data.h testcase_runner.c testcase_runner.o testcase.sym testcase.p testcase.p.info testcase_proxified.c testcase_proxified.o testcase_test
+        delete force testcase.o testcase_test.o
+
+
 
