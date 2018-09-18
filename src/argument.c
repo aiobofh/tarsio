@@ -12,9 +12,6 @@ int argument_list_append(argument_list_t* list, const char* data_type, const cha
     error1("Out of memory while allocating argument node '%s'", data_type);
     return -1;
   }
-  /*
-  *node = (argument_node_t)ARGUMENT_NODE_EMPTY;
-  */
   memset(node, 0, sizeof(*node));
 
   node->info.name = (char*)argument_name;
@@ -48,19 +45,15 @@ static void argument_node_cleanup(argument_node_t* node) {
 }
 
 void argument_list_cleanup(argument_list_t* list) {
-  argument_node_t* node = NULL;
+  argument_node_t* node;
   assert((NULL != list) && "Argument 'list' must not be NULL");
   node = list->first;
   while (NULL != node) {
     argument_node_t* next_node = node->next;
     argument_node_cleanup(node);
     free(node);
-    node = NULL;
     node = next_node;
     list->cnt--;
   }
-  /*
-  *list = (argument_list_t)ARGUMENT_LIST_EMPTY;
-  */
   memset(list, 0, sizeof(*list));
 }

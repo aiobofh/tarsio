@@ -6,7 +6,7 @@
 #include "file.h"
 
 static size_t fsize(FILE *fd) {
-  size_t file_size = 0;
+  size_t file_size;
   (void)fseek(fd, 0L, SEEK_END);
   file_size = ftell(fd);
   fseek(fd, 0L, SEEK_SET);
@@ -18,7 +18,7 @@ int file_parse(file_parse_cb_t func, void* list_ptr, const file_t* file, parse_p
   const int parse_function_bodies = ((PARSE_FUNCTION_BODIES == parse_part) || (PARSE_ALL == parse_part));
   const int parse_declarations = ((PARSE_DECLARATIONS == parse_part) || (PARSE_ALL == parse_part));
 
-  size_t i = 0;
+  size_t i;
   size_t line_count = 0;
   size_t column_count = 0;
   int num_braces = 0;
@@ -55,7 +55,7 @@ int file_parse(file_parse_cb_t func, void* list_ptr, const file_t* file, parse_p
     const int one_braces_count = (num_braces == 1);
     const int is_entering_function_body = ((is_code_block_start) && (no_parenthesis_count) && (no_braces_count));
     const int is_exiting_function_body = ((is_code_block_end) && (no_parenthesis_count) && (one_braces_count));
-    int do_parse = 0;
+    int do_parse;
 
     if (1 == state.done) {
       break;
@@ -72,10 +72,9 @@ int file_parse(file_parse_cb_t func, void* list_ptr, const file_t* file, parse_p
     in_function_body += is_entering_function_body;
     in_function_body -= is_exiting_function_body;
 
-    /*
-    do_parse = (!in_string && ((parse_function_bodies && in_function_body) || (parse_declarations && !in_function_body) || is_code_block_start));
-    */
-    do_parse = (!in_comment && ((parse_function_bodies && in_function_body) || (parse_declarations && !in_function_body) || is_code_block_start));
+    do_parse = (!in_comment && ((parse_function_bodies && in_function_body) ||
+				(parse_declarations && !in_function_body) ||
+				is_code_block_start));
 
     if ((last_do_parse != do_parse) ||
         (last_in_string != in_string) ||
@@ -105,15 +104,12 @@ int file_parse(file_parse_cb_t func, void* list_ptr, const file_t* file, parse_p
 
   free(state.buf);
 
-#ifdef PARANOIA
-  state = (file_parse_state_t)EMPTY_FILE_PARSE_STATE;
-#endif
   return 0;
 }
 
 int file_init(file_t* file, const char* filename) {
   int retval = 0;
-  FILE* fd = NULL;
+  FILE* fd;
 
   assert((NULL != file) && "Argument 'file' must not be NULL");
   assert((NULL != filename) && "Argument 'filename' must not be NULL");
@@ -148,9 +144,6 @@ int file_init(file_t* file, const char* filename) {
 
  fread_failed:
   free(file->buf);
-#ifdef PARANOIA
-  file->buf = NULL;
-#endif
  malloc_failed:
  normal_exit:
  fsize_failed:
@@ -164,7 +157,4 @@ void file_cleanup(file_t* file) {
   if (NULL != file->buf) {
     free(file->buf);
   }
-#ifdef PARANOIA
-  *file = (file_t)FILE_EMPTY;
-#endif
 }

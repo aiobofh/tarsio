@@ -20,16 +20,14 @@ static void testcase_list_append(testcase_list_t* list, testcase_node_t* node) {
 
 static int testcase_append(testcase_list_t* list, const char* name, const testcase_type_t type) {
   int retval = 0;
-  testcase_node_t* node = NULL;
+  testcase_node_t* node;
 
   if (NULL == (node = malloc(sizeof(*node)))) {
     error1("Out of memory while allocating testcase node for '%s'", name);
     retval = -1;
     goto testcase_node_malloc_failed;
   }
-  /*
-  *node = TESTCASE_NODE_EMPTY;
-  */
+
   memset(node, 0, sizeof(*node));
 
   if (NULL == (node->name = malloc(strlen(name)+ 1))) {
@@ -51,9 +49,6 @@ static int testcase_append(testcase_list_t* list, const char* name, const testca
 
  strcpy_failed:
  testcase_name_malloc_failed:
-#if PARANOIA
-  *node = TESTCASE_NODE_EMPTY;
-#endif
   free(node);
  testcase_node_malloc_failed:
  normal_exit:
@@ -70,7 +65,7 @@ static char *index_of(const char* buf, char c) {
 static int extract(testcase_list_t* list, char* buf) {
   int retval = 0;
   char* name = NULL;
-  char* ptr = NULL;
+  char* ptr;
   testcase_type_t type = TESTCASE_IS_UNKNOWN;
 
   if (buf == strstr(buf, "test(")) {
@@ -113,7 +108,7 @@ static int parse(testcase_list_t* list, const file_t* file) {
   const size_t len = file->len;
 
   int retval = 0;
-  char* buf = NULL;
+  char* buf;
   char* p = file->buf;
   char last_c = 0;
   size_t i = 0;
@@ -196,9 +191,6 @@ static void testcase_node_cleanup(testcase_node_t* node) {
   if (NULL != node->name) {
     free(node->name);
   }
-#ifdef  PARANOIA
-  *node = TESTCASE_NODE_EMPTY;
-#endif
   free(node);
 }
 

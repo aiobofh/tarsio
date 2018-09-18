@@ -13,7 +13,7 @@
  * Deseriliazation
  */
 static size_t fsize(FILE *fd) {
-  size_t file_size = 0;
+  size_t file_size;
   (void)fseek(fd, 0L, SEEK_END);
   file_size = ftell(fd);
   fseek(fd, 0L, SEEK_SET);

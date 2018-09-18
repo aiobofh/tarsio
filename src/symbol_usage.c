@@ -12,9 +12,6 @@ static symbol_usage_node_t* symbol_usage_node_new(const size_t line, const size_
     error0("Out of memory while allocating usage node");
     return NULL;
   }
-  /*
-  *node = (symbol_usage_node_t){NULL, {line, col, offset}};
-  */
   memset(node, 0, sizeof(*node));
   node->info.line = line;
   node->info.col = col;
@@ -39,26 +36,14 @@ void symbol_usage_append(symbol_usage_list_t* list, const size_t line, const siz
   list->cnt++;
 }
 
-static void symbol_usage_node_cleanup(symbol_usage_node_t* node) {
-#ifdef PARANOIA
-  *node = (symbol_usage_node_t)SYMBOL_USAGE_NODE_EMPTY;
-#else
-  (void)node;
-#endif
-}
-
 void symbol_usage_list_cleanup(symbol_usage_list_t* list) {
-  symbol_usage_node_t* node = NULL;
+  symbol_usage_node_t* node;
   assert((NULL != list) && "Argument 'list' must not be NULL");
   node = list->first;
   while (NULL != node) {
     symbol_usage_node_t* next_node = node->next;
-    symbol_usage_node_cleanup(node);
     free(node);
     node = next_node;
     list->cnt--;
   }
-#ifdef PARANOIA
-  *list = (symbol_usage_list_t)SYMBOL_USAGE_LIST_EMPTY;
-#endif
 }

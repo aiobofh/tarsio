@@ -8,7 +8,7 @@
 #include "cpp.h"
 
 static cpp_node_t* cpp_node_new(const char* buf) {
-  char* s = NULL;
+  char* s;
   cpp_node_t* node = NULL;
 
   if (NULL == (s = malloc(strlen(buf) + 1))) {
@@ -20,9 +20,7 @@ static cpp_node_t* cpp_node_new(const char* buf) {
     error1("Out of memory while allocating cpp directive for '%s'", buf);
     goto node_malloc_failed;
   }
-  /*
-  *node = (cpp_node_t)CPP_NODE_EMPTY;
-  */
+
   memset(node, 0, sizeof(*node));
 
   strcpy(s, buf);
@@ -110,13 +108,10 @@ static void cpp_node_cleanup(cpp_node_t* node) {
     free(node->info.directive);
   }
   free(node);
-#ifdef PARANOIA
-  *node = (cpp_node_t)CPP_NODE_EMPTY;
-#endif
 }
 
 void cpp_list_cleanup(cpp_list_t* list) {
-  cpp_node_t* node = NULL;
+  cpp_node_t* node;
   assert((NULL != list) && "Argument 'list' must not be NULL");
   node = list->first;
   while (NULL != node) {
@@ -124,7 +119,4 @@ void cpp_list_cleanup(cpp_list_t* list) {
     cpp_node_cleanup(node);
     node = next_node;
   }
-#ifdef PARANOIA
-  *list = (cpp_list_t)CPP_LIST_EMPTY;
-#endif
 }

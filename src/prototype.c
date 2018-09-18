@@ -9,7 +9,7 @@
 #include "prototype.h"
 
 static char* extract_symbol(const char* raw) {
-  char* symbol = NULL;
+  char* symbol;
   size_t len = 0;
   char* p = strstr(raw, "(");
   if (NULL == p) {
@@ -57,7 +57,7 @@ static int prototype_list_find_symbol(const prototype_list_t* list, const char* 
 
 static prototype_node_t* prototype_node_new(const char* raw, const prototype_list_t* list) {
   prototype_node_t* node = NULL;
-  char* symbol = NULL;
+  char* symbol;
 
   symbol = extract_symbol(raw);
   if (NULL == symbol) {
@@ -79,9 +79,7 @@ static prototype_node_t* prototype_node_new(const char* raw, const prototype_lis
     error1("Out of memory while allocating prototype node for '%s'", raw);
     goto node_malloc_failed;
   }
-  /*
-  *node = (prototype_node_t)PROTOTYPE_NODE_EMPTY;
-  */
+
   memset(node, 0, sizeof(*node));
 
   node->info.raw_prototype.decl = malloc(strlen(raw) + 1);
@@ -102,7 +100,6 @@ static prototype_node_t* prototype_node_new(const char* raw, const prototype_lis
  strlen_zero:
  found_duplicate:
   free(symbol);
-  symbol = NULL;
  extract_symbol_failed:
  normal_exit:
   return node;
@@ -137,8 +134,8 @@ static int extract_prototypes(void* list_ptr, file_parse_state_t* state, const c
   const int multiple_whitespaces = (is_white_space && last_is_white_space);
   const int is_last_character_of_prototype = ((is_line_feed && (';' == last_c)) || ('{' == c));
   const int is_last_character = (state->found_parenthesis && is_last_character_of_prototype);
-  int skip_character = 0;
-  int linefeed_in_argument_list = 0;
+  int skip_character;
+  int linefeed_in_argument_list;
   (void)col;
   (void)offset;
   state->line_feeds_in_declaration += ('\n' == c);
@@ -203,7 +200,7 @@ static int extract_prototypes(void* list_ptr, file_parse_state_t* state, const c
 }
 
 size_t prototype_get_first_function_implementation_line(prototype_list_t* list) {
-  prototype_node_t* node = NULL;
+  prototype_node_t* node;
   for (node = list->first; NULL != node; node = node->next) {
     if (node->info.is_function_implementation) {
       return (size_t)node->info.is_function_implementation;
@@ -215,9 +212,6 @@ size_t prototype_get_first_function_implementation_line(prototype_list_t* list) 
 static void raw_prototype_cleanup(raw_prototype_t* raw_prototype) {
   free(raw_prototype->decl);
   free(raw_prototype->args);
-#ifdef PARANOIA
-  *raw_prototype = (raw_prototype_t)RAW_PROTOTYPE_EMPTY;
-#endif
 }
 
 static void prototype_node_cleanup(prototype_node_t* node) {
@@ -240,7 +234,7 @@ int prototype_list_init(prototype_list_t* list, const file_t* file) {
 
 static int find_symbol_usage(void* list_ptr, file_parse_state_t* state, const char c, const size_t line, const size_t col, const size_t offset) {
   prototype_list_t* list = (prototype_list_t*)list_ptr;
-  prototype_node_t* node = NULL;
+  prototype_node_t* node;
 
   if ((('a' > c) || ('z' < c)) && (('0' > c) || ('9' < c)) && ('_' != c)) {
     for (node = list->first; NULL != node; node = node->next) {
@@ -309,8 +303,8 @@ static int extract_return_type(prototype_node_t* node) {
   const char* symbol = node->info.symbol;
   char* raw = node->info.raw_prototype.decl;
   const char* symbol_start = strstr(raw, symbol);
-  size_t len = 0;
-  char* buf = NULL;
+  size_t len;
+  char* buf;
   size_t asterisks = 0;
 
   if (NULL == symbol_start) {
@@ -373,21 +367,13 @@ static int extract_return_type(prototype_node_t* node) {
   memcpy(buf, raw, len);
   buf[len] = '\0';
 
-  /*
-  while (asterisks > 0) {
-    buf[len++] = '*';
-    buf[len] = '\0';
-    asterisks--;
-  }
-  */
-
   node->info.datatype.name = buf;
 
   return 0;
 }
 
 int prototype_extract_return_types(prototype_list_t* list) {
-  prototype_node_t* node = NULL;
+  prototype_node_t* node;
   for (node = list->first; NULL != node; node = node->next) {
     if (0 != extract_return_type(node)) {
       error1("Return type could not be extracted for '%s'", node->info.symbol);
@@ -401,13 +387,13 @@ static int extract_arguments(prototype_node_t* node) {
   const char* symbol = node->info.symbol;
   char* raw = node->info.raw_prototype.decl;
   const char* symbol_start = strstr(raw, symbol);
-  int paren_count = 0;
-  char* start_args = NULL;
-  size_t len = 0;
+  int paren_count;
+  char* start_args;
+  size_t len;
   int astrisks = 0;
   int dummy_cnt = 0;
-  char* last_start = NULL;
-  char* last_space = NULL;
+  char* last_start;
+  char* last_space;
 
   debug1("Extracting arguments for '%s'", node->info.symbol);
 
@@ -439,8 +425,8 @@ static int extract_arguments(prototype_node_t* node) {
       int is_variadic = 0;
       int is_const = 0;
       char* end = raw;
-      char* arg_name = NULL;
-      char* type_name = NULL;
+      char* arg_name;
+      char* type_name;
       raw += (',' == c);
       while (' ' == *raw) {
         raw++;
@@ -547,13 +533,11 @@ static int extract_arguments(prototype_node_t* node) {
     raw++;
   }
 
-  len = raw - start_args;
-
   return 0;
 }
 
 int prototype_extract_arguments(prototype_list_t* list) {
-  prototype_node_t* node = NULL;
+  prototype_node_t* node;
   for (node = list->first; NULL != node; node = node->next) {
     if (0 != extract_arguments(node)) {
       error1("Return type could not be extracted for '%s'", node->info.symbol);
@@ -564,7 +548,7 @@ int prototype_extract_arguments(prototype_list_t* list) {
 }
 
 void prototype_list_cleanup(prototype_list_t* list) {
-  prototype_node_t* node = NULL;
+  prototype_node_t* node;
   assert((NULL != list) && "Argument 'list' must not be NULL");
   node = list->first;
   while (NULL != node) {
@@ -572,16 +556,13 @@ void prototype_list_cleanup(prototype_list_t* list) {
     prototype_node_cleanup(node);
     node = next_node;
   }
-#ifdef PARANOIA
-  *list = (prototype_list_t)PROTOTYPE_LIST_EMPTY;
-#endif
 }
 
 /*
  * TODO: Refactor generate_prototype to write to disk more effeicient
  */
 void generate_prototype(prototype_node_t* node, const char* prefix, const char* prepend, const char* suffix) {
-  argument_node_t* anode = NULL;
+  argument_node_t* anode;
   int i;
   if (NULL != prefix) {
     printf("%s", prefix);

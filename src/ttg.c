@@ -52,7 +52,7 @@ static int ttg_options_init(ttg_options_t* options, int argc, char* argv[])
 
 static int generate_test_runner(testcase_list_t* list, const char* file) {
   int retval = 0;
-  testcase_node_t* node = NULL;
+  testcase_node_t* node;
 
   printf("#include <stdio.h>\n");
   printf("#include <stdlib.h>\n\n");
@@ -68,7 +68,7 @@ static int generate_test_runner(testcase_list_t* list, const char* file) {
 
   printf("\n"
          "int main(int argc, char* argv[]) {\n"
-         "  int retval = EXIT_SUCCESS;\n"
+         "  int retval;\n"
          "\n"
          "  __tarsio_init();\n"
          "  __tarsio_handle_arguments(argc, argv);\n");

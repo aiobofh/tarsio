@@ -56,7 +56,7 @@ static int tam_options_init(tam_options_t* options, int argc, char* argv[])
 }
 
 size_t first_line(prototype_list_t* list) {
-  prototype_node_t* node = NULL;
+  prototype_node_t* node;
   for (node = list->first; NULL != node; node = node->next) {
     if (node->info.is_function_implementation) {
       return (size_t)node->info.is_function_implementation;
@@ -66,7 +66,7 @@ size_t first_line(prototype_list_t* list) {
 }
 
 static void generate_extern_proxy_prototypes(prototype_list_t* list) {
-  prototype_node_t* node = NULL;
+  prototype_node_t* node;
   printf("/*\n"
          " * This external declaration part is inserted into the pre-processed\n"
          " * right before the first actual function definition.\n"
@@ -90,7 +90,7 @@ static void generate_proxified(prototype_list_t* list, file_t* file) {
    * This should be done smarter... Like a sorted list of all available offsets
    */
   while (offset < file->len) {
-    prototype_node_t* node = NULL;
+    prototype_node_t* node;
     char* symbol = NULL;
     char c = file->buf[offset];
     if (line == first_implementation_line) {
@@ -98,7 +98,7 @@ static void generate_proxified(prototype_list_t* list, file_t* file) {
       first_implementation_line = 0;
     }
     for (node = list->first; NULL != node; node = node->next) {
-      symbol_usage_node_t* snode = NULL;
+      symbol_usage_node_t* snode;
       for (snode = node->info.symbol_usage_list.first; NULL != snode; snode = snode->next) {
         if (offset == snode->info.offset - strlen(node->info.symbol)) {
           symbol = node->info.symbol;
