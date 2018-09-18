@@ -30,38 +30,38 @@ check: testcase_test
 #
 # Produce a pre-processed file for the code to test
 #
-${TMP}%_tarsio.pp: %.c
+${TMP}%.p: %.c
 	$(CC) ${TARSIO_CFLAGS} -Dmain=__tarsio_replace_main -E -c $< > $@
 
-${TMP}%_tarsio.sym: ${TMP}%_tarsio.pp
+${TMP}%.sym: ${TMP}%.p
 	./tcg $^ $@
 
-.PRECIOUS: ${TMP}%_tarsio_data.h
-${TMP}%_tarsio_data.h: ${TMP}%_tarsio.sym ${TESTDIR}%_test.c
+.PRECIOUS: ${TMP}%_data.h
+${TMP}%_data.h: ${TMP}%.sym ${TESTDIR}%_test.c
 	./tsg $^ > $@
 
-${TMP}%_tarsio_mocks.c: ${TMP}%_tarsio.sym ${TMP}%_tarsio_data.h
+${TMP}%_mocks.c: ${TMP}%.sym ${TMP}%_data.h
 	./tmg $^ > $@
 
-${TMP}%_tarsio_proxified.pp: ${TMP}%_tarsio.sym ${TMP}%_tarsio.pp
+${TMP}%_proxified.p: ${TMP}%.sym ${TMP}%.p
 	./tam $^ > $@
 
-${TMP}%_tarsio_runner.c: ${TESTDIR}%_test.c ${TMP}%_tarsio_data.h
+${TMP}%_runner.c: ${TESTDIR}%_test.c ${TMP}%_data.h
 	./ttg $^ > $@
 
 #
 # Compile the test suite to an object file
 #
-${TMP}%_tarsio_proxified.o: ${TMP}%_tarsio_proxified.pp
+${TMP}%_proxified.o: ${TMP}%_proxified.p
 	$(CC) ${CFLAGS} -x cpp-output -c -Wunused-function $^ -o $@
 
-${TMP}%_test.o: ${TESTDIR}%_test.c ${TMP}%_tarsio_data.h
+${TMP}%_test.o: ${TESTDIR}%_test.c ${TMP}%_data.h
 	$(CC) ${CFLAGS} -I${TMP} -I${TESTDIR} -c $< -o $@
 
-${TMP}%_tarsio_mocks.o: ${TMP}%_tarsio_mocks.c ${TMP}%_tarsio_data.h
+${TMP}%_mocks.o: ${TMP}%_mocks.c ${TMP}%_data.h
 	$(CC) ${CFLAGS} -I${TMP} -I${TESTDIR} -Wunused-function -c $< -o $@
 
-${TMP}%_tarsio_runner.o: ${TMP}%_tarsio_runner.c
+${TMP}%_runner.o: ${TMP}%_runner.c
 	$(CC) ${CFLAGS} -I${TMP} -I${TESTDIR} -Wunused-function -c $^ -o $@
 
 #
@@ -69,7 +69,7 @@ ${TMP}%_tarsio_runner.o: ${TMP}%_tarsio_runner.c
 #
 # TODO: Make tarsio.o a shared library instead
 #
-%_test: ${TMP}%_test.o ${TMP}%_tarsio_proxified.o ${TMP}%_tarsio_runner.o ${TMP}%_tarsio_mocks.o tarsio.o
+%_test: ${TMP}%_test.o ${TMP}%_proxified.o ${TMP}%_runner.o ${TMP}%_mocks.o tarsio.o
 	$(CC) ${LDFLAGS} -o $@ $^
 
 #
@@ -92,4 +92,4 @@ ttg: ttg.o file.o testcase.o
 
 
 clean:
-	${RM} *~ *.o protoparse symbolparse mockables proxify select implement *.pre *.all *.sym *.moc *.prx *.sel *.mod *.imp gts tsg tcg tmg tam ttg gent *_test ${TMP}*.pre ${TMP}*.pp* ${TMP}*_suite.c ${TMP}*_tarsio* ${TMP}*_test.o
+	${RM} *~ *.o protoparse symbolparse mockables proxify select implement *.pre *.all *.sym *.moc *.prx *.sel *.mod *.imp gts tsg tcg tmg tam ttg gent *_test ${TMP}*.pre ${TMP}*.pp* ${TMP}*_suite.c ${TMP}*_tarsio* ${TMP}*_test.o ${TMP}testcase*
