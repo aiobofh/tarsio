@@ -17,12 +17,52 @@ struct __tarsio_options_s {
 };
 typedef struct __tarsio_options_s __tarsio_options_t;
 
+struct __tarsio_failure_node_s {
+  struct __tarsio_failure_node_s* next;
+  char* testcase_name;
+  char* help;
+  char* file;
+  size_t line;
+};
+typedef struct __tarsio_failure_node_s __tarsio_failure_node_t;
+
+struct __tarsio_failure_list_s {
+  __tarsio_failure_node_t* first;
+  __tarsio_failure_node_t* last;
+};
+typedef struct __tarsio_failure_list_s __tarsio_failure_list_t;
+
+__tarsio_failure_list_t __tarsio_failure_list;
 __tarsio_options_t __tarsio_options;
 __tarsio_stats_t __tarsio_stats;
 
-void __tarsio_assert_eq(int res, const char* testcase_name) {
+void __tarsio_append_failure(__tarsio_failure_list_t* list, const char* testcase_name, const char* help, const char* file, size_t line) {
+  __tarsio_failure_node_t* node = malloc(sizeof(node));
+
+  if (NULL == node) {
+    fprintf(stderr, "FATAL: Out of memory while allocating assert information in Tarsio\n");
+    exit(EXIT_FAILURE);
+  }
+
+  node->testcase_name = (char*)testcase_name;
+  node->help = (char*)help;
+  node->file = (char*)file;
+  node->line = line;
+  node->next = NULL;
+
+  if (NULL == list->first) {
+    list->first = node;
+  }
+  if (NULL != list->last) {
+    list->last->next = node;
+  }
+  list->last = node;
+}
+
+void __tarsio_assert_eq(int res, const char* testcase_name, const char* help, const char* file, size_t line) {
   if (res) {
     __tarsio_stats.fail++;
+    __tarsio_append_failure(&__tarsio_failure_list, testcase_name, help, file, line);
   }
   else {
     __tarsio_stats.success++;
@@ -31,6 +71,7 @@ void __tarsio_assert_eq(int res, const char* testcase_name) {
 
 void __tarsio_init(void) {
   memset(&__tarsio_stats, 0, sizeof(__tarsio_stats));
+  memset(&__tarsio_failure_list, 0, sizeof(__tarsio_failure_list));
 }
 
 void __tarsio_handle_arguments(int argc, char* argv[]) {
@@ -78,6 +119,33 @@ void __tarsio_unit_test_execute(__tarsio_data_t* __tarsio_mock_data, int (*func)
   }
 }
 
-void __tarsio_summary(void) {
+int __tarsio_summary(void) {
+  int retval = 0;
+  __tarsio_failure_node_t* fnode;
+  char* last_test_name = NULL;
   putc('\n', stdout);
+
+  for (fnode = __tarsio_failure_list.first; NULL != fnode; fnode = fnode->next) {
+    if (((NULL != last_test_name) && (0 != strcmp(last_test_name, fnode->testcase_name))) || (NULL == last_test_name)) {
+      fprintf(stderr, "%s:\n", fnode->testcase_name);
+    }
+    fprintf(stderr, "  %s:%lu:\n", fnode->file, fnode->line);
+    fprintf(stderr, "    %s\n", fnode->help);
+    last_test_name = fnode->testcase_name;
+  }
+
+  if (NULL != __tarsio_failure_list.first) {
+    retval = -1;
+  }
+
+  return retval;
+}
+
+void __tarsio_cleanup(void) {
+  __tarsio_failure_node_t* fnode = __tarsio_failure_list.first;
+  while (NULL != fnode) {
+    __tarsio_failure_node_t* next_node = fnode->next;
+    free(fnode);
+    fnode = next_node;
+  }
 }

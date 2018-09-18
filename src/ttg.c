@@ -85,7 +85,8 @@ static int generate_test_runner(testcase_list_t* list, const char* file) {
       break;
     }
   }
-  printf("  __tarsio_summary();\n");
+  printf("  retval = __tarsio_summary();\n");
+  printf("  __tarsio_cleanup();\n");
   printf("  return retval;\n"
          "}\n");
 
