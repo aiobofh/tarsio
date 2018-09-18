@@ -61,7 +61,7 @@ static int generate_test_runner(testcase_list_t* list, const char* file) {
   printf("#include \"%s\"\n", file);
 
   for (node = list->first; NULL != node; node = node->next) {
-    printf("extern int __tarsio_test_%s(void*, const char*);\n", node->name);
+    printf("extern int __%s(void*, const char*);\n", node->name);
   }
   printf("\n"
          "__tarsio_data_t __tarsio_mock_data;\n");
@@ -75,10 +75,10 @@ static int generate_test_runner(testcase_list_t* list, const char* file) {
   for (node = list->first; NULL != node; node = node->next) {
     switch (node->type) {
     case TESTCASE_IS_UNIT_TEST:
-      printf("  __tarsio_unit_test_execute(&__tarsio_mock_data, __tarsio_test_%s, \"%s\", sizeof(__tarsio_mock_data));\n", node->name, node->name);
+      printf("  __tarsio_unit_test_execute(&__tarsio_mock_data, __%s, \"%s\", sizeof(__tarsio_mock_data));\n", node->name, node->name);
       break;
     case TESTCASE_IS_MODULE_TEST:
-      printf("  __tarsio_module_test_execute(&__tarsio_mock_data, __tarsio_test_%s, \"%s\", sizeof(__tarsio_mock_data));\n", node->name, node->name);
+      printf("  __tarsio_module_test_execute(&__tarsio_mock_data, __%s, \"%s\", sizeof(__tarsio_mock_data));\n", node->name, node->name);
       break;
     case TESTCASE_IS_UNKNOWN:
       error0("This should never happen :)");

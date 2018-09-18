@@ -67,7 +67,7 @@ static char *index_of(const char* buf, char c) {
   return (char*)buf;
 }
 
-static int extract_testcase(testcase_list_t* list, char* buf) {
+static int extract(testcase_list_t* list, char* buf) {
   int retval = 0;
   char* name = NULL;
   char* ptr = NULL;
@@ -154,9 +154,9 @@ static int parse(testcase_list_t* list, const file_t* file) {
     is_in_comment = (is_in_block_comment || is_in_row_comment);
 
     if (is_end_of_declaration) {
-      if (0 != extract_testcase(list, buf)) {
+      if (0 != extract(list, buf)) {
         retval = -2;
-        goto extract_testcase_failed;
+        goto extract_failed;
       }
       idx = 0;
     }
@@ -179,7 +179,7 @@ static int parse(testcase_list_t* list, const file_t* file) {
   }
 
 
- extract_testcase_failed:
+ extract_failed:
   free(buf);
  buf_malloc_failed:
   return retval;
