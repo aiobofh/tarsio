@@ -9,6 +9,14 @@
 #define m tarsio_mock
 
 /***************************************************************************
+ * index_of()
+ */
+test(index_of_shall_return_the_pointer_to_the_position_of_a_specific_char) {
+  char* teststring = "12345";
+  assert_eq(&teststring[4], index_of(teststring, '5'));
+}
+
+/***************************************************************************
  * extract_testcase()
  */
 test(extract_testcase_shall_return_0_on_success) {
@@ -170,7 +178,6 @@ test(parse_shall_free_the_allocated_buffer_if_not_out_of_memory) {
   assert_eq(0, parse(NULL, &file));
 }
 
-#undef quick_setup
 #define quick_setup                             \
   file_t file;                                  \
   char buf[15];                                 \
