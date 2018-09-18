@@ -20,10 +20,11 @@ struct file_parse_state_s {
   char* buf;
   size_t idx;
   size_t line_feeds_in_declaration;
+  int done;
 };
 typedef struct file_parse_state_s file_parse_state_t;
 
-#define EMPTY_FILE_PARSE_STATE {0, 0, 0, 0, NULL, 0, 0}
+#define EMPTY_FILE_PARSE_STATE {0, 0, 0, 0, NULL, 0, 0, 0}
 
 typedef int (*file_parse_cb_t)(void* list_ptr, file_parse_state_t* state, const char c, const size_t line ,const size_t col, const size_t offset);
 

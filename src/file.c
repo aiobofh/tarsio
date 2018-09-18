@@ -57,6 +57,10 @@ int file_parse(file_parse_cb_t func, void* list_ptr, const file_t* file, parse_p
     const int is_exiting_function_body = ((is_code_block_end) && (no_parenthesis_count) && (one_braces_count));
     int do_parse = 0;
 
+    if (1 == state.done) {
+      break;
+    }
+
     num_braces += is_code_block_start;
 
     in_string += is_string_start;
