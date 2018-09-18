@@ -20,8 +20,10 @@ TESTDIR=./
 
 all: tcg tsg tmg tam ttg
 
-check: testcase_test
-	$(Q)./testcase_test
+check:
+	$(Q)$(MAKE) && \
+	$(MAKE) testcase_test && \
+	./testcase_test
 
 %.o: %.c
 	$(Q)$(CC) ${CFLAGS} -o $@ -c $<
