@@ -124,6 +124,10 @@ static int parse(testcase_list_t* list, const file_t* file) {
   int is_in_comment = 0;
   int is_in_body = 0;
 
+  /*
+   * This is overdoing it a bit, since we probably only need a few bytes,
+   * but we never know if the buffer will be full och crap.
+   */
   if (NULL == (buf = malloc(file->len + 1))) {
     error1("Out of memory while allocating buffert for testcases in '%s'", file->filename);
     retval = -1;
