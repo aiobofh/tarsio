@@ -81,6 +81,15 @@ static int extract_cpp_directives(void* list_ptr, file_parse_state_t* state, con
     state->buf[state->idx] = '\0';
   }
 
+  /*
+   * Try to only take the top part of the file. The includes are the most
+   * important to catch.
+   */
+  if ((state->buf == strstr(state->buf, "test(")) ||
+      (state->buf == strstr(state->buf, "module_test("))) {
+    state->done = 1;
+  }
+
   state->last_c = c;
 
   return 0;
