@@ -12,8 +12,8 @@
  * index_of()
  */
 test(index_of_shall_return_the_pointer_to_the_position_of_a_specific_char) {
-  (void)m;
   char* teststring = "12345";
+  (void)m;
   assert_eq(&teststring[4], index_of(teststring, '5'));
 }
 
@@ -43,9 +43,18 @@ test(extract_search_for_module_test_names) {
   assert_eq(0, strcmp("module_test(", m.strstr.args.arg1));
 }
 
+#ifdef SASC
+#define quick_setup				\
+  m.strstr.func = strstr;			\
+  m.__builtin_strlen.func = strlen
+#else
+#define quick_setup				\
+  m.strstr.func = strstr;			\
+  m.strlen.func = strlen
+#endif
+
 test(extract_search_for_en_parentheis_using_index_of) {
-  m.strstr.func = strstr;
-  m.strlen.func = strlen;
+  quick_setup;
 
   extract(NULL, "test(a_name)");
 
@@ -55,18 +64,16 @@ test(extract_search_for_en_parentheis_using_index_of) {
 }
 
 test(extract_return_negative_1_if_parentheis_was_not_found) {
-  m.strstr.func = strstr;
-  m.strlen.func = strlen;
-
+  quick_setup;
+  
   m.index_of.retval = NULL;
 
   assert_eq(-1, extract(NULL, "test(a_name)"));
 }
 
 test(extract_not_append_test_case_if_name_not_found) {
-  m.strstr.func = strstr;
-  m.strlen.func = strlen;
-
+  quick_setup;
+  
   m.index_of.retval = NULL;
 
   extract(NULL, "test(a_name)");
@@ -76,10 +83,9 @@ test(extract_not_append_test_case_if_name_not_found) {
 
 test(extract_append_test_case_if_name_not_found) {
   char teststring[14];
-  strcpy(teststring, "test(a_name)");
-  m.strstr.func = strstr;
-  m.strlen.func = strlen;
-
+  strcpy(teststring, "test(a_name)");  
+  quick_setup;
+  
   m.index_of.retval = teststring + strlen("test(");
 
   extract(NULL, teststring);
@@ -90,9 +96,8 @@ test(extract_append_test_case_if_name_not_found) {
 test(extract_call_append_test_correctly) {
   char teststring[14];
   strcpy(teststring, "test(a_name)");
-  m.strstr.func = strstr;
-  m.strlen.func = strlen;
-
+  quick_setup;
+  
   m.index_of.retval = teststring + strlen(teststring) - 1;
 
   extract((testcase_list_t*)0x1234, teststring);
@@ -105,9 +110,8 @@ test(extract_call_append_test_correctly) {
 test(extract_classify_unit_test_correctly) {
   char teststring[14];
   strcpy(teststring, "test(a_name)");
-  m.strstr.func = strstr;
-  m.strlen.func = strlen;
-
+  quick_setup;
+  
   m.index_of.retval = teststring + strlen(teststring) - 1;
 
   extract((testcase_list_t*)0x1234, teststring);
@@ -118,9 +122,8 @@ test(extract_classify_unit_test_correctly) {
 test(extract_classify_module_test_correctly) {
   char teststring[24];
   strcpy(teststring, "module_test(a_name)");
-  m.strstr.func = strstr;
-  m.strlen.func = strlen;
-
+  quick_setup;
+  
   m.index_of.retval = teststring + strlen(teststring) - 1;
 
   extract((testcase_list_t*)0x1234, teststring);
@@ -128,20 +131,23 @@ test(extract_classify_module_test_correctly) {
   assert_eq(TESTCASE_IS_MODULE_TEST, m.testcase_append.args.arg2);
 }
 
+#undef quick_setup
+
+
 /***************************************************************************
  * parse()
  */
-test(parse_shall_retorn_0_on_success) {
+test(parse_retorn_0_on_success) {
   file_t file;
-  file.len = 0;
   char buf[1];
+  file.len = 0;
 
   m.malloc.retval = buf;
 
   assert_eq(0, parse(NULL, &file));
 }
 
-test(parse_shall_call_malloc_for_allocating_a_buff) {
+test(parse_malloc_for_allocating_a_buff) {
   file_t file;
   file.len = 5678;
 
@@ -150,7 +156,7 @@ test(parse_shall_call_malloc_for_allocating_a_buff) {
   assert_eq(1, m.malloc.call_count);
 }
 
-test(parse_shall_allocate_the_correct_number_of_bytes_plus_one_for_null) {
+test(parse_allocate_the_correct_number_of_bytes_plus_one_for_null) {
   file_t file;
   file.len = 5678;
 
@@ -159,7 +165,7 @@ test(parse_shall_allocate_the_correct_number_of_bytes_plus_one_for_null) {
   assert_eq(5678 + 1, m.malloc.args.arg0);
 }
 
-test(parse_shall_return_negative_1_if_out_of_memory) {
+test(parse_return_negative_1_if_out_of_memory) {
   file_t file;
   file.len = 5678;
 
@@ -168,7 +174,7 @@ test(parse_shall_return_negative_1_if_out_of_memory) {
   assert_eq(-1, parse(NULL, &file));
 }
 
-test(parse_shall_free_the_allocated_buffer_if_not_out_of_memory) {
+test(parse_free_the_allocated_buffer_if_not_out_of_memory) {
   file_t file;
   char buf[1];
 
@@ -187,7 +193,7 @@ test(parse_shall_free_the_allocated_buffer_if_not_out_of_memory) {
   m.malloc.retval = buf;                        \
   parse(NULL, &file)
 
-test(parse_shall_call_extract_if_end_of_line_is_found) {
+test(parse_extract_if_end_of_line_is_found) {
   const char* teststring = "something\n";
 
   quick_setup;
@@ -195,7 +201,7 @@ test(parse_shall_call_extract_if_end_of_line_is_found) {
   assert_eq(1, m.extract.call_count);
 }
 
-test(parse_shall_call_extract_if_code_block_start_is_found) {
+test(parse_extract_if_code_block_start_is_found) {
   const char* teststring = "something{";
 
   quick_setup;
@@ -203,7 +209,7 @@ test(parse_shall_call_extract_if_code_block_start_is_found) {
   assert_eq(1, m.extract.call_count);
 }
 
-test(parse_shall_not_call_extract_if_eol_found_in_block_comment) {
+test(parse_not_extract_if_eol_in_block_comment) {
   const char* teststring = "/* something\n";
 
   quick_setup;
@@ -211,7 +217,7 @@ test(parse_shall_not_call_extract_if_eol_found_in_block_comment) {
   assert_eq(0, m.extract.call_count);
 }
 
-test(parse_shall_not_call_extract_if_eol_found_in_row_comment) {
+test(parse_not_extract_if_eol_in_row_comment) {
   const char* teststring = "// something\n";
 
   quick_setup;
