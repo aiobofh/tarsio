@@ -63,7 +63,6 @@ size_t first_func_offset(prototype_list_t* list) {
   for (node = list->first; NULL != node; node = node->next) {
     if (node->info.is_function_implementation) {
       return node->info.raw_prototype.offset;
-      return (size_t)node->info.is_function_implementation;
     }
   }
   return 0;
