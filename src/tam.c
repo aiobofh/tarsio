@@ -14,10 +14,13 @@
  * tool in the Tarsio tool chain.
  */
 
+#include <unistd.h>
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
+#include "debug.h"
 #include "error.h"
 
 #include "file.h"
@@ -55,10 +58,11 @@ static int tam_options_init(tam_options_t* options, int argc, char* argv[])
   return 0;
 }
 
-size_t first_line(prototype_list_t* list) {
+size_t first_func_offset(prototype_list_t* list) {
   prototype_node_t* node;
   for (node = list->first; NULL != node; node = node->next) {
     if (node->info.is_function_implementation) {
+      return node->info.raw_prototype.offset;
       return (size_t)node->info.is_function_implementation;
     }
   }
@@ -67,63 +71,277 @@ size_t first_line(prototype_list_t* list) {
 
 static void generate_extern_proxy_prototypes(prototype_list_t* list) {
   prototype_node_t* node;
-  printf("/*\n"
-         " * This external declaration part is inserted into the pre-processed\n"
-         " * right before the first actual function definition.\n"
-         " */\n");
   for (node = list->first; NULL != node; node = node->next) {
     generate_prototype(node, "extern ", "__tarsio_proxy_", ";");
   }
   printf("\n");
 }
 
-/*
- * TODO: Refactor this to read larger chunks of the memory and write them
- *       to disk. E.g. by writing every byte until next offset (sorted).
- */
-static void generate_proxified(prototype_list_t* list, file_t* file) {
-  size_t offset = 0;
-  size_t line = 0;
-  size_t first_implementation_line = first_line(list);
-  size_t skip = 0;
-  /*
-   * This should be done smarter... Like a sorted list of all available offsets
-   */
-  while (offset < file->len) {
-    prototype_node_t* node;
-    char* symbol = NULL;
-    char c = file->buf[offset];
-    if (line == first_implementation_line) {
-      generate_extern_proxy_prototypes(list);
-      first_implementation_line = 0;
+enum sort_search_e {
+  SEARCH_NONE,
+  SEARCH_FIRST_FUNCTION,
+  SEARCH_STATIC_FUNCTION,
+  SEARCH_FUNCTION_CALL
+};
+typedef enum sort_search_e sort_search_t;
+
+struct replace_node_s {
+  struct replace_node_s* prev;
+  prototype_node_t* prototype_node;
+  symbol_usage_node_t* symbol_usage_node;
+  int only_static;
+  sort_search_t search;
+  size_t offset;
+  struct replace_node_s* next;
+};
+typedef struct replace_node_s replace_node_t;
+
+struct replace_list_s {
+  replace_node_t* first;
+  replace_node_t* last;
+};
+typedef struct replace_list_s replace_list_t;
+
+static replace_node_t* search_first_function(replace_list_t* list,
+                                             size_t first_func_offset)
+{
+  replace_node_t* node;
+  for (node = list->first; NULL != node; node = node->next) {
+    if (first_func_offset < node->offset) {
+      break;
     }
-    for (node = list->first; NULL != node; node = node->next) {
-      symbol_usage_node_t* snode;
-      for (snode = node->info.symbol_usage_list.first; NULL != snode; snode = snode->next) {
-        if (offset == snode->info.offset - strlen(node->info.symbol)) {
-          symbol = node->info.symbol;
-        }
+  }
+  return node;
+}
+
+static replace_node_t* search_static_function(replace_list_t* list,
+                                              prototype_node_t* pnode)
+{
+  replace_node_t* node;
+  for (node = list->first; NULL != node; node = node->next) {
+    if (pnode->info.raw_prototype.offset < node->offset) {
+      break;
+    }
+  }
+  return node;
+}
+
+static replace_node_t* search_function_call(replace_list_t* list,
+                                            symbol_usage_node_t* snode)
+{
+  replace_node_t* node;
+  for (node = list->first; NULL != node; node = node->next) {
+    if (snode->info.offset < node->offset) {
+      break;
+    }
+  }
+  return node;
+}
+
+static replace_node_t* new_replace_node(prototype_node_t* pnode,
+                                        symbol_usage_node_t* snode,
+                                        sort_search_t search)
+{
+  replace_node_t* node;
+
+  if (NULL == (node = malloc(sizeof(*node)))) {
+    error1("Out of memory while sorting usage list for '%s'",
+           pnode->info.symbol);
+    return NULL;
+  }
+
+  node->prev = node->next = NULL;
+  node->prototype_node = pnode;
+  node->symbol_usage_node = snode;
+  node->search = search;
+  node->offset = 0;
+
+  return node;
+}
+
+static void replace_list_add(replace_list_t* list,
+                             replace_node_t* node,
+                             replace_node_t* new_node)
+{
+  if (NULL == list->first) {
+    list->first = new_node;
+  }
+
+  if (NULL == node) {
+    if (NULL != list->last) {
+      list->last->next = new_node;
+    }
+    new_node->prev = list->last;
+    list->last = new_node;
+  }
+  else {
+    replace_node_t* prev = node->prev;
+
+    prev->next = new_node;
+    node->prev = new_node;
+    new_node->prev = prev;
+    new_node->next = node;
+  }
+}
+
+static int insert_first_function_offset(replace_list_t* list,
+                                        size_t offset)
+{
+  replace_node_t* new_node;
+  replace_node_t* node;
+  new_node = new_replace_node(NULL, NULL, SEARCH_FIRST_FUNCTION);
+  if (NULL == new_node) {
+    error0("Unable to create new sorted usage node");
+    return -1;
+  }
+
+  node = search_first_function(list, offset);
+
+  new_node->offset = offset;
+
+  replace_list_add(list, node, new_node);
+
+  return 0;
+}
+
+static int insert_static_function_offset(replace_list_t* list,
+                                         prototype_node_t* pnode)
+{
+  replace_node_t* new_node;
+  replace_node_t* node;
+  new_node = new_replace_node(pnode, NULL, SEARCH_STATIC_FUNCTION);
+  if (NULL == new_node) {
+    error0("Unable to create new sorted usage node");
+    return -1;
+  }
+
+  node = search_static_function(list, pnode);
+
+  new_node->offset = pnode->info.raw_prototype.offset;
+
+  replace_list_add(list, node, new_node);
+
+  return 0;
+}
+
+static int insert_function_call_offset(replace_list_t* list,
+                                       prototype_node_t* pnode,
+                                       symbol_usage_node_t* snode)
+{
+  replace_node_t* new_node;
+  replace_node_t* node;
+  new_node = new_replace_node(pnode, snode, SEARCH_FUNCTION_CALL);
+  if (NULL == new_node) {
+    error0("Unable to create new sorted usage node");
+    return -1;
+  }
+
+  node = search_function_call(list, snode);
+
+  new_node->offset = snode->info.offset - strlen(pnode->info.symbol);
+
+  replace_list_add(list, node, new_node);
+
+  return 0;
+}
+
+static int sort_usage(replace_list_t* slist, prototype_list_t* plist) {
+  prototype_node_t* pnode;
+  size_t first_func_offs = first_func_offset(plist);
+
+  /*
+   * First add the offset to the first function found in the pre-processsed
+   * source code version of the design under test, because this is a good
+   * place to insert extern declarations to all the proxified versions that
+   * are generated in another file.
+   */
+
+  insert_first_function_offset(slist, first_func_offs);
+
+  /*
+   * Then add offets to all the statically declared functions in the pre-
+   * processed source code version of the design under test, because these
+   * must be made global instead of static in the output file, so that all
+   * the modal functions in the design under test can be called from the
+   * testcases.
+   */
+
+  for (pnode = plist->first; NULL != pnode; pnode = pnode->next) {
+    if (pnode->info.linkage_definition.is_static) {
+      if (0 != insert_static_function_offset(slist, pnode)) {
+        error0("Could not insert");
+        return -1;
       }
     }
-    if (symbol) {
+  }
+
+  /*
+   * Lastly add offsets to all the usage (function calls) to any function
+   * that is supposed to have a generated proxy function. This is the actual
+   * auto-mocking consequence. ALWAYS making sure that the design under test
+   * use the proxy functions instead of the real functions.
+   */
+
+  for (pnode = plist->first; NULL != pnode; pnode = pnode->next) {
+    symbol_usage_list_t* sl = &pnode->info.symbol_usage_list;
+    symbol_usage_node_t* sn;
+    for (sn = sl->first; NULL != sn; sn = sn->next) {
+      if (insert_function_call_offset(slist, pnode, sn)) {
+        error0("Could not insert");
+        return -1;
+      }
+    }
+  }
+
+  return 0;
+}
+
+static void generate_proxified(prototype_list_t* list, file_t* file) {
+  replace_list_t slist;
+  replace_node_t* node;
+  size_t offset = 0;
+
+  slist.first = slist.last = NULL;
+  if (0 != sort_usage(&slist, list)) {
+    error0("Out of memory while sorting usage list\n");
+    return;
+  }
+
+  if (NULL == slist.first) {
+    return;
+  }
+
+  node = slist.first;
+  while (offset < file->len) {
+    if (NULL == node) {
+      /* Write the rest of the file and exit */
+      fwrite(&file->buf[offset], file->len - offset, 1, stdout);
+      break;
+    }
+    else if (SEARCH_FIRST_FUNCTION == node->search) {
+      fwrite(&file->buf[offset], node->offset - offset, 1, stdout);
+      generate_extern_proxy_prototypes(list);
+      offset = node->offset;
+    }
+    else if (SEARCH_STATIC_FUNCTION == node->search) {
+      fwrite(&file->buf[offset], node->offset - offset, 1, stdout);
+      offset = node->offset + strlen("static ") + 1;
+    }
+    else if (SEARCH_FUNCTION_CALL == node->search) {
+      prototype_node_t* pnode = node->prototype_node;
+      char* symbol = pnode->info.symbol;
+      fwrite(&file->buf[offset], node->offset - offset, 1, stdout);
       printf("__tarsio_proxy_%s", symbol);
-      offset += strlen(symbol) - 1;
+      offset = node->offset + strlen(symbol);
     }
     else {
-      if (skip == 0) {
-        putc(c, stdout);
-      }
-      else {
-        skip--;
-      }
+      error0("No search type should never happen :)");
+      return;
     }
-    /* Expose all funcitons, so that they can be called from testcases */
-    if (&file->buf[offset] == strstr(&file->buf[offset], "\nstatic ")) {
-      skip = 7;
-    }
-    line += ('\n' == c);
-    offset++;
+    node = node->next;
   }
+
+  return;
 }
 
 /****************************************************************************

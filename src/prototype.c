@@ -55,7 +55,7 @@ static int prototype_list_find_symbol(const prototype_list_t* list, const char* 
   return 0;
 }
 
-static prototype_node_t* prototype_node_new(const char* raw, const prototype_list_t* list) {
+static prototype_node_t* prototype_node_new(const char* raw, const prototype_list_t* list, const size_t offset) {
   prototype_node_t* node = NULL;
   char* symbol;
 
@@ -91,6 +91,8 @@ static prototype_node_t* prototype_node_new(const char* raw, const prototype_lis
   strcpy(node->info.raw_prototype.decl, raw);
   node->info.symbol = symbol;
 
+  node->info.raw_prototype.offset = offset;
+
   goto normal_exit;
 
  raw_prototype_malloc_failed:
@@ -105,8 +107,8 @@ static prototype_node_t* prototype_node_new(const char* raw, const prototype_lis
   return node;
 }
 
-static void prototype_list_append(prototype_list_t* list, const char* raw, int is_function_implementation) {
-  prototype_node_t* node = prototype_node_new(raw, list);
+static void prototype_list_append(prototype_list_t* list, const char* raw, int is_function_implementation, const size_t offset) {
+  prototype_node_t* node = prototype_node_new(raw, list, offset);
   if (NULL == node) {
     return;
   }
@@ -117,7 +119,12 @@ static void prototype_list_append(prototype_list_t* list, const char* raw, int i
     list->last->next = node;
   }
   list->last = node;
-  node->info.is_function_implementation = is_function_implementation;
+  if (is_function_implementation) {
+    /*
+    node->info.is_function_implementation = is_function_implementation;
+    */
+    node->info.is_function_implementation = offset;
+  }
   list->cnt++;
 }
 
@@ -186,7 +193,7 @@ static int extract_prototypes(void* list_ptr, file_parse_state_t* state, const c
      * A new prototype is found and should be added to the list of prototypes.
      */
     if (state->buf != strstr(state->buf, "typedef ")) {
-      prototype_list_append(list, state->buf, is_function_implementation);
+      prototype_list_append(list, state->buf, is_function_implementation, offset - strlen(state->buf));
     }
     state->found_parenthesis = 0;
     state->idx = 0;

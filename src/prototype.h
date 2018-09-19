@@ -8,6 +8,7 @@
 struct raw_prototype_s {
   char* decl;
   char* args;
+  size_t offset;
 };
 typedef struct raw_prototype_s raw_prototype_t;
 
