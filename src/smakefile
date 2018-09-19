@@ -1,7 +1,7 @@
-CFLAGS=define NODEBUG define SASC cpu 68060 optimize noicons noversion
+TMP=T:
+CFLAGS=define NODEBUG define SASC cpu 68060 optimize noicons noversion includedirectory $(TMP)
 LDFLAGS=noicons noversion
 CPU=68060
-
 all: tcg tsg tmg tam ttg
 
 check: all testcase_test
@@ -10,58 +10,59 @@ check: all testcase_test
 check: testcase_test
 
 tcg: tcg.o prototype.o file.o argument.o symbol_usage.o datatype.o symbol_cache.o
-	$(CC) $(CFLAGS) tcg.o prototype.o file.o argument.o symbol_usage.o datatype.o symbol_cache.o link to tcg
+	$(CC) $(CFLAGS) $? link to $@
 
 tsg: tsg.o prototype.o cpp.o symbol_cache.o file.o argument.o symbol_usage.o datatype.o
-	$(CC) $(CFLAGS) tsg.o prototype.o cpp.o symbol_cache.o file.o argument.o symbol_usage.o datatype.o link to tsg
+	$(CC) $(CFLAGS) $? link to $@
 
 tmg: tmg.o prototype.o symbol_cache.o file.o argument.o symbol_usage.o datatype.o
-	$(CC) $(CFLAGS) tmg.o prototype.o symbol_cache.o file.o argument.o symbol_usage.o datatype.o link to tmg
+	$(CC) $(CFLAGS) $? link to $@
 
 tam: tam.o prototype.o symbol_cache.o file.o argument.o symbol_usage.o datatype.o
-	$(CC) $(CFLAGS) tam.o prototype.o cpp.o symbol_cache.o file.o argument.o symbol_usage.o datatype.o link to tam
+	$(CC) $(CFLAGS) $? link to $@
 
 ttg: ttg.o file.o testcase.o
-	$(CC) $(CFLAGS) ttg.o file.o testcase.o link to ttg
+	$(CC) $(CFLAGS) $? link to $@
 
-testcase.p: testcase.c
-	$(CC) $(CFLASG) testcase.c preprocessoronly to testcase.p
+$(TMP)testcase.p: testcase.c
+	$(CC) $(CFLASG) $? preprocessoronly
+	copy testcase.p $@
+	delete testcase.p
 
-testcase.sym: testcase.p
-	tcg testcase.p testcase.sym
+$(TMP)testcase.sym: $(TMP)testcase.p
+	tcg $? $@
 
-testcase_data.h: testcase.sym testcase_test.c
-	tsg testcase.sym testcase_test.c > testcase_data.h
+$(TMP)testcase_data.h: $(TMP)testcase.sym testcase_test.c
+	tsg $? > $@
 
-testcase_mocks.c: testcase.sym testcase_data.h
-	tmg testcase.sym testcase_data.h > testcase_mocks.c
+$(TMP)testcase_mocks.c: $(TMP)testcase.sym $(TMP)testcase_data.h
+	tmg $? > $@
 
-testcase_proxified.p: testcase.sym testcase.p
-	tam testcase.sym testcase.p > testcase_proxified.p
+$(TMP)testcase_proxified.p: $(TMP)testcase.sym $(TMP)testcase.p
+	tam $? > $@
 
-testcase_runner.c: testcase_test.c testcase_data.h
-	ttg testcase_test.c testcase_data.h > testcase_runner.c
+$(TMP)testcase_runner.c: testcase_test.c $(TMP)testcase_data.h
+	ttg $? > $@
 
-testcase_mocks.o: testcase_mocks.c
-	$(CC) $(CFLAGS) testcase_mocks.c
+$(TMP)testcase_mocks.o: $(TMP)testcase_mocks.c
+	$(CC) $(CFLAGS) $?
 
-testcase_proxified.o: testcase_proxified.p
-	$(CC) $(CFLAGS) testcase_proxified.p
+$(TMP)testcase_proxified.o: $(TMP)testcase_proxified.p
+	$(CC) $(CFLAGS) $?
 
-testcase_test.o: testcase_test.c testcase_data.h
-	$(CC) $(CFLAGS) testcase_test.c
+testcase_test.o: testcase_test.c $(TMP)testcase_data.h
+	$(CC) $(CFLAGS) $<
 
-testcase_runner.o: testcase_runner.c
-	$(CC) $(CFLAGS) testcase_runner.c
+$(TMP)testcase_runner.o: $(TMP)testcase_runner.c
+	$(CC) $(CFLAGS) $?
 
-testcase_test: testcase_test.o testcase_proxified.o testcase_runner.o testcase_mocks.o tarsio.o
-	$(CC) $(CLFAGS) testcase_test.o testcase_proxified.o testcase_runner.o testcase_mocks.o tarsio.o link to testcase_test
+testcase_test: testcase_test.o $(TMP)testcase_proxified.o $(TMP)testcase_runner.o $(TMP)testcase_mocks.o tarsio.o
+	$(CC) $(CLFAGS) $? link to testcase_test
 
 clean:
-	delete force cpp.o prototype.o file.o argument.o symbol_usage.o datatype.o symbol_cache.o
-        delete force tcg tcg.o tcg.lnk tcg.info tsg tsg.o tsg.lnk tsg.info tmg tmg.o tmg.lnk tmg.info tam tam.o tam.lnk tam.info ttg ttg.o ttg.lnk ttg.info
-        delete force testcase_mocks.c testcase_mocks.o testcase_data.h testcase_runner.c testcase_runner.o testcase.sym testcase.p testcase.p.info testcase_proxified.c testcase_proxified.o testcase_test
-        delete force testcase.o testcase_test.o
+	delete quiet tcg tcg.o tcg.lnk tsg tsg.o tsg.lnk tmg tmg.o tmg.lnk tam tam.o tam.lnk ttg ttg.o ttg.lnk cpp.o tarsio.o testcase.o testcase.p.info prototype.o file.o argument.o symbol_usage.o datatype.o symbol_cache.o $(TMP)testcase.p $(TMP)testcase.sym $(TMP)testcase_data.h $(TMP)testcase_mocks.c $(TMP)testcase_proxified.p $(TMP)testcase_runner.c $(TMP)testcase_mocks.o $(TMP)testcase_proxified.o testcase_test.o $(TMP)testcase_runner.o testcase_test testcase_test.o testcase_test.lnk testcase_test.info
+
+
 
 
 
