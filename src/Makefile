@@ -2,28 +2,19 @@
 # Makefile for the Tarsio C Unit-testing framework
 #
 
-Q=@
-TMP=/tmp/
-CFLAGS=-Wall -std=c11 -pedantic -O0 -g -DNODEBUG
-TARSIO_CFLAGS=-O0 -Wall -std=c11 -pedantic -g -I. -I${TMP}
+Q?=@
+INCDIR=../include/
+CFLAGS=-Wall -std=c11 -pedantic -O2 -g -DNODEBUG -I${INCDIR}
 LDFLAGS=-flto
-TESTDIR=./
-
-#ifeq(CC,vbccm68k)
-#  PPFLAGS=-O=0 -noasm -I/etc/vcm68k-amigaos/include/ -I. -I${TMP} -Dmain=__tarsio_replace_main -E
-#endif
-#ifeq(CC,gcc)
-#  PPFLAGS=-O0 -Wall -std=c11 -pedantic -I. -I${TMP} -Dmain=__tarsio_replace_main -E
-#endif
 
 .SUFFIXES:
 
-all: tcg tsg tmg tam ttg
+all: tcg tsg tmg tam ttg tarsio.o
+	@: # Force GNU Make to be silent if nothing need to be done
 
 check:
 	$(Q)$(MAKE) && \
-	$(MAKE) testcase_test && \
-	./testcase_test
+	$(MAKE) --no-print-directory -C ../test/
 
 %.o: %.c
 	$(Q)$(CC) ${CFLAGS} -o $@ -c $<
@@ -31,51 +22,6 @@ check:
 %: %.o
 	$(Q)$(CC) -o $@ $^
 
-#
-# Produce a pre-processed file for the code to test
-#
-${TMP}%.p: %.c
-	$(Q)$(CC) ${TARSIO_CFLAGS} -Dmain=__tarsio_replace_main -E -c $< > $@
-
-${TMP}%.sym: ${TMP}%.p
-	$(Q)./tcg $^ $@
-
-.PRECIOUS: ${TMP}%_data.h
-${TMP}%_data.h: ${TMP}%.sym ${TESTDIR}%_test.c
-	$(Q)./tsg $^ > $@
-
-${TMP}%_mocks.c: ${TMP}%.sym ${TMP}%_data.h
-	$(Q)./tmg $^ > $@
-
-${TMP}%_proxified.p: ${TMP}%.sym ${TMP}%.p
-	$(Q)./tam $^ > $@
-
-.PRECIOIS: ${TMP}%_runner.c
-${TMP}%_runner.c: ${TESTDIR}%_test.c ${TMP}%_data.h
-	$(Q)./ttg $^ > $@
-
-#
-# Compile the test suite to an object file
-#
-${TMP}%_proxified.o: ${TMP}%_proxified.p
-	$(Q)$(CC) ${CFLAGS} -x cpp-output -c -Wunused-function $^ -o $@
-
-${TMP}%_test.o: ${TESTDIR}%_test.c ${TMP}%_data.h
-	$(Q)$(CC) ${CFLAGS} -I${TMP} -I${TESTDIR} -c $< -o $@
-
-${TMP}%_mocks.o: ${TMP}%_mocks.c ${TMP}%_data.h
-	$(Q)$(CC) ${CFLAGS} -I${TMP} -I${TESTDIR} -Wunused-function -c $< -o $@
-
-${TMP}%_runner.o: ${TMP}%_runner.c
-	$(Q)$(CC) ${CFLAGS} -I${TMP} -I${TESTDIR} -Wunused-function -c $^ -o $@
-
-#
-# Link the test suite object to the test case object
-#
-# TODO: Make tarsio.o a shared library instead
-#
-%_test: ${TMP}%_test.o ${TMP}%_proxified.o ${TMP}%_runner.o ${TMP}%_mocks.o tarsio.o
-	$(Q)$(CC) ${LDFLAGS} -o $@ $^
 
 #
 # Tarsio tool chain
@@ -95,6 +41,5 @@ tam: tam.o prototype.o symbol_cache.o file.o argument.o symbol_usage.o datatype.
 ttg: ttg.o file.o testcase.o
 	$(Q)$(CC) ${LDFLAGS} -o $@ $^
 
-
 clean:
-	$(Q)${RM} *~ *.o protoparse symbolparse mockables proxify select implement *.pre *.all *.sym *.moc *.prx *.sel *.mod *.imp gts tsg tcg tmg tam ttg gent *_test ${TMP}*.pre ${TMP}*.pp* ${TMP}*_suite.c ${TMP}*_tarsio* ${TMP}*_test.o ${TMP}testcase*
+	$(Q)${RM} *~ *.o gts tsg tcg tmg tam ttg *_test

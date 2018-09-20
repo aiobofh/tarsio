@@ -65,7 +65,7 @@ test(extract_search_for_en_parentheis_using_index_of) {
 
 test(extract_return_negative_1_if_parentheis_was_not_found) {
   quick_setup;
-  
+
   m.index_of.retval = NULL;
 
   assert_eq(-1, extract(NULL, "test(a_name)"));
@@ -73,7 +73,7 @@ test(extract_return_negative_1_if_parentheis_was_not_found) {
 
 test(extract_not_append_test_case_if_name_not_found) {
   quick_setup;
-  
+
   m.index_of.retval = NULL;
 
   extract(NULL, "test(a_name)");
@@ -83,9 +83,9 @@ test(extract_not_append_test_case_if_name_not_found) {
 
 test(extract_append_test_case_if_name_not_found) {
   char teststring[14];
-  strcpy(teststring, "test(a_name)");  
+  strcpy(teststring, "test(a_name)");
   quick_setup;
-  
+
   m.index_of.retval = teststring + strlen("test(");
 
   extract(NULL, teststring);
@@ -97,7 +97,7 @@ test(extract_call_append_test_correctly) {
   char teststring[14];
   strcpy(teststring, "test(a_name)");
   quick_setup;
-  
+
   m.index_of.retval = teststring + strlen(teststring) - 1;
 
   extract((testcase_list_t*)0x1234, teststring);
@@ -111,7 +111,7 @@ test(extract_classify_unit_test_correctly) {
   char teststring[14];
   strcpy(teststring, "test(a_name)");
   quick_setup;
-  
+
   m.index_of.retval = teststring + strlen(teststring) - 1;
 
   extract((testcase_list_t*)0x1234, teststring);
@@ -123,7 +123,7 @@ test(extract_classify_module_test_correctly) {
   char teststring[24];
   strcpy(teststring, "module_test(a_name)");
   quick_setup;
-  
+
   m.index_of.retval = teststring + strlen(teststring) - 1;
 
   extract((testcase_list_t*)0x1234, teststring);
