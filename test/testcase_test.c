@@ -9,6 +9,58 @@
 #define m tarsio_mock
 
 /***************************************************************************
+ * testcase_list_append()
+ */
+test(list_append_shall_set_first_node_if_it_is_first) {
+  testcase_list_t list = {NULL, NULL};
+  testcase_list_append(&list, (testcase_node_t*)0x1234);
+  assert_eq((testcase_node_t*)0x1234, list.first);
+}
+
+test(list_append_shall_not_set_first_node_if_it_is_not_first) {
+  testcase_list_t list = {(testcase_node_t*)0x5678, NULL};
+  testcase_list_append(&list, (testcase_node_t*)0x1234);
+  assert_eq((testcase_node_t*)0x5678, list.first);
+}
+
+test(list_append_shall_set_last_always) {
+  testcase_list_t list = {(testcase_node_t*)0x5678, NULL};
+  testcase_list_append(&list, (testcase_node_t*)0x1234);
+  assert_eq((testcase_node_t*)0x1234, list.last);
+}
+
+test(list_append_shall_set_previous_last_node_always) {
+  testcase_node_t last = {NULL, TESTCASE_IS_UNKNOWN, NULL};
+  testcase_list_t list = {(testcase_node_t*)0x5678, NULL};
+  list.last = &last;
+  testcase_list_append(&list, (testcase_node_t*)0x1234);
+  assert_eq((testcase_node_t*)0x1234, last.next);
+}
+
+/***************************************************************************
+ * testcase_append()
+ */
+test(testcase_append_shall_call_malloc_with_correct_node_size) {
+  testcase_append(NULL, NULL, TESTCASE_IS_UNKNOWN);
+  assert_eq(1, m.malloc.call_count);
+  assert_eq(sizeof(testcase_node_t), m.malloc.args.arg0);
+}
+
+test(testcase_append_shall_return_negative_1_if_out_of_memory_for_node) {
+  assert_eq(-1, testcase_append(NULL, NULL, TESTCASE_IS_UNKNOWN));
+}
+
+/*
+test(testcase_append_shall_null_the_newly_allocaed_node) {
+  m.malloc.retval = (void*)0x1234;
+  testcase_append(NULL, NULL, TESTCASE_IS_UNKNOWN);
+  assert_eq(1, m.memset.call_count);
+  assert_eq((void*)0x1234, m.memset.args.arg0);
+  assert_eq(0, m.memset.args.arg1);
+  assert_eq(sizeof(testcase_node_t), m.memset.args.arg2);
+}
+*/
+/***************************************************************************
  * index_of()
  */
 test(index_of_shall_return_the_pointer_to_the_position_of_a_specific_char) {
