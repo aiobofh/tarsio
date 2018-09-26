@@ -4,6 +4,7 @@
 
 Q?=@
 INCDIR=../include/
+TSTDIR=../test/
 CFLAGS=-Wall -std=c11 -pedantic -O2 -g -DNODEBUG -I${INCDIR}
 LDFLAGS=-flto
 
@@ -14,7 +15,7 @@ all: tcg tsg tmg tam ttg tarsio.o
 
 check:
 	$(Q)$(MAKE) && \
-	$(MAKE) --no-print-directory -C ../test/
+	$(MAKE) --no-print-directory -C ${TSTDIR}
 
 %.o: %.c
 	$(Q)$(CC) ${CFLAGS} -o $@ -c $<
@@ -42,4 +43,4 @@ ttg: ttg.o file.o testcase.o
 	$(Q)$(CC) ${LDFLAGS} -o $@ $^
 
 clean:
-	$(Q)${RM} *~ *.o gts tsg tcg tmg tam ttg *_test
+	$(Q)${RM} *~ *.o *.lnk gts tsg tcg tmg tam ttg

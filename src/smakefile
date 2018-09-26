@@ -1,68 +1,10 @@
-TMP=T:
-CFLAGS=define NODEBUG define SASC cpu 68060 optimize noicons noversion includedirectory $(TMP)
-LDFLAGS=noicons noversion
-CPU=68060
-all: tcg tsg tmg tam ttg
+TMPDIR=T:
 
-check: all testcase_test
-	testcase_test
+all: $(TMPDIR)smakefile.src
+	@smake -s -f $(TMPDIR)smakefile.src
 
-check: testcase_test
+$(TMPDIR)smakefile.src: smakefile.local
+	@type $< >$@
 
-tcg: tcg.o prototype.o file.o argument.o symbol_usage.o datatype.o symbol_cache.o
-	$(CC) $(CFLAGS) $? link to $@
-
-tsg: tsg.o prototype.o cpp.o symbol_cache.o file.o argument.o symbol_usage.o datatype.o
-	$(CC) $(CFLAGS) $? link to $@
-
-tmg: tmg.o prototype.o symbol_cache.o file.o argument.o symbol_usage.o datatype.o
-	$(CC) $(CFLAGS) $? link to $@
-
-tam: tam.o prototype.o symbol_cache.o file.o argument.o symbol_usage.o datatype.o
-	$(CC) $(CFLAGS) $? link to $@
-
-ttg: ttg.o file.o testcase.o
-	$(CC) $(CFLAGS) $? link to $@
-
-$(TMP)testcase.p: testcase.c
-	$(CC) $(CFLASG) $? preprocessoronly
-	copy testcase.p $@
-	delete testcase.p
-
-$(TMP)testcase.sym: $(TMP)testcase.p
-	tcg $? $@
-
-$(TMP)testcase_data.h: $(TMP)testcase.sym testcase_test.c
-	tsg $? > $@
-
-$(TMP)testcase_mocks.c: $(TMP)testcase.sym $(TMP)testcase_data.h
-	tmg $? > $@
-
-$(TMP)testcase_proxified.p: $(TMP)testcase.sym $(TMP)testcase.p
-	tam $? > $@
-
-$(TMP)testcase_runner.c: testcase_test.c $(TMP)testcase_data.h
-	ttg $? > $@
-
-$(TMP)testcase_mocks.o: $(TMP)testcase_mocks.c
-	$(CC) $(CFLAGS) $?
-
-$(TMP)testcase_proxified.o: $(TMP)testcase_proxified.p
-	$(CC) $(CFLAGS) $?
-
-testcase_test.o: testcase_test.c $(TMP)testcase_data.h
-	$(CC) $(CFLAGS) $<
-
-$(TMP)testcase_runner.o: $(TMP)testcase_runner.c
-	$(CC) $(CFLAGS) $?
-
-testcase_test: testcase_test.o $(TMP)testcase_proxified.o $(TMP)testcase_runner.o $(TMP)testcase_mocks.o tarsio.o
-	$(CC) $(CLFAGS) $? link to testcase_test
-
-clean:
-	delete quiet tcg tcg.o tcg.lnk tsg tsg.o tsg.lnk tmg tmg.o tmg.lnk tam tam.o tam.lnk ttg ttg.o ttg.lnk cpp.o tarsio.o testcase.o testcase.p.info prototype.o file.o argument.o symbol_usage.o datatype.o symbol_cache.o $(TMP)testcase.p $(TMP)testcase.sym $(TMP)testcase_data.h $(TMP)testcase_mocks.c $(TMP)testcase_proxified.p $(TMP)testcase_runner.c $(TMP)testcase_mocks.o $(TMP)testcase_proxified.o testcase_test.o $(TMP)testcase_runner.o testcase_test testcase_test.o testcase_test.lnk testcase_test.info
-
-
-
-
-
+clean: $(TMPDIR)smakefile.src
+	@smake -s -f $(TMPDIR)smakefile.src clean

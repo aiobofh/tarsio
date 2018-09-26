@@ -1,9 +1,5 @@
 .SUFFIXES:
 
-SUFFIXES :=
-%.w:
-%.v:
-
 TESTSUITES=$(subst .c,,$(wildcard ${TSTDIR}*_test.c))
 DATS=$(subst ${TSTDIR},${TMPDIR},$(subst _test,_data.h,${TESTSUITES}))
 
