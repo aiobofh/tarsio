@@ -43,4 +43,4 @@ ttg: ttg.o file.o testcase.o
 	$(Q)$(CC) ${LDFLAGS} -o $@ $^
 
 clean:
-	$(Q)${RM} *~ *.o *.lnk gts tsg tcg tmg tam ttg
+	$(Q)${RM} *~ *.o *.lnk *.p *.ueam gts tsg tcg tmg tam ttg

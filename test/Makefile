@@ -29,3 +29,6 @@ check:: ${TSTDIR}testcase_test
 	${Q}${TSTDIR}testcase_test
 
 include ${INCDIR}coverage.mk
+
+clean::
+	${RM} *.uaem *.lnk *.info

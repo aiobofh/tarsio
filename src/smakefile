@@ -1,10 +1,66 @@
 TMPDIR=T:
+INCDIR=/include/
+CFLAGS=define NODEBUG define SASC optimize noicons noversion includedirectory $(TMPDIR) includedirectory $(INCDIR)
+LDFLAGS=noicons noversion
 
-all: $(TMPDIR)smakefile.src
-	@smake -s -f $(TMPDIR)smakefile.src
+all: tcg tsg tmg tam ttg tarsio.o
 
-$(TMPDIR)smakefile.src: smakefile.local
-	@type $< >$@
+prototype.o: prototype.c
+	@$(CC) $(CFLAGS) prototype.c
 
-clean: $(TMPDIR)smakefile.src
-	@smake -s -f $(TMPDIR)smakefile.src clean
+file.o: file.c
+	@$(CC) $(CFLAGS) file.c
+
+argument.o: argument.c
+	@$(CC) $(CFLAGS) argument.c
+
+symbol_usage.o: symbol_usage.c
+	@$(CC) $(CFLAGS) symbol_usage.c
+
+datatype.o: datatype.c
+	@$(CC) $(CFLAGS) datatype.c
+
+symbol_cache.o: symbol_cache.c
+	@$(CC) $(CFLAGS) symbol_cache.c
+
+testcase.o: testcase.c
+	@$(CC) $(CFLAGS) testcase.c
+
+tarsio.o: tarsio.c
+	@$(CC) $(CFLAGS) tarsio.c
+
+cpp.o: cpp.c
+	@$(CC) $(CFLAGS) cpp.c
+
+tcg.o: tcg.c
+	@$(CC) $(CFLAGS) tcg.c
+
+tsg.o: tsg.c
+	@$(CC) $(CFLAGS) tsg.c
+
+tmg.o: tmg.c
+	@$(CC) $(CFLAGS) tmg.c
+
+tam.o: tam.c
+	@$(CC) $(CFLAGS) tam.c
+
+ttg.o: ttg.c
+	@$(CC) $(CFLAGS) ttg.c
+
+tcg: tcg.o prototype.o file.o argument.o symbol_usage.o datatype.o symbol_cache.o
+	@$(CC) $(CFLAGS) tcg.o prototype.o file.o argument.o symbol_usage.o datatype.o symbol_cache.o link to tcg
+
+tsg: tsg.o prototype.o cpp.o symbol_cache.o file.o argument.o symbol_usage.o datatype.o
+	@$(CC) $(CFLAGS) tsg.o prototype.o cpp.o symbol_cache.o file.o argument.o symbol_usage.o datatype.o link to tsg
+
+tmg: tmg.o prototype.o symbol_cache.o file.o argument.o symbol_usage.o datatype.o
+	@$(CC) $(CFLAGS) tmg.o prototype.o symbol_cache.o file.o argument.o symbol_usage.o datatype.o link to tmg
+
+tam: tam.o prototype.o symbol_cache.o file.o argument.o symbol_usage.o datatype.o
+	@$(CC) $(CFLAGS) tam.o prototype.o symbol_cache.o file.o argument.o symbol_usage.o datatype.o link to tam
+
+ttg: ttg.o file.o testcase.o
+	@$(CC) $(CFLAGS) ttg.o file.o testcase.o link to ttg
+
+clean:
+	@delete quiet tcg tcg.o tcg.lnk tsg tsg.o tsg.lnk tmg tmg.o tmg.lnk tam tam.o tam.lnk ttg ttg.o ttg.lnk cpp.o tarsio.o testcase.o testcase.p.info prototype.o file.o argument.o symbol_usage.o datatype.o symbol_cache.o

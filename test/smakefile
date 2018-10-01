@@ -1,16 +1,9 @@
 # SAS/C smakefile for Tarsio self-tests
 
-SRCDIR=/src/
 INCDIR=/include/
-TSTDIR=/test/
-TMPDIR=T:
 
-all: $(TMPDIR)smakefile.test
-	@smake -s -f $(TMPDIR)smakefile.test check DUTNAME=testcase
+all:
+	@smake -s -f $(INCDIR)tarsio.smk check DUTNAME=testcase
 
-$(TMPDIR)smakefile.test: $(INCDIR)tarsio.smk $(TSTDIR)smakefile.local
-	@type $(INCDIR)tarsio.smk >$(TMPDIR)smakefile.test
-	@type $(TSTDIR)smakefile.local >>$(TMPDIR)smakefile.test
-
-clean: $(TMPDIR)smakefile.test
-	@smake -s -f $(TMPDIR)smakefile.test clean DUTNAME=testcase
+clean:
+	@smake -s -f $(INCDIR)tarsio.smk clean DUTNAME=testcase
