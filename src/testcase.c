@@ -8,6 +8,10 @@
 #include "file.h"
 #include "testcase.h"
 
+#ifndef MAX_FUNC_NAME_LEN
+#define MAX_FUNC_NAME_LEN 78 /* Some compilers are limited to 32 char */
+#endif
+
 static void testcase_list_append(testcase_list_t* list, testcase_node_t* node) {
   if (NULL == list->first) {
     list->first = node;
@@ -18,39 +22,79 @@ static void testcase_list_append(testcase_list_t* list, testcase_node_t* node) {
   list->last = node;
 }
 
-static int testcase_append(testcase_list_t* list, const char* name, const testcase_type_t type) {
-  int retval = 0;
+static testcase_node_t* new_node(const char* name, testcase_type_t type) {
   testcase_node_t* node;
 
   if (NULL == (node = malloc(sizeof(*node)))) {
     error1("Out of memory while allocating testcase node for '%s'", name);
-    retval = -1;
     goto testcase_node_malloc_failed;
   }
 
   memset(node, 0, sizeof(*node));
 
-  if (NULL == (node->name = malloc(strlen(name)+ 1))) {
-    error1("Out of memory while allocating name '%s'", name);
-    retval = -2;
-    goto testcase_name_malloc_failed;
+  node->type = type;
+  node->name = (char*)name;
+
+ testcase_node_malloc_failed:
+  return node;
+}
+
+static void print_len_warning(const char* str) {
+  fprintf(stderr, "WARNING: '%s' is a long test-case name, some compilers may trunkate it - resulting in duplicate symbol names.\n", str);
+}
+
+static char* strclone(const char* src) {
+  char *dst;
+
+  const size_t len = strlen(src);
+
+  if (len >= MAX_FUNC_NAME_LEN) {
+    print_len_warning(src);
   }
 
-  if (NULL == strcpy(node->name, name)) {
-    error1("Could not copy testcase name '%s'", name);
-    retval = -3;
+  if (NULL == (dst = malloc(len + 1))) {
+    error1("Out of memory while allocating string clone '%s'", src);
+    goto malloc_failed;
+  }
+
+  if (NULL == strcpy(dst, src)) {
+    error1("Could not copy string clone '%s'", src);
     goto strcpy_failed;
   }
-  node->type = type;
+
+  goto normal_exit;
+
+ strcpy_failed:
+  free(dst);
+  dst = NULL;
+ malloc_failed:
+ normal_exit:
+  return dst;
+}
+
+static int testcase_append(testcase_list_t* list, const char* name, const testcase_type_t type) {
+  int retval = 0;
+  char* node_name;
+  testcase_node_t* node;
+
+  if (NULL == (node_name = strclone(name))) {
+    error1("Unable to clone testcase name '%s'", name);
+    retval = -1;
+    goto strclone_failed;
+  }
+
+  if (NULL == (node = new_node(node_name, type))) {
+    error1("Unable to create new testcase node '%s'", name);
+    retval = -2;
+    goto new_node_failed;
+  }
 
   testcase_list_append(list, node);
 
   goto normal_exit;
 
- strcpy_failed:
- testcase_name_malloc_failed:
-  free(node);
- testcase_node_malloc_failed:
+ new_node_failed:
+ strclone_failed:
  normal_exit:
   return retval;
 }
