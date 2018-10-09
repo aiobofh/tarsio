@@ -37,7 +37,7 @@ __tarsio_options_t __tarsio_options;
 __tarsio_stats_t __tarsio_stats;
 
 void __tarsio_append_failure(__tarsio_failure_list_t* list, const char* testcase_name, const char* help, const char* file, size_t line) {
-  __tarsio_failure_node_t* node = malloc(sizeof(node));
+  __tarsio_failure_node_t* node = malloc(sizeof(*node));
 
   if (NULL == node) {
     fprintf(stderr, "FATAL: Out of memory while allocating assert information in Tarsio\n");
