@@ -1,74 +1,125 @@
 .SUFFIXES:
 
-TESTSUITES=$(subst .c,,$(wildcard ${TSTDIR}*_test.c))
-DATS=$(subst ${TSTDIR},${TMPDIR},$(subst _test,_data.h,${TESTSUITES}))
+HOSTTMPDIR:=/tmp/
+HOSTINCDIR:=../include/
+HOSTSRCDIR:=../src/
+HOSTTSTDIR:=../test/
+
+ifdef SASC
+SRCDIR:=/src/
+INCDIR:=/include/
+TSTDIR:=/test/
+COVDIR=T:
+TMPDIR=T:
+
+TCG=vamos -c ~/.vamosrc ${TARSIO_BIN}/tcg $(subst ${HOSTTMPDIR},${TMPDIR},$^) $(subst ${HOSTTMPDIR},${TMPDIR},$@)
+TSG=vamos -c ~/.vamosrc ${TARSIO_BIN}/tsg $(subst ${HOSTTMPDIR},${TMPDIR},$^) > $@
+TMG=vamos -c ~/.vamosrc ${TARSIO_BIN}/tmg $(subst ${HOSTTMPDIR},${TMPDIR},$^) > $@
+TAM=vamos -c ~/.vamosrc ${TARSIO_BIN}/tam $(subst ${HOSTTMPDIR},${TMPDIR},$^) > $@
+TTG=vamos -c ~/.vamosrc ${TARSIO_BIN}/ttg $(subst ${HOSTTMPDIR},${TMPDIR},$^) > $@
+
+TMPCFLAGS=define NODEBUG define SASC optimize noicons noversion includedirectory $(TMPDIR) includedirectory $(INCDIR) includedirectory $(SRCDIR)
+PPFLAGS=${TMPCFLAGS} define main=__tarsio_replace_main $(subst ${HOSTSRCDIR},${SRCDIR},$^) preprocessoronly; cp $(subst .c,.p,$^) $@; rm $(subst .c,.p,$^)
+CFLAGS=${TMPCFLAGS} $(subst ${HOSTTMPDIR},${TMPDIR},$(subst ${HOSTTSTDIR},${TSTDIR},$(subst ${HOSTSRCDIR},${SRCDIR},$^)))
+CFLAGSPP=${CFLAGS}
+LDFLAGS=noicons noversion $(subst ${HOSTTMPDIR},${TMPDIR},$(subst ${HOSTTSTDIR},${TSTDIR},$(subst ${HOSTSRCDIR},${SRCDIR},$^))) link to $(subst ${HOSTTMPDIR},${TMPDIR},$(subst ${HOSTTSTDIR},${TSTDIR},$(subst ${HOSTSRCDIR},${SRCDIR},$@)))
+CC:=sc
+TESTO=mv $(subst ${HOSTTMPDIR},${HOSTTSTDIR},$@) $@
+PROXIFIEDO=mv $(subst ${HOSTSRCDIR},${HOSTTMPDIR},$@) $@
+else
+
+TCG=tcg $^ $@
+TSG=tsg $^ > $@
+TMG=tmg $^ > $@
+TAM=tam $^ > $@
+TTG=ttg $^ > $@
+
+SRCDIR:=${HOSTSRCDIR}
+INCDIR:=${HOSTINCDIR}
+TSTDIR:=
+COVDIR:=${HOSTTMPDIR}
+TMPDIR:=${HOSTTMPDIR}
+TMPCFLAGS=-O0 -Wall -std=c11 -pedantic -g -I. -I${TMPDIR} -I${INCDIR} -I${SRCDIR}
+PPFLAGS=${TMPCFLAGS} -Dmain=__tarsio_replace_main -E -c $< > $@
+CFLAGS=${TMPCFLAGS} -o $@ -c $<
+CFLAGSPP=${TMPCFLAGS} -x cpp-output -c -Wunused-function $< -o $@
+LDFLAGS=-o $@ $^
+TESTO:=
+PROXIFIEDO:=
+endif
+
+TESTSUITES=$(subst .c,,$(wildcard ${HOSTTSTDIR}*_test.c))
+DATS=$(subst ${HOSTTSTDIR},${HOSTTMPDIR},$(subst _test,_data.h,${TESTSUITES}))
+
+info:
+	echo ${DATS}
 
 #
 # Produce a pre-processed file for the code to test
 #
-.PRECIOUS: ${TMPDIR}%.p
-${TMPDIR}%.p: ${SRCDIR}%.c
-	${Q}${CC} ${CFLAGS} -Dmain=__tarsio_replace_main -E -c $< > $@
+.PRECIOUS: ${HOSTTMPDIR}%.p
+${HOSTTMPDIR}%.p: ${HOSTSRCDIR}%.c
+	${Q}${CC} ${PPFLAGS}
 
-.PRECIOUS: ${TMPDIR}%.sym
-${TMPDIR}%.sym: ${TMPDIR}%.p
-	${Q}tcg $^ $@
+.PRECIOUS: ${HOSTTMPDIR}%.sym
+${HOSTTMPDIR}%.sym: ${HOSTTMPDIR}%.p
+	${Q}${TCG}
 
-.NOTPARALELL: ${TMPDIR}%_data.h
-.PRECIOUS: ${TMPDIR}%_data.h
-${TMPDIR}%_data.h: ${TMPDIR}%.sym ${TSTDIR}%_test.c
-	${Q}tsg $^ > $@
+.NOTPARALELL: ${HOSTTMPDIR}%_data.h
+.PRECIOUS: ${HOSTTMPDIR}%_data.h
+${HOSTTMPDIR}%_data.h: ${HOSTTMPDIR}%.sym ${HOSTTSTDIR}%_test.c
+	${Q}${TSG}
 
-.PRECIOUS: ${TMPDIR}%_mocks.c
-${TMPDIR}%_mocks.c: ${TMPDIR}%.sym ${TMPDIR}%_data.h
-	${Q}tmg $^ > $@
+.PRECIOUS: ${HOSTTMPDIR}%_mocks.c
+${HOSTTMPDIR}%_mocks.c: ${HOSTTMPDIR}%.sym ${HOSTTMPDIR}%_data.h
+	${Q}${TMG}
 
-.PRECIOUS: ${TMPDIR}%_proxified.p
-${TMPDIR}%_proxified.p: ${TMPDIR}%.sym ${TMPDIR}%.p
-	${Q}tam $^ > $@
+.PRECIOUS: ${HOSTTMPDIR}%_proxified.p
+${HOSTTMPDIR}%_proxified.p: ${HOSTTMPDIR}%.sym ${HOSTTMPDIR}%.p
+	${Q}${TAM}
 
-.PRECIOIS: ${TMPDIR}%_runner.c
-${TMPDIR}%_runner.c: ${TSTDIR}%_test.c ${TMPDIR}%_data.h
-	${Q}ttg $^ > $@
+.PRECIOIS: ${HOSTTMPDIR}%_runner.c
+${HOSTTMPDIR}%_runner.c: ${HOSTTSTDIR}%_test.c ${HOSTTMPDIR}%_data.h
+	${Q}${TTG}
 
 #
 # Compile the test suite to an object file
 #
-.PRECIOUS: ${SRCDIR}%_proxified.o
-${SRCDIR}%_proxified.o: ${TMPDIR}%_proxified.p ${TMPDIR}%_data.h
+${HOSTTMPDIR}%.o: ${HOSTTMPDIR}%.c
+	${Q}${CC} ${CFLAGS}
 
-.PRECIOUS: ${TMPDIR}%_mocks.o
-${TMPDIR}%_mocks.o: ${TMPDIR}%_mocks.c
+${HOSTTMPDIR}%.o: ${HOSTTMPDIR}%.p
+	${Q}${CC} ${CFLAGSPP}
 
-.PRECIOUS: ${TMPDIR}%_runner.o
-${TMPDIR}%_runner.o: ${TMPDIR}%_runner.c
+#${HOSTSRCDIR}%.o: ${HOSTTMPDIR}%.p
+#	${Q}${CC} ${CFLAGSPP}
 
-.PRECIOUS: ${TMPDIR}%_test.o
-${TMPDIR}%_test.o: ${TSTDIR}%_test.c ${TMPDIR}%_data.h
+.PRECIOUS: ${HOSTSRCDIR}%_proxified.o
+${HOSTSRCDIR}%_proxified.o: ${HOSTTMPDIR}%_proxified.p ${HOSTTMPDIR}%_data.h
+	${Q}${CC} ${CFLAGSPP}; ${PROXIFIEDO}
 
-${TMPDIR}%.o: ${TSTDIR}%.c
-	${Q}${CC} ${CFLAGS} -o $@ -c $<
+.PRECIOUS: ${HOSTTMPDIR}%_mocks.o
+${HOSTTMPDIR}%_mocks.o: ${HOSTTMPDIR}%_mocks.c
 
-${TMPDIR}%.o: ${TMPDIR}%.c
-	${Q}${CC} ${CFLAGS} -o $@ -c $<
+.PRECIOUS: ${HOSTTMPDIR}%_runner.o
+${HOSTTMPDIR}%_runner.o: ${HOSTTMPDIR}%_runner.c
 
-${TMPDIR}%.o: ${TMPDIR}%.p
-	${Q}${CC} ${CFLAGS} -x cpp-output -c -Wunused-function $^ -o $@
+.NOTPARALELL: ${HOSTTMPDIR}%_test.o
+.PRECIOUS: ${HOSTTMPDIR}%_test.o
+${HOSTTMPDIR}%_test.o: ${HOSTTSTDIR}%_test.c ${HOSTTMPDIR}%_data.h
+	${Q}${CC} ${CFLAGS}; ${TESTO}
 
-${SRCDIR}%.o: ${TMPDIR}%.p
-	${Q}${CC} ${CFLAGS} -x cpp-output -c -Wunused-function $^ -o $@
 
 #
 # Link the test suite object to the test case object
 #
 # TODO: Make tarsio.o a shared library instead
 #
-%_test: ${TMPDIR}%_test.o ${SRCDIR}%_proxified.o ${TMPDIR}%_runner.o ${TMPDIR}%_mocks.o ${SRCDIR}tarsio.o
-	${Q}${CC} ${LDFLAGS} -o $@ $^
+%_test: ${HOSTTMPDIR}%_test.o ${HOSTSRCDIR}%_proxified.o ${HOSTTMPDIR}%_runner.o ${HOSTTMPDIR}%_mocks.o ${HOSTSRCDIR}tarsio.o
+	${Q}${CC} ${LDFLAGS}
 
 .PHONY: clean
 clean::
-	${Q}${RM} *~ ${TMPDIR}*.sym ${TMPDIR}*_data.h ${TMPDIR}*.p ${SRCDIR}*_proxified* ${TMPDIR}*_runner* ${TMPDIR}*_mocks* ${TMPDIR}*_test* *_test
+	${Q}${RM} *~ ${HOSTTMPDIR}*.sym ${HOSTTMPDIR}*_data.h ${HOSTTMPDIR}*.p ${HOSTSRCDIR}*_proxified* ${HOSTTMPDIR}*_runner* ${HOSTTMPDIR}*_mocks* ${HOSTTMPDIR}*_test* *_test *.o
 
-#.PHONY: check
 check:: ${DATS}

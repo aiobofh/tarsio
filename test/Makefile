@@ -1,34 +1,34 @@
 # Makefile for Tarsio self-tests
 Q=@
 
-SRCDIR=../src/
-INCDIR=../include/
-TSTDIR=./
-COVDIR=/tmp/
-TMPDIR=/tmp/
-
-CFLAGS=-O0 -Wall -std=c11 -pedantic -g -I. -I${TMPDIR} -I${INCDIR} -I${SRCDIR}
-
 .SUFFIXES:
 
 SUFFIXES :=
 %.w:
 %.v:
 
+ifdef SASC
+SEP:=
+EXECUTOR=vamos -c ~/.vamosrc ${SEP}
+else
+EXECUTOR:=./
+endif
+
+export TARSIO_BIN:=../src
 export Q
 export PATH:=${PATH}:../src
 
 all:
-	${Q}${MAKE} --no-print-directory -C ${SRCDIR} && \
+	${Q}${MAKE} --no-print-directory -C ../src/ && \
 	${MAKE} --no-print-directory check
 
-include ${INCDIR}tarsio.mk
+include ../include/tarsio.mk
 
 .PHONY: check
-check:: ${TSTDIR}testcase_test
-	${Q}${TSTDIR}testcase_test
+check:: testcase_test
+	${Q}${EXECUTOR}testcase_test
 
-include ${INCDIR}coverage.mk
+# include ../include/coverage.mk
 
 clean::
 	${RM} *.uaem *.lnk *.info

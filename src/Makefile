@@ -3,10 +3,18 @@
 #
 
 Q?=@
-INCDIR=../include/
-TSTDIR=../test/
-CFLAGS=-Wall -std=c11 -pedantic -O2 -g -DNODEBUG -I${INCDIR}
-LDFLAGS=-flto
+ifdef SASC
+INCDIR:=/include/
+CFLAGS=define NODEBUG define SASC optimize noicons noversion includedirectory $(INCDIR) $<
+CC:=sc
+LDFLAGS=noicons noversion $^ link to $@
+else
+INCDIR:=../include/
+CFLAGS=-Wall -std=c11 -pedantic -O2 -g -DNODEBUG -I${INCDIR} -o $@ -c $<
+LDFLAGS=-flto -o $@ $^
+endif
+
+TSTDIR:=../test/
 
 .SUFFIXES:
 
@@ -18,29 +26,24 @@ check:
 	$(MAKE) --no-print-directory -C ${TSTDIR}
 
 %.o: %.c
-	$(Q)$(CC) ${CFLAGS} -o $@ -c $<
+	$(Q)$(CC) ${CFLAGS}
 
-%: %.o
-	$(Q)$(CC) -o $@ $^
+%:
+	$(Q)$(CC) ${LDFLAGS}
 
 
 #
 # Tarsio tool chain
 #
 tcg: tcg.o prototype.o file.o argument.o symbol_usage.o datatype.o symbol_cache.o
-	$(Q)$(CC) ${LDFLAGS} -o $@ $^
 
 tsg: tsg.o prototype.o cpp.o symbol_cache.o file.o argument.o symbol_usage.o datatype.o
-	$(Q)$(CC) ${LDFLAGS} -o $@ $^
 
 tmg: tmg.o prototype.o symbol_cache.o file.o argument.o symbol_usage.o datatype.o
-	$(Q)$(CC) ${LDFLAGS} -o $@ $^
 
 tam: tam.o prototype.o symbol_cache.o file.o argument.o symbol_usage.o datatype.o
-	$(Q)$(CC) ${LDFLAGS} -o $@ $^
 
 ttg: ttg.o file.o testcase.o
-	$(Q)$(CC) ${LDFLAGS} -o $@ $^
 
 clean:
 	$(Q)${RM} *~ *.o *.lnk *.p *.ueam gts tsg tcg tmg tam ttg
