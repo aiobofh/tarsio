@@ -72,11 +72,19 @@ void __tarsio_assert_eq(int res, const char* testcase_name, const char* help, co
 void __tarsio_init(void) {
   memset(&__tarsio_stats, 0, sizeof(__tarsio_stats));
   memset(&__tarsio_failure_list, 0, sizeof(__tarsio_failure_list));
+  memset(&__tarsio_options, 0, sizeof(__tarsio_options));
 }
 
 void __tarsio_handle_arguments(int argc, char* argv[]) {
-  (void)argc;
-  (void)argv;
+  int i;
+  for (i = 1; i < argc; i++) {
+    if (0 == strcmp(argv[i], "-v")) {
+      __tarsio_options.verbose = 1;
+    }
+    else if (0 == strcmp(argv[i], "-x")) {
+      __tarsio_options.xml_output = 1;
+    }
+  }
 }
 
 void __tarsio_skip(const char* reason, const char* test_name) {
