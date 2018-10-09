@@ -55,5 +55,5 @@ dist: source-dist
 clean:
 	@$(MAKE) --no-print-directory -C src clean && \
 	$(MAKE) --no-print-directory -C test clean && \
-	$(RM) -rf *~ include/*~ *.uaem tarsio-${VERSION}* tarsio.lha && \
-	git status | grep 'git addd' >/dev/null && (echo "WARNING: There are untracked files, investigate with 'git status'." >&2 && false) || (true)
+	$(RM) -rf *~ include/*~ *.uaem tarsio-${VERSION}* tarsio.lha # && \
+#	git status | grep 'git addd' >/dev/null && (echo "WARNING: There are untracked files, investigate with 'git status'." >&2 && false) || (true)
