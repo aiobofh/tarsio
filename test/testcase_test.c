@@ -54,10 +54,17 @@ test(new_node_shall_zero_allocated_memory) {
   testcase_node_t node;
   m.malloc.retval = (void*)&node;
   new_node(NULL, TESTCASE_IS_UNKNOWN);
+#ifdef SASC
+  assert_eq(1, m.__builtin_memset.call_count);
+  assert_eq((void*)&node, m.__builtin_memset.args.arg0);
+  assert_eq(0, m.__builtin_memset.args.arg1);
+  assert_eq(sizeof(testcase_node_t), m.__builtin_memset.args.arg2);
+#else
   assert_eq(1, m.memset.call_count);
   assert_eq((void*)&node, m.memset.args.arg0);
   assert_eq(0, m.memset.args.arg1);
   assert_eq(sizeof(testcase_node_t), m.memset.args.arg2);
+#endif
 }
 
 test(new_node_shall_set_contents_correctly) {
@@ -81,13 +88,21 @@ test(print_len_warning_shall_print_to_stderr) {
  * strclone()
  */
 test(strclone_shall_warn_if_long_testcase_name) {
+#ifdef SASC
+  m.__builtin_strlen.retval = 80 + 1;
+#else
   m.strlen.retval = 80 + 1;
+#endif
   strclone(NULL);
   assert_eq(1, m.print_len_warning.call_count);
 }
 
 test(strclone_shall_malloc_enough_memory_for_string_copy) {
+#ifdef SASC
+  m.__builtin_strlen.func = strlen;
+#else
   m.strlen.func = strlen;
+#endif
   strclone("012345");
   assert_eq(1, m.malloc.call_count);
   assert_eq(7, m.malloc.args.arg0);
@@ -100,9 +115,15 @@ test(srtclone_shall_return_NULL_if_out_of_memory) {
 test(strclone_shall_call_strcpy_correctly) {
   m.malloc.retval = (void*)0x1234;
   strclone((const char*)0x5678);
+#ifdef SASC
+  assert_eq(1, m.__builtin_strcpy.call_count);
+  assert_eq((char*)0x1234, m.__builtin_strcpy.args.arg0);
+  assert_eq((char*)0x5678, m.__builtin_strcpy.args.arg1);
+#else
   assert_eq(1, m.strcpy.call_count);
   assert_eq((char*)0x1234, m.strcpy.args.arg0);
   assert_eq((char*)0x5678, m.strcpy.args.arg1);
+#endif
 }
 
 test(strclone_shall_free_memory_if_strcpy_failed) {
@@ -114,31 +135,39 @@ test(strclone_shall_free_memory_if_strcpy_failed) {
 
 test(strclone_shall_not_free_memory_on_success) {
   m.malloc.retval = (void*)0x1234;
+#ifdef SASC
+  m.__builtin_strcpy.retval = m.malloc.retval;
+#else
   m.strcpy.retval = m.malloc.retval;
+#endif
   strclone((const char*)0x5678);
   assert_eq(0, m.free.call_count);
 }
 
 test(strclone_shall_return_the_new_string_pointer_on_success) {
   m.malloc.retval = (void*)0x1234;
+#ifdef SASC
+  m.__builtin_strcpy.retval = m.malloc.retval;
+#else
   m.strcpy.retval = m.malloc.retval;
+#endif
   assert_eq((char*)0x1234, strclone((const char*)0x5678));
 }
 
 /***************************************************************************
  * testcase_append()
  */
-test(testcase_append_shall_call_strclone_with_name_as_argument) {
+test(1_testcase_append_shall_call_strclone_with_name_as_argument) {
   testcase_append(NULL, (const char*)0x1234, TESTCASE_IS_UNKNOWN);
   assert_eq(1, m.strclone.call_count);
   assert_eq((const char*)0x1234, m.strclone.args.arg0);
 }
 
-test(testcase_append_shall_return_negative_1_if_name_could_not_be_cloned) {
+test(2_testcase_append_shall_return_negative_1_if_name_could_not_be_cloned) {
   assert_eq(-1, testcase_append(NULL, NULL, TESTCASE_IS_UNKNOWN));
 }
 
-test(testcase_append_shall_call_new_node_correctly) {
+test(3_testcase_append_shall_call_new_node_correctly) {
   m.strclone.retval = (char*)0x1234;
   testcase_append(NULL, NULL, TESTCASE_IS_UNKNOWN);
   assert_eq(1, m.new_node.call_count);
@@ -146,12 +175,12 @@ test(testcase_append_shall_call_new_node_correctly) {
   assert_eq(TESTCASE_IS_UNKNOWN, m.new_node.args.arg1);
 }
 
-test(testcase_append_shall_return_negative_2_if_new_node_failed) {
+test(4_testcase_append_shall_return_negative_2_if_new_node_failed) {
   m.strclone.retval = (char*)0x1234;
   assert_eq(-2, testcase_append(NULL, NULL, TESTCASE_IS_UNKNOWN));
 }
 
-test(testcase_append_shall_call_testcase_list_append_correctly) {
+test(5_testcase_append_shall_call_testcase_list_append_correctly) {
   m.strclone.retval = (char*)0x1234;
   m.new_node.retval = (testcase_node_t*)0x5678;
   testcase_append((testcase_list_t*)0x4321, NULL, TESTCASE_IS_UNKNOWN);
@@ -407,12 +436,20 @@ test(parse_return_negative_2_if_extract_fail) {
  */
 test(testcase_list_init_list_NULL_assert) {
   testcase_list_init(NULL, (file_t*)0x1234);
+#ifdef SASC
+  assert_eq(2, m.__assert.call_count);
+#else
   assert_eq(1, m.__assert_fail.call_count);
+#endif
 }
 
 test(testcase_list_init_file_NULL_assert) {
   testcase_list_init((testcase_list_t*)0x1234, NULL);
+#ifdef SASC
+  assert_eq(2, m.__assert.call_count);
+#else
   assert_eq(1, m.__assert_fail.call_count);
+#endif
 }
 
 test(testcase_list_init_shall_call_parse_correctly) {
