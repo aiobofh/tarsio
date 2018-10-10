@@ -227,31 +227,34 @@ static int compare_prototype_lists(prototype_list_t* l1, prototype_list_t* l2)
   for (n1 = l1->first; NULL != n1; n1 = n1->next) {
     argument_node_t* a1;
     argument_node_t* a2;
-    debug2(" Checking '%s' == '%s'...", n1->info.symbol, n2->info.symbol);
+    debug2(" Checking symbol '%s' == '%s'...", n1->info.symbol, n2->info.symbol);
     if (0 != strcmp(n1->info.symbol, n2->info.symbol)) {
+      error0("  Checking symbol");
       error2(" '%s' != '%s'", n1->info.symbol, n2->info.symbol);
       return -1;
     }
-    debug2(" Checking '%s' == '%s'...", n1->info.datatype.name, n2->info.datatype.name);
+    debug2(" Checking return type '%s' == '%s'...", n1->info.datatype.name, n2->info.datatype.name);
     if (0 != strcmp(n1->info.datatype.name, n2->info.datatype.name)) {
       return -2;
     }
     a2 = n2->info.argument_list.first;
     for (a1 = n1->info.argument_list.first; NULL != a1; a1 = a1->next) {
-      debug2("  Checking '%s' == '%s'...", a1->info.datatype.name, a2->info.datatype.name);
+      debug2("  Checking argument type '%s' == '%s'...", a1->info.datatype.name, a2->info.datatype.name);
       if (NULL != a1->info.datatype.name) {
         if (0 != strcmp(a1->info.datatype.name, a2->info.datatype.name)) {
+          error1("  Checking argument type 1 for '%s'", n1->info.symbol);
           error2("  '%s' != '%s'...", a1->info.datatype.name, a2->info.datatype.name);
           return -3;
         }
       }
       else {
         if (NULL != a2->info.datatype.name) {
+          error1("  Checking argument type 2 for '%s'", n1->info.symbol);
           error2("  '%s' != '%s'...", a1->info.datatype.name, a2->info.datatype.name);
           return -4;
         }
       }
-      debug2("  Checking '%s' == '%s'...", a1->info.name, a2->info.name);
+      debug2("  Checking argument name '%s' == '%s'...", a1->info.name, a2->info.name);
       if (NULL != a1->info.name) {
         if (0 != strcmp(a1->info.name, a2->info.name)) {
           error0("  Bouth should be NULL...");
@@ -339,7 +342,10 @@ int main(int argc, char* argv[])
     goto prototype_extract_arguments_failed;
   }
 
-  generate_symbol_cache(&prototype_list, options.output_filename);
+  if (0 != generate_symbol_cache(&prototype_list, options.output_filename)) {
+    retval = EXIT_FAILURE;
+    goto generate_symbol_cache_failed;
+  }
 
   /*
    * Self-test - Since this list is the foundation of all the other
@@ -353,6 +359,7 @@ int main(int argc, char* argv[])
   }
 
  compare_prototype_lists_failed:
+ generate_symbol_cache_failed:
  prototype_extract_arguments_failed:
  prototype_extract_return_type_failed:
  prototype_remove_unused_failed:
