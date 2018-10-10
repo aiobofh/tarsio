@@ -6,6 +6,7 @@ HOSTSRCDIR:=../src/
 HOSTTSTDIR:=../test/
 
 ifdef SASC
+CPPEXT:=.p
 SRCDIR:=/src/
 INCDIR:=/include/
 TSTDIR:=/test/
@@ -19,7 +20,7 @@ TAM=vamos -c ~/.vamosrc ${TARSIO_BIN}/tam $(subst ${HOSTTMPDIR},${TMPDIR},$^) > 
 TTG=vamos -c ~/.vamosrc ${TARSIO_BIN}/ttg $(subst ${HOSTTMPDIR},${TMPDIR},$^) > $@
 
 TMPCFLAGS=define NODEBUG define SASC optimize noicons noversion includedirectory $(TMPDIR) includedirectory $(INCDIR) includedirectory $(SRCDIR)
-PPFLAGS=${TMPCFLAGS} define main=__tarsio_replace_main $(subst ${HOSTSRCDIR},${SRCDIR},$^) preprocessoronly; cp $(subst .c,.p,$^) $@; rm $(subst .c,.p,$^)
+PPFLAGS=${TMPCFLAGS} define main=__tarsio_replace_main $(subst ${HOSTSRCDIR},${SRCDIR},$^) preprocessoronly; cp $(subst .c,${CPPEXT},$^) $@; rm $(subst .c,${CPPEXT},$^)
 CFLAGS=${TMPCFLAGS} $(subst ${HOSTTMPDIR},${TMPDIR},$(subst ${HOSTTSTDIR},${TSTDIR},$(subst ${HOSTSRCDIR},${SRCDIR},$^)))
 CFLAGSPP=${CFLAGS}
 LDFLAGS=noicons noversion $(subst ${HOSTTMPDIR},${TMPDIR},$(subst ${HOSTTSTDIR},${TSTDIR},$(subst ${HOSTSRCDIR},${SRCDIR},$^))) link to $(subst ${HOSTTMPDIR},${TMPDIR},$(subst ${HOSTTSTDIR},${TSTDIR},$(subst ${HOSTSRCDIR},${SRCDIR},$@)))
@@ -27,7 +28,29 @@ CC:=sc
 TESTO=mv $(subst ${HOSTTMPDIR},${HOSTTSTDIR},$@) $@
 PROXIFIEDO=mv $(subst ${HOSTSRCDIR},${HOSTTMPDIR},$@) $@
 else
+ifdef VBCC
+CPPEXT:=.i
+TCG=vamos -c ~/.vamosrc ${TARSIO_BIN}/tcg $(subst ${HOSTTMPDIR},T:,$^) $(subst ${HOSTTMPDIR},T:,$@)
+TSG=vamos -c ~/.vamosrc ${TARSIO_BIN}/tsg $(subst ${HOSTTMPDIR},T:,$^) > $@
+TMG=vamos -c ~/.vamosrc ${TARSIO_BIN}/tmg $(subst ${HOSTTMPDIR},T:,$^) > $@
+TAM=vamos -c ~/.vamosrc ${TARSIO_BIN}/tam $(subst ${HOSTTMPDIR},T:,$^) > $@
+TTG=vamos -c ~/.vamosrc ${TARSIO_BIN}/ttg $(subst ${HOSTTMPDIR},T:,$^) > $@
 
+SRCDIR:=${HOSTSRCDIR}
+INCDIR:=${HOSTINCDIR}
+TSTDIR:=
+COVDIR:=${HOSTTMPDIR}
+TMPDIR:=${HOSTTMPDIR}
+TMPCFLAGS=-O0 -c99 -g -I. -I${TMPDIR} -I${INCDIR} -I${SRCDIR}
+PPFLAGS=${TMPCFLAGS} -Dmain=__tarsio_replace_main -E -c $<; cp $(subst .c,${CPPEXT},$<) $@; rm $(subst .c,${CPPEXT},$^)
+CFLAGS=${TMPCFLAGS} -o $@ -c $<
+CFLAGSPP=${TMPCFLAGS} $< -o $@
+LDFLAGS=-o $@ $^
+TESTO:=
+PROXIFIEDO:=
+CC:=vc
+else
+CPPEXT:=.pp
 TCG=tcg $^ $@
 TSG=tsg $^ > $@
 TMG=tmg $^ > $@
@@ -47,6 +70,7 @@ LDFLAGS=-o $@ $^
 TESTO:=
 PROXIFIEDO:=
 endif
+endif
 
 TESTSUITES=$(subst .c,,$(wildcard ${HOSTTSTDIR}*_test.c))
 DATS=$(subst ${HOSTTSTDIR},${HOSTTMPDIR},$(subst _test,_data.h,${TESTSUITES}))
@@ -57,12 +81,12 @@ info:
 #
 # Produce a pre-processed file for the code to test
 #
-.PRECIOUS: ${HOSTTMPDIR}%.p
-${HOSTTMPDIR}%.p: ${HOSTSRCDIR}%.c
+.PRECIOUS: ${HOSTTMPDIR}%${CPPEXT}
+${HOSTTMPDIR}%${CPPEXT}: ${HOSTSRCDIR}%.c
 	${Q}${CC} ${PPFLAGS}
 
 .PRECIOUS: ${HOSTTMPDIR}%.sym
-${HOSTTMPDIR}%.sym: ${HOSTTMPDIR}%.p
+${HOSTTMPDIR}%.sym: ${HOSTTMPDIR}%${CPPEXT}
 	${Q}${TCG}
 
 .NOTPARALELL: ${HOSTTMPDIR}%_data.h
@@ -74,8 +98,8 @@ ${HOSTTMPDIR}%_data.h: ${HOSTTMPDIR}%.sym ${HOSTTSTDIR}%_test.c
 ${HOSTTMPDIR}%_mocks.c: ${HOSTTMPDIR}%.sym ${HOSTTMPDIR}%_data.h
 	${Q}${TMG}
 
-.PRECIOUS: ${HOSTTMPDIR}%_proxified.p
-${HOSTTMPDIR}%_proxified.p: ${HOSTTMPDIR}%.sym ${HOSTTMPDIR}%.p
+.PRECIOUS: ${HOSTTMPDIR}%_proxified${CPPEXT}
+${HOSTTMPDIR}%_proxified${CPPEXT}: ${HOSTTMPDIR}%.sym ${HOSTTMPDIR}%${CPPEXT}
 	${Q}${TAM}
 
 .PRECIOIS: ${HOSTTMPDIR}%_runner.c
@@ -88,14 +112,14 @@ ${HOSTTMPDIR}%_runner.c: ${HOSTTSTDIR}%_test.c ${HOSTTMPDIR}%_data.h
 ${HOSTTMPDIR}%.o: ${HOSTTMPDIR}%.c
 	${Q}${CC} ${CFLAGS}
 
-${HOSTTMPDIR}%.o: ${HOSTTMPDIR}%.p
+${HOSTTMPDIR}%.o: ${HOSTTMPDIR}%${CPPEXT}
 	${Q}${CC} ${CFLAGSPP}
 
 #${HOSTSRCDIR}%.o: ${HOSTTMPDIR}%.p
 #	${Q}${CC} ${CFLAGSPP}
 
 .PRECIOUS: ${HOSTSRCDIR}%_proxified.o
-${HOSTSRCDIR}%_proxified.o: ${HOSTTMPDIR}%_proxified.p ${HOSTTMPDIR}%_data.h
+${HOSTSRCDIR}%_proxified.o: ${HOSTTMPDIR}%_proxified${CPPEXT} ${HOSTTMPDIR}%_data.h
 	${Q}${CC} ${CFLAGSPP}; ${PROXIFIEDO}
 
 .PRECIOUS: ${HOSTTMPDIR}%_mocks.o
@@ -115,11 +139,11 @@ ${HOSTTMPDIR}%_test.o: ${HOSTTSTDIR}%_test.c ${HOSTTMPDIR}%_data.h
 #
 # TODO: Make tarsio.o a shared library instead
 #
-%_test: ${HOSTTMPDIR}%_test.o ${HOSTSRCDIR}%_proxified.o ${HOSTTMPDIR}%_runner.o ${HOSTTMPDIR}%_mocks.o ${HOSTSRCDIR}tarsio.o
+%_test: ${HOSTTMPDIR}%_test.o ${HOSTSRCDIR}%_proxified.o ${HOSTTMPDIR}%_runner.o ${HOSTTMPDIR}%_mocks.o
 	${Q}${CC} ${LDFLAGS}
 
 .PHONY: clean
 clean::
-	${Q}${RM} *~ ${HOSTTMPDIR}*.sym ${HOSTTMPDIR}*_data.h ${HOSTTMPDIR}*.p ${HOSTSRCDIR}*_proxified* ${HOSTTMPDIR}*_runner* ${HOSTTMPDIR}*_mocks* ${HOSTTMPDIR}*_test* *_test *.o
+	${Q}${RM} *~ ${HOSTTMPDIR}*.sym ${HOSTTMPDIR}*_data.h ${HOSTTMPDIR}*_data.o ${HOSTTMPDIR}*.p ${HOSTTMPDIR}*.pp ${HOSTTMPDIR}*.i ${HOSTTMPDIR}*_proxified* ${HOSTSRCDIR}*_proxified* ${HOSTTMPDIR}*_runner* ${HOSTTMPDIR}*_mocks* ${HOSTTMPDIR}*_test* *_test *.o ${HOSTTMPDIR}file*.asm ${HOSTTMPDIR}file*.o
 
 check:: ${DATS}

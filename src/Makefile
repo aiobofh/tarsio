@@ -9,16 +9,25 @@ CFLAGS=define NODEBUG define SASC optimize noicons noversion includedirectory $(
 CC:=sc
 LDFLAGS=noicons noversion $^ link to $@
 else
+ifdef VBCC
+INCDIR:=../include/
+CFLAGS=-DNODEBUG -O2 -c99 -c $^ -I${INCDIR} -o $@ -cpu=68000
+#CFLAGS=-O2 -c99 -c $^ -I${INCDIR} -o $@ -cpu=68000
+LDFLAGS=-O2 -c99 $^ -o $@
+CC:=vc
+else
 INCDIR:=../include/
 CFLAGS=-Wall -std=c11 -pedantic -O2 -g -DNODEBUG -I${INCDIR} -o $@ -c $<
+#CFLAGS=-Wall -std=c11 -pedantic -O2 -g -I${INCDIR} -o $@ -c $<
 LDFLAGS=-flto -o $@ $^
+endif
 endif
 
 TSTDIR:=../test/
 
 .SUFFIXES:
 
-all: tcg tsg tmg tam ttg tarsio.o
+all: tcg tsg tmg tam ttg
 	@: # Force GNU Make to be silent if nothing need to be done
 
 check:
@@ -46,4 +55,4 @@ tam: tam.o prototype.o symbol_cache.o file.o argument.o symbol_usage.o datatype.
 ttg: ttg.o file.o testcase.o
 
 clean:
-	$(Q)${RM} *~ *.o *.lnk *.p *.ueam gts tsg tcg tmg tam ttg
+	$(Q)${RM} *~ *.o *.so *.library *.lnk *.p *.ueam gts tsg tcg tmg tam ttg

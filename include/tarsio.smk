@@ -38,8 +38,8 @@ $(DUTNAME)_test.o: $(DUTNAME)_test.c $(TMPDIR)$(DUTNAME)_data.h
 $(TMPDIR)$(DUTNAME)_runner.o: $(TMPDIR)$(DUTNAME)_runner.c
 	@$(CC) $(CFLAGS) $(TMPDIR)$(DUTNAME)_runner.c
 
-$(DUTNAME)_test: $(DUTNAME)_test.o $(TMPDIR)$(DUTNAME)_proxified.o $(TMPDIR)$(DUTNAME)_runner.o $(TMPDIR)$(DUTNAME)_mocks.o $(SRCDIR)tarsio.o
-	@$(CC) $(CLFAGS) $(DUTNAME)_test.o $(TMPDIR)$(DUTNAME)_proxified.o $(TMPDIR)$(DUTNAME)_runner.o $(TMPDIR)$(DUTNAME)_mocks.o $(SRCDIR)tarsio.o link to $(DUTNAME)_test
+$(DUTNAME)_test: $(DUTNAME)_test.o $(TMPDIR)$(DUTNAME)_proxified.o $(TMPDIR)$(DUTNAME)_runner.o $(TMPDIR)$(DUTNAME)_mocks.o
+	@$(CC) $(CLFAGS) $(DUTNAME)_test.o $(TMPDIR)$(DUTNAME)_proxified.o $(TMPDIR)$(DUTNAME)_runner.o $(TMPDIR)$(DUTNAME)_mocks.o link to $(DUTNAME)_test
 
 check_$(DUTNAME): $(DUTNAME)_test
         @$(DUTNAME)_test

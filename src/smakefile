@@ -3,7 +3,7 @@ INCDIR=/include/
 CFLAGS=define NODEBUG define SASC optimize noicons noversion includedirectory $(TMPDIR) includedirectory $(INCDIR)
 LDFLAGS=noicons noversion
 
-all: tcg tsg tmg tam ttg tarsio.o
+all: tcg tsg tmg tam ttg
 
 prototype.o: prototype.c
 	@$(CC) $(CFLAGS) prototype.c
@@ -25,9 +25,6 @@ symbol_cache.o: symbol_cache.c
 
 testcase.o: testcase.c
 	@$(CC) $(CFLAGS) testcase.c
-
-tarsio.o: tarsio.c
-	@$(CC) $(CFLAGS) tarsio.c
 
 cpp.o: cpp.c
 	@$(CC) $(CFLAGS) cpp.c
