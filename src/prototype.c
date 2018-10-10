@@ -55,6 +55,54 @@ static int prototype_list_find_symbol(const prototype_list_t* list, const char* 
   return 0;
 }
 
+static char* washing_machine(const char* raw) {
+  const size_t len = strlen(raw);
+  size_t i;
+  size_t idx = 0;
+  char* d;
+  char last_c = 0;
+  d = malloc(len + 1);
+  if (NULL == d) {
+    error1("Out of memory when allocating washed string for '%s'", raw);
+    return NULL;
+  }
+
+  for (i = 0; i < len; i++) {
+    const char c = raw[i];
+    const char next_c = raw[i + 1];
+    if (&raw[i] == strstr(&raw[i], " __reg (")) {
+      i += strlen(" __reg( 'a0' ) ");
+    }
+    if (('(' == next_c) && (' ' == c)) {
+      continue;
+    }
+    if (('(' == last_c) && (' ' == c)) {
+      continue;
+    }
+    if ((')' == next_c) && (' ' == c)) {
+      continue;
+    }
+    if ((';' == next_c) && (' ' == c)) {
+      continue;
+    }
+    if ((' ' == last_c) && ('*' == c) && (' ' == next_c)) {
+      idx--;
+    }
+    if ((' ' == last_c) && (',' == c)) {
+      idx--;
+    }
+    if ((' ' == c) && ('=' == next_c)) {
+      d[idx++] = ';';
+      break;
+    }
+    d[idx++] = c;
+    last_c = c;
+  }
+  d[idx] = '\0';
+
+  return d;
+}
+
 static prototype_node_t* prototype_node_new(const char* raw, const prototype_list_t* list, const size_t offset) {
   prototype_node_t* node = NULL;
   char* symbol;
@@ -82,13 +130,16 @@ static prototype_node_t* prototype_node_new(const char* raw, const prototype_lis
 
   memset(node, 0, sizeof(*node));
 
-  node->info.raw_prototype.decl = malloc(strlen(raw) + 1);
+  node->info.raw_prototype.decl = washing_machine(raw);
+  /* node->info.raw_prototype.decl = malloc(strlen(raw) + 1); */
   if (NULL == node->info.raw_prototype.decl) {
     error1("Out of memory while allocating raw prototype for '%s'", raw);
     goto raw_prototype_malloc_failed;
   }
 
+  /*
   strcpy(node->info.raw_prototype.decl, raw);
+  */
   node->info.symbol = symbol;
 
   node->info.raw_prototype.offset = offset;
@@ -518,6 +569,17 @@ static int extract_arguments(prototype_node_t* node) {
           sprintf(arg_name, "dummy%02d", dummy_cnt);
           dummy_cnt++;
         }
+
+        /*
+         * Weird detection of anonymous void arguments.
+         */
+        /*
+        if ((0 == strcmp("void", arg_name)) == (0 == strcmp("", type_name))) {
+          char* tmp = arg_name;
+          arg_name = type_name;
+          type_name = tmp;
+        }
+        */
       }
 
       if ((0 == astrisks) && (0 == strcmp("void", type_name))) {
