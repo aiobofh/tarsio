@@ -14,7 +14,6 @@
  * tool in the Tarsio tool chain.
  */
 
-#include <unistd.h>
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
