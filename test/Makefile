@@ -31,4 +31,4 @@ check:: testcase_test
 # include ../include/coverage.mk
 
 clean::
-	${RM} *.uaem *.lnk *.info
+	${Q}${RM} *.uaem *.lnk *.info
