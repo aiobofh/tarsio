@@ -5,20 +5,24 @@
 #include "error.h"
 
 #include "argument.h"
+#include "datatype.h"
 
-int argument_list_append(argument_list_t* list, const char* data_type, const char* argument_name, const int is_const, const int is_variadic, const int astrisks) {
+argument_node_t* argument_node_new(char* data_type, char* argument_name, int is_const, int is_variadic, int astrisks) {
   argument_node_t* node = malloc(sizeof(*node));
   if (NULL == node) {
     error1("Out of memory while allocating argument node '%s'", data_type);
-    return -1;
+    return NULL;
   }
   memset(node, 0, sizeof(*node));
 
   node->info.name = (char*)argument_name;
-  node->info.datatype.name = (char*)data_type;
-  node->info.datatype.datatype_definition.is_const = (int)is_const;
-  node->info.datatype.datatype_definition.is_variadic = (int)is_variadic;
-  node->info.datatype.datatype_definition.is_pointer = (int)astrisks;
+
+  datatype_init(&node->info.datatype, data_type, 0, 0, is_const, is_variadic, astrisks);
+
+  return node;
+}
+
+int argument_list_append(argument_list_t* list, argument_node_t* node) {
   if (NULL == list->first) {
     list->first = node;
   }

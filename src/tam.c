@@ -59,17 +59,24 @@ static int tam_options_init(tam_options_t* options, int argc, char* argv[])
 
 size_t first_func_offset(prototype_list_t* list) {
   prototype_node_t* node;
+
+  return list->first_function_implementation_offset;
+
   for (node = list->first; NULL != node; node = node->next) {
+    fprintf(stderr, "DEBUG: '%s'\n", node->info.symbol);
     if (node->info.is_function_implementation) {
+      fprintf(stderr, "DEBUG: First function found %lu\n", node->info.raw_prototype.offset);
       return node->info.raw_prototype.offset;
     }
   }
+  fprintf(stderr, "ERROR: No first function found\n");
   return 0;
 }
 
 static void generate_extern_proxy_prototypes(prototype_list_t* list) {
   prototype_node_t* node;
   for (node = list->first; NULL != node; node = node->next) {
+    printf("/* %lu */\n", list->first_function_implementation_offset);
     generate_prototype(node, "extern ", "__tarsio_proxy_", ";");
   }
   printf("\n");

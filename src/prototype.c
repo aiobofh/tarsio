@@ -45,14 +45,14 @@ static char* extract_symbol(const char* raw) {
   return symbol;
 }
 
-static int prototype_list_find_symbol(const prototype_list_t* list, const char* symbol) {
+static prototype_node_t* prototype_list_find_symbol(const prototype_list_t* list, const char* symbol, const size_t offset) {
   prototype_node_t* node;
   for (node = list->first; NULL != node; node = node->next) {
     if (0 == strcmp(symbol, node->info.symbol)) {
-      return 1;
+      return node;
     }
   }
-  return 0;
+  return NULL;
 }
 
 static char* washing_machine(const char* raw) {
@@ -103,8 +103,11 @@ static char* washing_machine(const char* raw) {
   return d;
 }
 
+static void prototype_list_remove(prototype_list_t* list, prototype_node_t* node);
+
 static prototype_node_t* prototype_node_new(const char* raw, const prototype_list_t* list, const size_t offset) {
   prototype_node_t* node = NULL;
+  prototype_node_t* n = NULL;
   char* symbol;
 
   symbol = extract_symbol(raw);
@@ -118,8 +121,10 @@ static prototype_node_t* prototype_node_new(const char* raw, const prototype_lis
     goto strlen_zero;
   }
 
-  if (1 == prototype_list_find_symbol(list, symbol)) {
-    goto found_duplicate;
+  debug1("%s", raw);
+
+  if (NULL != (n = prototype_list_find_symbol(list, symbol, offset))) {
+    prototype_list_remove((prototype_list_t*)list, n);
   }
 
   node = malloc(sizeof(*node));
@@ -131,19 +136,13 @@ static prototype_node_t* prototype_node_new(const char* raw, const prototype_lis
   memset(node, 0, sizeof(*node));
 
   node->info.raw_prototype.decl = washing_machine(raw);
-  /* node->info.raw_prototype.decl = malloc(strlen(raw) + 1); */
   if (NULL == node->info.raw_prototype.decl) {
     error1("Out of memory while allocating raw prototype for '%s'", raw);
     goto raw_prototype_malloc_failed;
   }
 
-  /*
-  strcpy(node->info.raw_prototype.decl, raw);
-  */
   node->info.symbol = symbol;
-
   node->info.raw_prototype.offset = offset;
-
   goto normal_exit;
 
  raw_prototype_malloc_failed:
@@ -151,14 +150,13 @@ static prototype_node_t* prototype_node_new(const char* raw, const prototype_lis
   node = NULL;
  node_malloc_failed:
  strlen_zero:
- found_duplicate:
   free(symbol);
  extract_symbol_failed:
  normal_exit:
   return node;
 }
 
-static void prototype_list_append(prototype_list_t* list, const char* raw, int is_function_implementation, const size_t offset) {
+static void prototype_list_append(prototype_list_t* list, const char* raw, size_t is_function_implementation, const size_t offset) {
   prototype_node_t* node = prototype_node_new(raw, list, offset);
   if (NULL == node) {
     return;
@@ -171,9 +169,9 @@ static void prototype_list_append(prototype_list_t* list, const char* raw, int i
   }
   list->last = node;
   if (is_function_implementation) {
-    /*
-    node->info.is_function_implementation = is_function_implementation;
-    */
+    if (is_function_implementation < list->first_function_implementation_offset) {
+      list->first_function_implementation_offset = is_function_implementation;
+    }
     node->info.is_function_implementation = offset;
   }
   list->cnt++;
@@ -236,10 +234,13 @@ static int extract_prototypes(void* list_ptr, file_parse_state_t* state, const c
   if (1 == is_last_character) {
     int is_function_implementation = 0;
     if ('{' == c) {
+      /*
       is_function_implementation = line - state->line_feeds_in_declaration;
+      */
+      is_function_implementation = offset - strlen(state->buf);
+      debug3("is_function_implementation %d %c '%s'", is_function_implementation, state->buf[state->idx - 1], state->buf);
       state->buf[state->idx - 1] = ';';
     }
-    debug2("is_function_implementation %d %c", is_function_implementation, state->buf[state->idx - 1]);
     /*
      * A new prototype is found and should be added to the list of prototypes.
      */
@@ -281,9 +282,42 @@ static void prototype_node_cleanup(prototype_node_t* node) {
   free(node);
 }
 
+static void prototype_list_remove(prototype_list_t* list, prototype_node_t* node) {
+  prototype_node_t* n = list->first;
+  prototype_node_t* prev_node = NULL;
+
+  while (NULL != n) {
+    if (n == node) {
+      prototype_node_t* next_node = n->next;
+      if (list->first == node) {
+        list->first = next_node;
+      }
+      else {
+        if (NULL != prev_node) {
+          prev_node->next = next_node;
+        }
+      }
+      if (list->last == node) {
+        list->last = prev_node;
+      }
+
+      prototype_node_cleanup(node);
+
+      list->cnt--;
+
+      break;
+    }
+    prev_node = n;
+    n = n->next;
+  }
+}
+
+
 int prototype_list_init(prototype_list_t* list, const file_t* file) {
   assert((NULL != list) && "Argument 'list' must not be NULL");
   assert((NULL != file) && "Argument 'file' must not be NULL");
+
+  list->first_function_implementation_offset = file->len;
 
   file_parse(extract_prototypes, list, file, PARSE_DECLARATIONS);
 
@@ -297,7 +331,6 @@ static int find_symbol_usage(void* list_ptr, file_parse_state_t* state, const ch
   if ((('a' > c) || ('z' < c)) && (('0' > c) || ('9' < c)) && ('_' != c)) {
     for (node = list->first; NULL != node; node = node->next) {
       if (0 == strcmp(state->buf, node->info.symbol)) {
-        debug1("Searching for '%s'", node->info.symbol);
         symbol_usage_append(&node->info.symbol_usage_list, line, col, offset);
         break;
       }
@@ -587,10 +620,16 @@ static int extract_arguments(prototype_node_t* node) {
         free(arg_name);
       }
       else {
-        debug2(" Appending '%s' '%s' to list", type_name, arg_name);
-        if (0 != argument_list_append(&node->info.argument_list, type_name, arg_name, is_const, is_variadic, astrisks)) {
-          error2("Could not append argument '%s' to '%s'", arg_name, symbol);
+        argument_node_t* argnode = argument_node_new(type_name, arg_name, is_const, is_variadic, astrisks);
+        if (NULL == argnode) {
+          error2("Could not allocate new argument node '%s' to '%s'", arg_name, symbol);
           return -3;
+        }
+        debug2(" Appending '%s' '%s' to list", type_name, arg_name);
+
+        if (0 != argument_list_append(&node->info.argument_list, argnode)) {
+          error2("Could not append argument '%s' to '%s'", arg_name, symbol);
+          return -4;
         }
         debug0(" All good");
       }
@@ -664,5 +703,5 @@ void generate_prototype(prototype_node_t* node, const char* prefix, const char* 
       printf(", ");
     }
   }
-  printf(")%s\n", suffix);
+  printf(")%s /* %lu */\n", suffix, node->info.is_function_implementation);
 }

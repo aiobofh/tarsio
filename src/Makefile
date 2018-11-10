@@ -17,7 +17,7 @@ LDFLAGS=-O2 -c99 $^ -o $@
 CC:=vc
 else
 INCDIR:=../include/
-CFLAGS=-Wall -std=c11 -pedantic -O2 -g -DNODEBUG -I${INCDIR} -o $@ -c $<
+CFLAGS=-Wall -std=c11 -pedantic -O2 -g -I${INCDIR} -o $@ -c $< -DNODEBUG
 #CFLAGS=-Wall -std=c11 -pedantic -O2 -g -I${INCDIR} -o $@ -c $<
 LDFLAGS=-flto -o $@ $^
 endif

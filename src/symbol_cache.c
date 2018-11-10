@@ -52,12 +52,13 @@ static void transform_structs(prototype_list_t* list, char* buf) {
     symbol_usage_node_t* sn = NULL;
 
     pn = (prototype_node_t*)buf;
+
     al = &pn->info.argument_list;
     sl = &pn->info.symbol_usage_list;
 
     buf += sizeof(*pn);
 
-    debug0(" Transforming argument list pointer to first node");
+    debug2(" Transforming argument list pointer to first node %s %lu", pn->info.symbol, pn->info.is_function_implementation);
     al->first = (argument_node_t*)buf;
     for (j = 0; j < pn->info.argument_list.cnt; j++) {
       an = (argument_node_t*)buf;

@@ -31,7 +31,8 @@ typedef struct argument_list_s argument_list_t;
 
 #define ARGUMENT_LIST_EMPTY {0, NULL, NULL}
 
-int argument_list_append(argument_list_t* list, const char* data_type, const char* argument_name, const int is_const, const int is_variadic, const int astrisks);
+argument_node_t* argument_node_new(char* data_type, char* argument_name, int is_const, int is_variadic, int astrisks);
+int argument_list_append(argument_list_t* list, argument_node_t* node);
 void argument_list_cleanup(argument_list_t* list);
 
 #endif

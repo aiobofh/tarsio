@@ -20,6 +20,7 @@ typedef struct datatype_s datatype_t;
 
 #define DATATYPE_EMPTY {NULL, DATATYPE_DEFINITION_EMPTY}
 
+void datatype_init(datatype_t* datatype, char* name, int is_static, int is_function_pointer, int is_const, int is_variadic, int astrisks);
 void datatype_cleanup(datatype_t* datatype);
 
 #endif

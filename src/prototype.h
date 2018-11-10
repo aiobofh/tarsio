@@ -30,7 +30,7 @@ struct prototype_s {
   char* symbol;
   argument_list_t argument_list;
   symbol_usage_list_t symbol_usage_list;
-  int is_function_implementation;
+  size_t is_function_implementation;
 };
 typedef struct prototype_s prototype_t;
 
@@ -46,12 +46,13 @@ typedef struct prototype_node_s prototype_node_t;
 
 struct prototype_list_s {
   size_t cnt;
+  size_t first_function_implementation_offset;
   prototype_node_t* first;
   prototype_node_t* last;
 };
 typedef struct prototype_list_s prototype_list_t;
 
-#define PROTOTYPE_LIST_EMPTY {0, NULL, NULL}
+#define PROTOTYPE_LIST_EMPTY {0, 0, NULL, NULL}
 
 int prototype_list_init(prototype_list_t* list, const file_t* file);
 int prototype_usage(prototype_list_t* list, const file_t* file);
