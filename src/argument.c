@@ -39,8 +39,6 @@ static void argument_cleanup(argument_t* argument) {
   if (NULL != argument->name) {
     free(argument->name);
   }
-  argument->name = NULL;
-  argument->array_size = 0;
 }
 
 static void argument_node_cleanup(argument_node_t* node) {
@@ -57,7 +55,5 @@ void argument_list_cleanup(argument_list_t* list) {
     argument_node_cleanup(node);
     free(node);
     node = next_node;
-    list->cnt--;
   }
-  memset(list, 0, sizeof(*list));
 }
