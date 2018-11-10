@@ -25,10 +25,12 @@ all:
 include ../include/tarsio.mk
 
 .PHONY: check
-check:: testcase_test
-	${Q}${EXECUTOR}testcase_test
+check:: testcase_test datatype_test symbol_usage_test
+	${Q}${EXECUTOR}testcase_test; \
+	${EXECUTOR}datatype_test; \
+	${EXECUTOR}symbol_usage_test
 
-# include ../include/coverage.mk
+include ../include/coverage.mk
 
 clean::
 	${Q}${RM} *.uaem *.lnk *.info

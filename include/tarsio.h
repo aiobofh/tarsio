@@ -2,6 +2,8 @@
 #define _TARSIO_H_
 #include <assert.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #define tarsio_mock (*((__tarsio_data_t*)__tarsio_mock_data))
 #define test(NAME) void __##NAME(void* __tarsio_mock_data, const char* __tarsio_test_name)
 #define assert_eq(EXP, ACT) __tarsio_assert_eq(((EXP) != (ACT)), __tarsio_test_name, #EXP " != " #ACT, __FILE__, __LINE__)
