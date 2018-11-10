@@ -76,7 +76,6 @@ int file_parse(file_parse_cb_t func, void* list_ptr, const file_t* file, parse_p
 				(parse_declarations && !in_function_body) ||
 				is_code_block_start));
 
-    /*
     if ((last_do_parse != do_parse) ||
         (last_in_string != in_string) ||
         (last_in_comment != in_comment) ||
@@ -84,7 +83,7 @@ int file_parse(file_parse_cb_t func, void* list_ptr, const file_t* file, parse_p
         (last_is_code_block_start != is_code_block_start)) {
       debug5("do_parse? %d is string? %d in comment? %d in function body? %d is code block start %d", do_parse, in_string, in_comment, in_function_body, is_code_block_start);
     }
-    */
+
     if (do_parse) {
       func(list_ptr, &state, c, line_count, column_count, i);
     }
