@@ -11,6 +11,7 @@ test(new_shall_malloc_the_correct_size) {
 }
 
 test(new_shall_return_NULL_if_out_of_memory) {
+  m.malloc.retval = NULL;
   assert_eq(NULL, argument_node_new(NULL, NULL, 0, 0, 0));
 }
 
@@ -30,31 +31,12 @@ test(new_shall_clear_the_whole_node) {
   assert_eq(sizeof(node), m.memset.args.arg2);
 }
 
-test(append_shall_add_node_to_empty_list) {
-  argument_node_t node;
-  argument_list_t list = ARGUMENT_LIST_EMPTY;
-  argument_list_append(&list, &node);
-  assert_eq(&node, list.first);
-  assert_eq(&node, list.last);
-}
-
-test(append_shall_add_node_to_end_of_list) {
-  argument_node_t node1;
-  argument_node_t node2;
-  argument_list_t list = ARGUMENT_LIST_EMPTY;
-  list.first = &node1;
-  list.last = &node1;
-  argument_list_append(&list, &node2);
-  assert_eq(&node1, list.first);
-  assert_eq(&node2, list.last);
-  assert_eq(node1.next, &node2);
-}
-
-test(append_shall_increment_node_count_on_success) {
-  argument_node_t node;
-  argument_list_t list = ARGUMENT_LIST_EMPTY;
-  argument_list_append(&list, &node);
-  assert_eq(1, list.cnt);
+test(append_shall_call_list_append) {
+  argument_list_append((argument_list_t*)0x1234,
+                       (argument_node_t*)0x5678);
+  assert_eq(1, m.base_list_append.call_count);
+  assert_eq((list_t*)0x1234, m.base_list_append.args.arg0);
+  assert_eq((node_t*)0x5678, m.base_list_append.args.arg1);
 }
 
 test(cleanup_shall_cleanup_datatype) {
