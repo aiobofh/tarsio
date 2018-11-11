@@ -5,6 +5,8 @@
 #include "debug.h"
 #include "error.h"
 
+#include "str.h"
+
 #include "file.h"
 #include "testcase.h"
 
@@ -43,39 +45,17 @@ static void print_len_warning(const char* str) {
   fprintf(stderr, "WARNING: '%s' is a long test-case name, some compilers may trunkate it - resulting in duplicate symbol names.\n", str);
 }
 
-static char* strclone(const char* src) {
-  char *dst;
-
-  const size_t len = strlen(src);
-
-  if (len >= MAX_FUNC_NAME_LEN) {
-    print_len_warning(src);
-  }
-
-  if (NULL == (dst = malloc(len + 1))) {
-    error1("Out of memory while allocating string clone '%s'", src);
-    goto malloc_failed;
-  }
-
-  if (NULL == strcpy(dst, src)) {
-    error1("Could not copy string clone '%s'", src);
-    goto strcpy_failed;
-  }
-
-  goto normal_exit;
-
- strcpy_failed:
-  free(dst);
-  dst = NULL;
- malloc_failed:
- normal_exit:
-  return dst;
-}
 
 static int testcase_append(testcase_list_t* list, const char* name, const testcase_type_t type) {
   int retval = 0;
   char* node_name;
   testcase_node_t* node;
+
+  const size_t len = strlen(name);
+
+  if (len >= MAX_FUNC_NAME_LEN) {
+    print_len_warning(name);
+  }
 
   if (NULL == (node_name = strclone(name))) {
     error1("Unable to clone testcase name '%s'", name);

@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "list.h"
+
 #include "error.h"
 
 #include "argument.h"
@@ -23,15 +25,7 @@ argument_node_t* argument_node_new(char* data_type, char* argument_name, int is_
 }
 
 int argument_list_append(argument_list_t* list, argument_node_t* node) {
-  if (NULL == list->first) {
-    list->first = node;
-  }
-  if (NULL != list->last) {
-    list->last->next = node;
-  }
-  list->last = node;
-  list->cnt++;
-  return 0;
+  return list_append(list, node);
 }
 
 static void argument_cleanup(argument_t* argument) {

@@ -20,6 +20,10 @@ INCDIR:=../include/
 CFLAGS=-Wall -std=c11 -pedantic -O2 -g -I${INCDIR} -o $@ -c $< -DNODEBUG
 #CFLAGS=-Wall -std=c11 -pedantic -O2 -g -I${INCDIR} -o $@ -c $<
 LDFLAGS=-flto -o $@ $^
+ifdef COV
+CFLAGS+=-fprofile-arcs -ftest-coverage
+LDFLAGS+=-fprofile-arcs -lgcov --coverage
+endif
 endif
 endif
 
@@ -44,15 +48,15 @@ check:
 #
 # Tarsio tool chain
 #
-tcg: tcg.o prototype.o file.o argument.o symbol_usage.o datatype.o symbol_cache.o
+tcg: tcg.o list.o prototype.o file.o argument.o symbol_usage.o datatype.o symbol_cache.o
 
-tsg: tsg.o prototype.o cpp.o symbol_cache.o file.o argument.o symbol_usage.o datatype.o
+tsg: tsg.o str.o list.o prototype.o cpp.o symbol_cache.o file.o argument.o symbol_usage.o datatype.o
 
-tmg: tmg.o prototype.o symbol_cache.o file.o argument.o symbol_usage.o datatype.o
+tmg: tmg.o list.o prototype.o symbol_cache.o file.o argument.o symbol_usage.o datatype.o
 
-tam: tam.o prototype.o symbol_cache.o file.o argument.o symbol_usage.o datatype.o
+tam: tam.o list.o prototype.o symbol_cache.o file.o argument.o symbol_usage.o datatype.o
 
-ttg: ttg.o file.o testcase.o
+ttg: ttg.o str.o file.o testcase.o
 
-clean:
+clean::
 	$(Q)${RM} *~ *.o *.so *.library *.lnk *.p *.ueam gts tsg tcg tmg tam ttg

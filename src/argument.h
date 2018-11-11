@@ -3,6 +3,7 @@
 
 #include <stdlib.h>
 
+#include "list.h"
 #include "datatype.h"
 
 struct argument_s {
@@ -15,7 +16,7 @@ typedef struct argument_s argument_t;
 #define ARGUMENT_EMPTY {DATATYPE_EMPTY, NULL, 0}
 
 struct argument_node_s {
-  struct argument_node_s* next;
+  NODE(struct argument_node_s);
   argument_t info;
 };
 typedef struct argument_node_s argument_node_t;
@@ -23,13 +24,11 @@ typedef struct argument_node_s argument_node_t;
 #define ARGUMENT_NODE_EMPTY {NULL, ARGUMENT_EMPTY}
 
 struct argument_list_s {
-  size_t cnt;
-  argument_node_t* first;
-  argument_node_t* last;
+  LIST(argument_node_t);
 };
 typedef struct argument_list_s argument_list_t;
 
-#define ARGUMENT_LIST_EMPTY {0, NULL, NULL}
+#define ARGUMENT_LIST_EMPTY LIST_EMPTY
 
 argument_node_t* argument_node_new(char* data_type, char* argument_name, int is_const, int is_variadic, int astrisks);
 int argument_list_append(argument_list_t* list, argument_node_t* node);
