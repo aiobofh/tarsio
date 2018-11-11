@@ -41,9 +41,9 @@ static void transform_structs(prototype_list_t* list, char* buf) {
   /* Move offset into the first node */
   buf += sizeof(*l);
 
-  debug0("Transforming prototype list pointer to first node");
   l->first = (prototype_node_t*)buf;
 
+  debug0("Transforming prototype list pointer to first node");
 
   for (i = 0; i < l->cnt; i++) {
     argument_list_t* al;
@@ -80,6 +80,10 @@ static void transform_structs(prototype_list_t* list, char* buf) {
 
     pn->next = (prototype_node_t*)buf;
     l->last = pn;
+  }
+
+  if (NULL == pn) {
+    return;
   }
 
   pn->next = NULL;
