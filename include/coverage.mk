@@ -48,7 +48,7 @@ output_coverage: ${LINES_COV} ${BRANCHES_COV}
 
 .PHONY: clean
 clean::
-	${Q}${RM} ${BRANCHES_COV} ${LINES_COV} ${COVERAGE_XML}
+	${Q}${RM} ${BRANCHES_COV} ${LINES_COV} ${COVERAGE_XML} ${SRCDIR}*.gcda ${SRCDIR}*.gcno
 
 .PHONY: check
 check::
