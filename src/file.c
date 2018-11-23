@@ -9,7 +9,7 @@ static size_t fsize(FILE *fd) {
   size_t file_size;
   (void)fseek(fd, 0L, SEEK_END);
   file_size = ftell(fd);
-  fseek(fd, 0L, SEEK_SET);
+  rewind(fd);
   return file_size;
 }
 
@@ -116,6 +116,8 @@ int file_parse(file_parse_cb_t func, void* list_ptr, const file_t* file, parse_p
 int file_init(file_t* file, const char* filename) {
   int retval = 0;
   FILE* fd;
+  size_t len = 0;
+  char* buf = NULL;
 
   assert((NULL != file) && "Argument 'file' must not be NULL");
   assert((NULL != filename) && "Argument 'filename' must not be NULL");
@@ -126,30 +128,32 @@ int file_init(file_t* file, const char* filename) {
     goto fopen_failed;
   }
 
-  if (0 == (file->len = fsize(fd))) {
+  if (0 == (len = fsize(fd))) {
     fprintf(stderr, "ERROR: Invalid file size of '%s'.\n", filename);
     retval = -2;
     goto fsize_failed;
   }
 
-  if (NULL == (file->buf = malloc(file->len + 1))) {
+  if (NULL == (buf = malloc(len + 1))) {
     fprintf(stderr, "ERROR: Out of memory while reading '%s'.\n", filename);
     retval = -3;
     goto malloc_failed;
   }
 
-  if (file->len != fread(file->buf, 1, file->len, fd)) {
+  if (len != fread(buf, 1, len, fd)) {
     fprintf(stderr, "ERROR: Invalid read size while reading '%s'.\n", filename);
     retval = -4;
     goto fread_failed;
   }
 
+  file->len = len;
+  file->buf = buf;
   file->filename = (char*)filename;
 
   goto normal_exit;
 
  fread_failed:
-  free(file->buf);
+  free(buf);
  malloc_failed:
  normal_exit:
  fsize_failed:
