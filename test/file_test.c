@@ -22,11 +22,13 @@ test(fsize_shall_use_ftell_to_determine_the_number_of_bytes) {
   assert_eq((FILE*)0x1234, m.ftell.args.arg0);
 }
 
+#ifndef SASC
 test(fsize_shall_rewind_to_beginning_of_file_when_done) {
   fsize((FILE*)0x1234);
   assert_eq(1, m.rewind.call_count);
   assert_eq((FILE*)0x1234, m.rewind.args.arg0);
 }
+#endif
 
 test(fsize_shall_forward_ftell_return_value) {
   m.ftell.retval = 5678;

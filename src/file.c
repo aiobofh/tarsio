@@ -116,8 +116,8 @@ int file_parse(file_parse_cb_t func, void* list_ptr, const file_t* file, parse_p
 int file_init(file_t* file, const char* filename) {
   int retval = 0;
   FILE* fd;
-  size_t len = 0;
-  char* buf = NULL;
+  size_t len;
+  char* buf;
 
   assert((NULL != file) && "Argument 'file' must not be NULL");
   assert((NULL != filename) && "Argument 'filename' must not be NULL");

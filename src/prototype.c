@@ -107,7 +107,7 @@ static void prototype_list_remove(prototype_list_t* list, prototype_node_t* node
 
 static prototype_node_t* prototype_node_new(const char* raw, const prototype_list_t* list, const size_t offset) {
   prototype_node_t* node = NULL;
-  prototype_node_t* n = NULL;
+  prototype_node_t* n;
   char* symbol;
 
   symbol = extract_symbol(raw);
@@ -547,7 +547,7 @@ static int extract_arguments(prototype_node_t* node) {
         arg_name = NULL;
       }
       else {
-        char* compkeyptr = NULL;
+        char* compkeyptr;
         /*
          * Datatype name length
          */

@@ -24,10 +24,17 @@ test(new_shall_clear_the_whole_node) {
   symbol_usage_node_t node;
   m.malloc.retval = &node;
   symbol_usage_node_new(0, 0, 0);
+#ifndef SASC
   assert_eq(1, m.memset.call_count);
   assert_eq(&node, m.memset.args.arg0);
   assert_eq(0, m.memset.args.arg1);
   assert_eq(sizeof(node), m.memset.args.arg2);
+#else
+  assert_eq(1, m.__builtin_memset.call_count);
+  assert_eq(&node, m.__builtin_memset.args.arg0);
+  assert_eq(0, m.__builtin_memset.args.arg1);
+  assert_eq(sizeof(node), m.__builtin_memset.args.arg2);
+#endif
 }
 
 test(new_shall_set_the_line_col_and_offset) {

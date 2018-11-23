@@ -10,7 +10,7 @@
 #include "cpp.h"
 
 static cpp_node_t* cpp_node_new(const char* buf) {
-  cpp_node_t* node = NULL;
+  cpp_node_t* node;
 
   if (NULL == (node = malloc(sizeof(*node)))) {
     error1("Out of memory while allocating cpp directive for '%s'", buf);
