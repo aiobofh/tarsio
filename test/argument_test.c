@@ -68,6 +68,11 @@ test(node_cleanup_shall_cleanup_argument_data) {
   assert_eq(&node.info, m.argument_cleanup.args.arg0);
 }
 
+test(node_cleanup_should_assert_on_NULL_arg) {
+  argument_list_cleanup(NULL);
+  assert_eq(1, m.__assert_fail.call_count);
+}
+
 test(list_cleanup_shall_free_all_nodes) {
   argument_node_t node1 = ARGUMENT_NODE_EMPTY;
   argument_node_t node2 = ARGUMENT_NODE_EMPTY;
