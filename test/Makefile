@@ -41,4 +41,6 @@ check:: $(subst .c,,$(wildcard *_test.c))
 clean::
 	${Q}${RM} *.uaem *.lnk *.info
 
+ifndef SASC
 include ../include/coverage.mk
+endif
