@@ -10,10 +10,17 @@
  */
 test(fsize_shall_use_fseek_the_end_of_the_provided_file_as_base) {
   fsize((FILE*)0x1234);
+#ifndef SASC
   assert_eq(1, m.fseek.call_count);
   assert_eq((FILE*)0x1234, m.fseek.args.arg0);
   assert_eq(0L, m.fseek.args.arg1);
   assert_eq(SEEK_END, m.fseek.args.arg2);
+#else
+  /* SASC will generate code to call fseek instead of having its own function
+   * for rewind, hence fseek will be called twice. */
+  skip("Not applicable on SASC");
+#endif
+
 }
 
 test(fsize_shall_use_ftell_to_determine_the_number_of_bytes) {
@@ -22,13 +29,16 @@ test(fsize_shall_use_ftell_to_determine_the_number_of_bytes) {
   assert_eq((FILE*)0x1234, m.ftell.args.arg0);
 }
 
-#ifndef SASC
+
 test(fsize_shall_rewind_to_beginning_of_file_when_done) {
   fsize((FILE*)0x1234);
+#ifndef SASC
   assert_eq(1, m.rewind.call_count);
   assert_eq((FILE*)0x1234, m.rewind.args.arg0);
-}
+#else
+  skip("Not applicable on SASC");
 #endif
+}
 
 test(fsize_shall_forward_ftell_return_value) {
   m.ftell.retval = 5678;
@@ -143,7 +153,7 @@ test(init_shall_load_the_file_into_the_corrct_memory) {
   m.fopen.retval = (FILE*)0x1234;
   m.fsize.retval = 5678;
   m.malloc.retval = (void*)0x4321;
-  m.fread.retval = 8765;
+  m.fread.retval = 5678;
   file_init((file_t*)&file, (char*)0x2222);
   assert_eq(file.buf, m.malloc.retval);
 }

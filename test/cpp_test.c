@@ -88,7 +88,7 @@ test(list_init_shall_assert_list_is_not_NULL) {
 #ifndef SASC
   assert_eq(1, m.__assert_fail.call_count);
 #else
-  assert_eq(1, m.__assert.call_count);
+  skip("Not applicable on SASC");
 #endif
 }
 
@@ -97,7 +97,7 @@ test(list_init_shall_assert_file_is_not_NULL) {
 #ifndef SASC
   assert_eq(1, m.__assert_fail.call_count);
 #else
-  assert_eq(1, m.__assert.call_count);
+  skip("Not applicable on SASC");
 #endif
 }
 
