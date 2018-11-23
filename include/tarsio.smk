@@ -42,7 +42,7 @@ $(DUTNAME)_test: $(DUTNAME)_test.o $(TMPDIR)$(DUTNAME)_proxified.o $(TMPDIR)$(DU
 	@$(CC) $(CLFAGS) $(DUTNAME)_test.o $(TMPDIR)$(DUTNAME)_proxified.o $(TMPDIR)$(DUTNAME)_runner.o $(TMPDIR)$(DUTNAME)_mocks.o link to $(DUTNAME)_test
 
 check_$(DUTNAME): $(DUTNAME)_test
-        @$(DUTNAME)_test
+        @$(DUTNAME)_test COMPACT
 
 check: check_$(DUTNAME)
 

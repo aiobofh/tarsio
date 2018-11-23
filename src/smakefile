@@ -8,6 +8,12 @@ all: tcg tsg tmg tam ttg
 prototype.o: prototype.c
 	@$(CC) $(CFLAGS) prototype.c
 
+str.o: str.c
+	@$(CC) $(CFLAGS) str.c
+
+list.o: list.c
+	@$(CC) $(CFLAGS) list.c
+
 file.o: file.c
 	@$(CC) $(CFLAGS) file.c
 
@@ -44,20 +50,20 @@ tam.o: tam.c
 ttg.o: ttg.c
 	@$(CC) $(CFLAGS) ttg.c
 
-tcg: tcg.o prototype.o file.o argument.o symbol_usage.o datatype.o symbol_cache.o
-	@$(CC) $(CFLAGS) tcg.o prototype.o file.o argument.o symbol_usage.o datatype.o symbol_cache.o link to tcg
+tcg: tcg.o prototype.o list.o file.o argument.o symbol_usage.o datatype.o symbol_cache.o
+	@$(CC) $(CFLAGS) tcg.o prototype.o list.o file.o argument.o symbol_usage.o datatype.o symbol_cache.o link to tcg
 
-tsg: tsg.o prototype.o cpp.o symbol_cache.o file.o argument.o symbol_usage.o datatype.o
-	@$(CC) $(CFLAGS) tsg.o prototype.o cpp.o symbol_cache.o file.o argument.o symbol_usage.o datatype.o link to tsg
+tsg: tsg.o prototype.o str.o list.o cpp.o symbol_cache.o file.o argument.o symbol_usage.o datatype.o
+	@$(CC) $(CFLAGS) tsg.o prototype.o str.o list.o cpp.o symbol_cache.o file.o argument.o symbol_usage.o datatype.o link to tsg
 
-tmg: tmg.o prototype.o symbol_cache.o file.o argument.o symbol_usage.o datatype.o
-	@$(CC) $(CFLAGS) tmg.o prototype.o symbol_cache.o file.o argument.o symbol_usage.o datatype.o link to tmg
+tmg: tmg.o prototype.o list.o symbol_cache.o file.o argument.o symbol_usage.o datatype.o
+	@$(CC) $(CFLAGS) tmg.o prototype.o list.o symbol_cache.o file.o argument.o symbol_usage.o datatype.o link to tmg
 
-tam: tam.o prototype.o symbol_cache.o file.o argument.o symbol_usage.o datatype.o
-	@$(CC) $(CFLAGS) tam.o prototype.o symbol_cache.o file.o argument.o symbol_usage.o datatype.o link to tam
+tam: tam.o prototype.o list.o symbol_cache.o file.o argument.o symbol_usage.o datatype.o
+	@$(CC) $(CFLAGS) tam.o prototype.o list.o symbol_cache.o file.o argument.o symbol_usage.o datatype.o link to tam
 
-ttg: ttg.o file.o testcase.o
-	@$(CC) $(CFLAGS) ttg.o file.o testcase.o link to ttg
+ttg: ttg.o str.o file.o testcase.o
+	@$(CC) $(CFLAGS) ttg.o str.o file.o testcase.o link to ttg
 
 clean:
-	@delete quiet tcg tcg.o tcg.lnk tsg tsg.o tsg.lnk tmg tmg.o tmg.lnk tam tam.o tam.lnk ttg ttg.o ttg.lnk cpp.o tarsio.o testcase.o testcase.p.info prototype.o file.o argument.o symbol_usage.o datatype.o symbol_cache.o
+	@delete quiet tcg tcg.o tcg.lnk tsg tsg.o tsg.lnk tmg tmg.o tmg.lnk tam tam.o tam.lnk ttg ttg.o ttg.lnk cpp.o tarsio.o testcase.o testcase.p.info prototype.o file.o list.o str.o argument.o symbol_usage.o datatype.o symbol_cache.o

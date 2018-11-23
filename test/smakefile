@@ -3,7 +3,30 @@
 INCDIR=/include/
 
 all:
+	@smake -s -f $(INCDIR)tarsio.smk argument_test DUTNAME=argument
+	@smake -s -f $(INCDIR)tarsio.smk cpp_test DUTNAME=cpp
+	@smake -s -f $(INCDIR)tarsio.smk datatype_test DUTNAME=datatype
+	@smake -s -f $(INCDIR)tarsio.smk file_test DUTNAME=file
+	@smake -s -f $(INCDIR)tarsio.smk list_test DUTNAME=list
+	@smake -s -f $(INCDIR)tarsio.smk str_test DUTNAME=str
+	@smake -s -f $(INCDIR)tarsio.smk symbol_usage_test DUTNAME=symbol_usage
+	@smake -s -f $(INCDIR)tarsio.smk testcase_test DUTNAME=testcase
+	@smake -s -f $(INCDIR)tarsio.smk check DUTNAME=argument
+	@smake -s -f $(INCDIR)tarsio.smk check DUTNAME=cpp
+	@smake -s -f $(INCDIR)tarsio.smk check DUTNAME=datatype
+	@smake -s -f $(INCDIR)tarsio.smk check DUTNAME=file
+	@smake -s -f $(INCDIR)tarsio.smk check DUTNAME=list
+	@smake -s -f $(INCDIR)tarsio.smk check DUTNAME=str
+	@smake -s -f $(INCDIR)tarsio.smk check DUTNAME=symbol_usage
 	@smake -s -f $(INCDIR)tarsio.smk check DUTNAME=testcase
+	@echo ""
 
 clean:
+	@smake -s -f $(INCDIR)tarsio.smk clean DUTNAME=argument
+	@smake -s -f $(INCDIR)tarsio.smk clean DUTNAME=cpp
+	@smake -s -f $(INCDIR)tarsio.smk clean DUTNAME=datatype
+	@smake -s -f $(INCDIR)tarsio.smk clean DUTNAME=file
+	@smake -s -f $(INCDIR)tarsio.smk clean DUTNAME=list
+	@smake -s -f $(INCDIR)tarsio.smk clean DUTNAME=str
+	@smake -s -f $(INCDIR)tarsio.smk clean DUTNAME=symbol_usage
 	@smake -s -f $(INCDIR)tarsio.smk clean DUTNAME=testcase
