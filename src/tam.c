@@ -302,6 +302,11 @@ static int sort_usage(replace_list_t* slist, prototype_list_t* plist) {
 }
 
 static void generate_proxified(prototype_list_t* list, file_t* file) {
+  /*
+   * Replicate the pre-processed C code version and replace all function
+   * calls with proxies, and also declare them extern right above the first
+   * invoking function definition.
+   */
   replace_list_t slist;
   replace_node_t* node;
   size_t offset = 0;
@@ -324,15 +329,22 @@ static void generate_proxified(prototype_list_t* list, file_t* file) {
       break;
     }
     else if (SEARCH_FIRST_FUNCTION == node->search) {
+      /* TODO: This fucks up the line-numbering in the pre-processed file
+      *        when using GCC */
       fwrite(&file->buf[offset], node->offset - offset, 1, stdout);
       generate_extern_proxy_prototypes(list);
       offset = node->offset;
     }
     else if (SEARCH_STATIC_FUNCTION == node->search) {
+      /* Skip the 'static' keyword, so that all functions are callable from
+       * the checks. */
       fwrite(&file->buf[offset], node->offset - offset, 1, stdout);
       offset = node->offset + strlen("static ") + 1;
     }
     else if (SEARCH_FUNCTION_CALL == node->search) {
+      /* Prefix _all_ function calls to known functions with the tarsio proxy
+       * prefix - So that we can be sure no real code is called directly, at
+       * least not without passing via the proxy function. */
       prototype_node_t* pnode = node->prototype_node;
       char* symbol = pnode->info.symbol;
       fwrite(&file->buf[offset], node->offset - offset, 1, stdout);
