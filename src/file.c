@@ -24,16 +24,13 @@ int file_parse(file_parse_cb_t func, void* list_ptr, const file_t* file, parse_p
   int num_braces = 0;
   int num_paren = 0;
   int in_function_body = 0;
+  int in_single_quote_string = 0;
+  int in_double_quote_string = 0;
   int in_string = 0;
   int in_comment = 0;
   file_parse_state_t state = EMPTY_FILE_PARSE_STATE;
   char last_c = 0;
-
-  int last_do_parse = -1;
-  int last_in_string = -1;
-  int last_in_comment = -1;
-  int last_in_function_body = -1;
-  int last_is_code_block_start = -1;
+  char last_last_c = 0;
 
   assert((0 == ('0' == ' ')) && "This code assumes that bool false is 0 for mathematical operations");
   assert((1 == ('0' == '0')) && "This code assumes that bool true is 1 for mathematical operations");
@@ -41,11 +38,20 @@ int file_parse(file_parse_cb_t func, void* list_ptr, const file_t* file, parse_p
   state.buf = malloc(file->len + 1);
 
   for (i = 0; i < file->len; i++) {
-    const char c = file->buf[i];
+    char c = file->buf[i];
+    /*
+     * TODO: Make the file-parser handle C++ style line-comments.
+     */
     const int is_comment_start = (!in_string && !in_comment && (('*' == c) && ('/' == last_c)));
     const int is_comment_end = (in_comment && (('/' == c) && ('*' == last_c)));
-    const int is_string_start = (!in_comment && !in_string && (('"' == c) || ('\'' == c)));
-    const int is_string_end = (in_string && ((('"' == c) || ('\'' == c)) && '\\' != last_c));
+    const int is_escaped_single_quote = (in_single_quote_string && ('\'' == c) && ('\\' == last_c) && ('\\' != last_last_c));
+    const int is_escaped_double_quote = (in_double_quote_string && ('"' == c) && ('\\' == last_c) && ('\\' != last_last_c));
+    const int is_double_quote_string_start = (!in_comment && !in_string && (('"' == c)));
+    const int is_single_quote_string_start = (!in_comment && !in_string && (('\'' == c)));
+    const int is_string_start = is_single_quote_string_start || is_double_quote_string_start;
+    const int is_double_quote_string_end = (in_double_quote_string && ('"' == c) && (!is_escaped_double_quote));
+    const int is_single_quote_string_end = (in_single_quote_string && ('\'' == c) && (!is_escaped_single_quote));
+    const int is_string_end = is_single_quote_string_end || is_double_quote_string_end;
     const int is_code_block_start = (!in_comment && !in_string && ('{' == c));
     const int is_code_block_end = (!in_comment && !in_string && ('}' == c));
     const int is_left_parentheis = (!in_comment && !in_string && ('(' == c));
@@ -56,12 +62,19 @@ int file_parse(file_parse_cb_t func, void* list_ptr, const file_t* file, parse_p
     const int is_entering_function_body = ((is_code_block_start) && (no_parenthesis_count) && (no_braces_count));
     const int is_exiting_function_body = ((is_code_block_end) && (no_parenthesis_count) && (one_braces_count));
     int do_parse;
+    int is_inserted_space = 0;
 
     if (1 == state.done) {
       break;
     }
 
     num_braces += is_code_block_start;
+
+    in_single_quote_string += is_single_quote_string_start;
+    in_single_quote_string -= is_single_quote_string_end;
+
+    in_double_quote_string += is_double_quote_string_start;
+    in_double_quote_string -= is_double_quote_string_end;
 
     in_string += is_string_start;
     in_string -= is_string_end;
@@ -72,17 +85,14 @@ int file_parse(file_parse_cb_t func, void* list_ptr, const file_t* file, parse_p
     in_function_body += is_entering_function_body;
     in_function_body -= is_exiting_function_body;
 
+    if (!in_string && !in_comment && !in_function_body && !no_parenthesis_count && no_braces_count && '\n' == c) {
+      is_inserted_space = 1;
+      c = ' ';
+    }
+
     do_parse = (!in_comment && ((parse_function_bodies && in_function_body) ||
 				(parse_declarations && !in_function_body) ||
-				is_code_block_start));
-
-    if ((last_do_parse != do_parse) ||
-        (last_in_string != in_string) ||
-        (last_in_comment != in_comment) ||
-        (last_in_function_body != in_function_body) ||
-        (last_is_code_block_start != is_code_block_start)) {
-      debug5("do_parse? %d is string? %d in comment? %d in function body? %d is code block start %d", do_parse, in_string, in_comment, in_function_body, is_code_block_start);
-    }
+				is_code_block_start || is_inserted_space));
 
     if (do_parse) {
       func(list_ptr, &state, c, line_count, column_count, i);
@@ -94,12 +104,8 @@ int file_parse(file_parse_cb_t func, void* list_ptr, const file_t* file, parse_p
     num_braces -= is_code_block_end;
     num_paren += is_left_parentheis;
     num_paren -= is_right_parentheis;
+    last_last_c = last_c;
     last_c = c;
-    last_do_parse = do_parse;
-    last_in_string = in_string;
-    last_in_comment = in_comment;
-    last_in_function_body = in_function_body;
-    last_is_code_block_start = is_code_block_start;
   }
 
   free(state.buf);
