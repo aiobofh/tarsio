@@ -43,6 +43,9 @@ static void argument_node_cleanup(argument_node_t* node) {
 void argument_list_cleanup(argument_list_t* list) {
   argument_node_t* node;
   assert((NULL != list) && "Argument 'list' must not be NULL");
+  if (NULL == list) {
+    return;
+  }
   node = list->first;
   while (NULL != node) {
     argument_node_t* next_node = node->next;
