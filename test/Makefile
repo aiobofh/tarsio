@@ -13,8 +13,10 @@ SUFFIXES :=
 ifdef SASC
 SEP:=
 EXECUTOR=vamos -c ~/.vamosrc ${SEP}
+FAILCOLLECT:=
 else
 EXECUTOR:=./
+FAILCOLLECT=-c || (echo "$$i failed")
 endif
 
 export TARSIO_BIN:=../src
@@ -29,7 +31,7 @@ include ../include/tarsio.mk
 
 .PHONY: check
 check:: $(subst .c,,$(wildcard *_test.c))
-	${Q}for i in $$(ls -1 *_test); do ${EXECUTOR}$$i -c || (echo "$$i failed") ; done; echo
+	${Q}for i in $$(ls -1 *_test); do ${EXECUTOR}$$i $(FAILCOLLECT) ; done; echo
 #	${Q}${EXECUTOR}str_test -c; \
 #	${EXECUTOR}list_test -c; \
 #	${EXECUTOR}cpp_test -c; \
