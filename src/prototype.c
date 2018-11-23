@@ -531,6 +531,7 @@ static int extract_arguments(prototype_node_t* node) {
        * Argument name length
        */
       len = end - last_space;
+      /* TODO: Check if there was a datatype name still... like "int" in "long int", in that case it's not an arg name. */
       arg_name = malloc(len + 1);
       if (NULL == arg_name) {
         error1("Out of memory while allocating argument name for '%s'", symbol);
@@ -572,6 +573,16 @@ static int extract_arguments(prototype_node_t* node) {
           memcpy(type_name, last_start, len);
         }
         type_name[len] = '\0';
+
+        /*
+         * Hande some multi-keyword datatypes with anoymous argument name.
+         */
+        if ((0 == strcmp("long", type_name)) && (0 == strcmp("int", arg_name))) {
+          type_name = realloc(type_name, strlen(type_name) + 1 + strlen(arg_name) + 1);
+          strcat(type_name, " ");
+          strcat(type_name, arg_name);
+          arg_name[0] = 0;
+        }
 
         /*
          * Remove compiler specific type annotaions.
