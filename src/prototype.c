@@ -547,22 +547,15 @@ static int extract_arguments(prototype_node_t* node) {
         arg_name = NULL;
       }
       else {
-
+        char* compkeyptr = NULL;
         /*
          * Datatype name length
          */
-        debug1(" Eliminating other compiler specific keywords in '%s'", last_start);
-        if (strstr(last_start, "*__restrict")) {
-          last_space -= strlen("*__restrict");
-        }
-
         last_space--;
         while ((' ' == *last_space) || ('*' == *last_space) || (')' == *last_space)) {
           last_space--;
         }
         len = last_space - last_start + 1;
-
-        debug1(" Type name len %lu", len);
 
         if (0 > last_space - last_start + 1) {
           debug0(" Probably the last (anonymous) argument...");
@@ -579,6 +572,13 @@ static int extract_arguments(prototype_node_t* node) {
           memcpy(type_name, last_start, len);
         }
         type_name[len] = '\0';
+
+        /*
+         * Remove compiler specific type annotaions.
+         */
+        if (NULL != (compkeyptr = strstr(type_name, " *__restrict"))) {
+          *(compkeyptr) = '\0';
+        }
 
         debug1(" Located type-name '%s'", type_name);
 
