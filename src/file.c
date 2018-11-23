@@ -122,6 +122,10 @@ int file_init(file_t* file, const char* filename) {
   assert((NULL != file) && "Argument 'file' must not be NULL");
   assert((NULL != filename) && "Argument 'filename' must not be NULL");
 
+  if ((NULL == file) || (NULL == filename)) {
+    return -5;
+  }
+
   if (NULL == (fd = fopen(filename, "r"))) {
     fprintf(stderr, "ERROR: File '%s' not found.\n", filename);
     retval = -1;
@@ -164,6 +168,9 @@ int file_init(file_t* file, const char* filename) {
 
 void file_cleanup(file_t* file) {
   assert((NULL != file) && "Argument 'file' must not be NULL");
+  if (NULL == file) {
+    return;
+  }
   if (NULL != file->buf) {
     free(file->buf);
   }

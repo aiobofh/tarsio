@@ -48,6 +48,24 @@ test(fsize_shall_forward_ftell_return_value) {
 /*****************************************************************************
  * file_init()
  */
+test(init_shall_assert_file_is_not_NULL) {
+  file_init((file_t*)NULL, (char*)0x5678);
+#ifndef SASC
+  assert_eq(1, m.__assert_fail.call_count);
+#else
+  skip("Not applicable on SASC");
+#endif
+}
+
+test(init_shall_assert_filename_is_not_NULL) {
+  file_init((file_t*)0x1234, (char*)NULL);
+#ifndef SASC
+  assert_eq(1, m.__assert_fail.call_count);
+#else
+  skip("Not applicable on SASC");
+#endif
+}
+
 test(init_shall_open_the_correct_file_for_reading) {
   file_init((file_t*)0x1234, (char*)0x5678);
   assert_eq(1, m.fopen.call_count);
@@ -56,6 +74,7 @@ test(init_shall_open_the_correct_file_for_reading) {
 }
 
 test(init_shall_return_1_negative_if_file_can_not_be_opened) {
+  m.fopen.retval = NULL;
   assert_eq(-1, file_init((file_t*)0x1234, (char*)0x5678));
 }
 
@@ -161,3 +180,26 @@ test(init_shall_load_the_file_into_the_corrct_memory) {
 /*****************************************************************************
  * file_cleanup()
  */
+test(cleanup_shall_assert_file_is_not_NULL) {
+  file_cleanup((file_t*)NULL);
+#ifndef SASC
+  assert_eq(1, m.__assert_fail.call_count);
+#else
+  skip("Not applicable on SASC");
+#endif
+}
+
+test(cleanup_shall_not_free_loaded_file_if_not_allocated) {
+  file_t file;
+  file.buf = NULL;
+  file_cleanup(&file);
+  assert_eq(0, m.free.call_count);
+}
+
+test(cleanup_shall_free_loaded_file_in_memory) {
+  file_t file;
+  file.buf = (char*)0x1234;
+  file_cleanup(&file);
+  assert_eq(1, m.free.call_count);
+  assert_eq((char*)0x1234, m.free.args.arg0);
+}
