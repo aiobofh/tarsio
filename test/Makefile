@@ -28,14 +28,15 @@ all:
 include ../include/tarsio.mk
 
 .PHONY: check
-check:: str_test list_test cpp_test testcase_test datatype_test symbol_usage_test argument_test
-	${Q}${EXECUTOR}str_test -c; \
-	${EXECUTOR}list_test -c; \
-	${EXECUTOR}cpp_test -c; \
-	${EXECUTOR}testcase_test -c; \
-	${EXECUTOR}datatype_test -c; \
-	${EXECUTOR}symbol_usage_test -c; \
-	${EXECUTOR}argument_test
+check:: $(subst .c,,$(wildcard *_test.c))
+	${Q}for i in $$(ls -1 *_test); do ${EXECUTOR}$$i -c || (echo "$$i failed") ; done; echo
+#	${Q}${EXECUTOR}str_test -c; \
+#	${EXECUTOR}list_test -c; \
+#	${EXECUTOR}cpp_test -c; \
+#	${EXECUTOR}testcase_test -c; \
+#	${EXECUTOR}datatype_test -c; \
+#	${EXECUTOR}symbol_usage_test -c; \
+#	${EXECUTOR}argument_test
 
 clean::
 	${Q}${RM} *.uaem *.lnk *.info
