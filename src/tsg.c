@@ -126,9 +126,9 @@ static void generate_struct(prototype_list_t* list, cpp_list_t* cpp_list) {
       for (i = 0; i < anode->info.datatype.datatype_definition.is_pointer; i++) {
         printf("*");
       }
-      /*
-      printf(" %s", anode->info.name);
-       */
+
+      printf(" /* %s */", anode->info.name);
+
       if (NULL != anode->next) {
         printf(", ");
       }
