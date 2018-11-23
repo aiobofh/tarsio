@@ -13,7 +13,7 @@ SUFFIXES :=
 ifdef SASC
 SEP:=
 EXECUTOR=vamos -c ~/.vamosrc ${SEP}
-FAILCOLLECT:=
+FAILCOLLECT:=COMPACT
 else
 EXECUTOR:=./
 FAILCOLLECT=-c || (echo "$$i failed")

@@ -143,9 +143,13 @@ static void generate_proxies(prototype_list_t* list, const char* file) {
          "void __tarsio_make_fake_dependency(void);\n\n"
          "void __tarsio_make_fake_dependency(void) {\n"
          "  __tarsio_fake_function_pointer func;\n");
+
   if (NULL == list->first) {
+    printf("  func = NULL;\n");
     printf("  (void)func;\n");
+    printf("  if (1 == 2) func();");
   }
+
   for (node = list->first; NULL != node; node = node->next) {
     printf("  func = (__tarsio_fake_function_pointer)__tarsio_proxy_%s;\n", node->info.symbol);
     printf("  func();\n");

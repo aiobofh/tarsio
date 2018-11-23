@@ -136,6 +136,7 @@ static void generate_tarsio_init(void) {
        "}\n");
 }
 
+#ifndef SASC
 static void generate_tarsio_handle_arguments(void) {
   puts("void __tarsio_handle_arguments(int argc, char* argv[]) {\n"
        "  int i;\n"
@@ -146,12 +147,30 @@ static void generate_tarsio_handle_arguments(void) {
        "    if (0 == strcmp(argv[i], \"-v\")) {\n"
        "      __tarsio_options.verbose = 1;\n"
        "    }\n"
-       "    else if (0 == strcmp(argv[i], \"-x\")) {\n"
+       "    if (0 == strcmp(argv[i], \"-x\")) {\n"
        "      __tarsio_options.xml_output = 1;\n"
        "    }\n"
        "  }\n"
        "}\n");
 }
+#else
+static void generate_tarsio_handle_arguments(void) {
+  puts("void __tarsio_handle_arguments(int argc, char* argv[]) {\n"
+       "  int i;\n"
+       "  for (i = 1; i < argc; i++) {\n"
+       "    if (0 == strcmp(argv[i], \"COMPACT\")) {\n"
+       "      __tarsio_options.compact = 1;\n"
+       "    }\n"
+       "    if (0 == strcmp(argv[i], \"VERBOSE\")) {\n"
+       "      __tarsio_options.verbose = 1;\n"
+       "    }\n"
+       "    if (0 == strcmp(argv[i], \"XML\")) {\n"
+       "      __tarsio_options.xml_output = 1;\n"
+       "    }\n"
+       "  }\n"
+       "}\n");
+}
+#endif
 
 static void generate_tarsio_skip(void) {
   puts("void __tarsio_skip(const char* reason, const char* test_name) {\n"
