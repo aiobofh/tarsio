@@ -23,6 +23,10 @@ export TARSIO_BIN:=../src
 export Q
 export PATH:=${PATH}:../src
 
+ifndef VERBOSE
+.SILENT:
+endif
+
 all:
 	${Q}${MAKE} --no-print-directory -C ../src/ && \
 	${MAKE} --no-print-directory check
