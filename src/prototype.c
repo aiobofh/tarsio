@@ -51,8 +51,6 @@ static char* extract_symbol(const char* raw) {
 
   debug2("Extracted symbol '%s' from >>'%s'<<", symbol, raw);
 
-  fprintf(stderr, "DEBUG: extracted '%s'\n", symbol);
-
   return symbol;
 }
 
@@ -286,7 +284,6 @@ static int extract_prototypes(void* list_ptr, file_parse_state_t* state, const c
      * A new prototype is found and should be added to the list of prototypes.
      */
     if (state->buf != strstr(state->buf, "typedef ")) {
-      fprintf(stderr, "DEBUG: adding '%s'\n", state->buf);
       prototype_list_append(list, state->buf, is_function_implementation, offset - strlen(state->buf), line, col);
     }
     state->found_parenthesis = 0;
@@ -366,10 +363,6 @@ int prototype_list_init(prototype_list_t* list, const file_t* file) {
 
   file_parse(extract_prototypes, list, file, PARSE_DECLARATIONS, 1);
 
-  for (node = list->first; NULL != node; node = node->next) {
-    fprintf(stderr, "DEBUG:   %s\n", node->info.symbol);
-  }
-
   return 0;
 }
 
@@ -379,12 +372,8 @@ static int find_symbol_usage(void* list_ptr, file_parse_state_t* state, const ch
 
   if ((('a' > c) || ('z' < c)) && (('0' > c) || ('9' < c)) && ('_' != c)) {
     for (node = list->first; NULL != node; node = node->next) {
-      if (strcmp(state->buf, node->info.symbol) == 0) {
-        fprintf(stderr, "DEBUG: Potential hit: '%s' %s line: %lu col: %lu offs: %lu\n", node->info.symbol, state->buf, line, col-strlen(node->info.symbol), offset);
-      }
       if (0 == strcmp(state->buf, node->info.symbol)) {
         debug1("Possible hit: '%s'", state->buf);
-        fprintf(stderr, "DEBUG: Found symbol usage '%s' %lu offs: %lu\n", node->info.symbol, last_function_start, offset);
         symbol_usage_append(&node->info.symbol_usage_list, line, col - strlen(node->info.symbol), offset, last_function_start, (void*)node);
         break;
       }
@@ -441,15 +430,6 @@ int prototype_remove_unused(prototype_list_t* list) {
 
     node = next_node;
     list->cnt--;
-  }
-
-  fprintf(stderr, "DEBUG: NODES LEFT AFTER CLEANUP:\n");
-  for (node = list->first; NULL != node; node = node->next) {
-    symbol_usage_node_t* snode;
-    fprintf(stderr, "DEBUG:   %s used in %s at: \n", node->info.symbol, list->filename);
-    for (snode = node->info.symbol_usage_list.first; NULL != snode; snode = snode->next) {
-      fprintf(stderr, "DEBUG:    line: %lu col %lu (offs: %lu)\n", snode->info.line, snode->info.col, snode->info.offset);
-    }
   }
 
   return 0;
@@ -512,9 +492,6 @@ static int extract_return_type(prototype_node_t* node) {
 
   rawlen = strlen(raw);
 
-
-  fprintf(stderr, "Before '%s'\n", raw);
-
   /*
    * Remove compiler specific keywords
    */
@@ -523,9 +500,6 @@ static int extract_return_type(prototype_node_t* node) {
   i = 0;
   tmpbuf_i = 0;
   while (i < len + 1) {
-    /*
-    fprintf(stderr, "DEBUG: '%s' '%c' %lu %lu\n", &raw[i], raw[i], i, rawlen);
-    */
     if ((' ' == raw[i + 0]) &&
         ('_' == raw[i + 1]) &&
         ('_' == raw[i + 2]) &&
@@ -551,8 +525,6 @@ static int extract_return_type(prototype_node_t* node) {
   }
 
   len = tmpbuf_i;
-
-  fprintf(stderr, "After '%s'\n", tmpbuf);
 
   /*
    * Count asterisks
@@ -591,8 +563,6 @@ static int extract_return_type(prototype_node_t* node) {
 
   node->info.datatype.name_len = strlen(buf) + 1;
   node->info.datatype.name = buf;
-
-  fprintf(stderr, "DEBUG: Retval '%s'\n", node->info.datatype.name);
 
   free(tmpbuf);
   return 0;

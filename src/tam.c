@@ -81,25 +81,6 @@ static int tam_options_init(tam_options_t* options, int argc, char* argv[])
   return 0;
 }
 
-/*
-size_t first_func_offset(prototype_list_t* list) {
-  prototype_node_t* node;
-
-  return list->first_function_implementation_offset;
-
-  for (node = list->first; NULL != node; node = node->next) {
-    fprintf(stderr, "DEBUG: '%s'\n", node->info.symbol);
-    if (node->info.is_function_implementation) {
-      fprintf(stderr, "DEBUG: First function found %lu\n", node->info.raw_prototype.offset);
-      fprintf(stderr, "First func offset %lu\n", node->info.raw_prototype.offset);
-      return node->info.raw_prototype.offset;
-    }
-  }
-  fprintf(stderr, "ERROR: No first function found\n");
-  return 0;
-}
-*/
-
 enum sort_search_e {
   SEARCH_NONE,
   SEARCH_FIRST_FUNCTION,
@@ -133,66 +114,14 @@ static void generate_extern_proxy_prototype(prototype_list_t* list, const size_t
 
   generate_prototype(snode->info.prototype_node, "extern ", "__tarsio_proxy_", ";");
   snode->info.last_function_start = 0; /* Never declare this one again */
-
-  return;
-
-
-  /* I wonder if this works in all compilers :D */
-  /*
-  for (node = list->first; NULL != node; node = node->next) {
-    fprintf(stderr, "DEBUG: %s %p\n", node->info.symbol, node->info.symbol_usage_list.first);
-
-    symbol_usage_list_t* slist = &node->info.symbol_usage_list;
-    symbol_usage_node_t* snode;
-    for (snode = slist->first; NULL != snode; snode = snode->next) {
-
-      fprintf(stderr, "DEBUG: is %lu == %lu\n",
-              snode->info.last_function_start, offset);
-
-      if (offset == snode->info.last_function_start) {
-        fprintf(stderr, "DEBUG: Yes\n");
-        generate_prototype(node, "extern ", "__tarsio_proxy_", ";");
-        snode->info.last_function_start = 0;
-      }
-    }
-  }
-  printf("\n");
-  */
 }
-
-/*
-static void generate_extern_proxy_prototypes(prototype_list_t* list) {
-  prototype_node_t* node;
-  for (node = list->first; NULL != node; node = node->next) {
-    generate_prototype(node, "extern ", "__tarsio_proxy_", ";");
-  }
-  printf("\n");
-}
-*/
-
-
-/*
-static replace_node_t* search_first_function(replace_list_t* list,
-                                             size_t first_func_offset)
-{
-  replace_node_t* node;
-  for (node = list->first; NULL != node; node = node->next) {
-    if (first_func_offset < node->offset) {
-      break;
-    }
-  }
-  return node;
-}
-*/
 
 static replace_node_t* search_static_function(replace_list_t* list,
                                               prototype_node_t* pnode)
 {
   replace_node_t* node;
   for (node = list->first; NULL != node; node = node->next) {
-    fprintf(stderr, "DEBUG: static func %lu < %lu (%s) %d?\n", pnode->info.raw_prototype.offset, node->offset, node->prototype_node->info.symbol, node->search);
     if (pnode->info.raw_prototype.offset < node->offset) {
-      fprintf(stderr, "DEBUG:   Found it %lu < %lu\n", pnode->info.raw_prototype.offset, node->offset);
       return node;
     }
   }
@@ -204,13 +133,9 @@ static replace_node_t* search_function_call(replace_list_t* list,
 {
   replace_node_t* node;
   prototype_node_t* p;
-  debug0("Searching for function calls to replaced functions");
   for (node = list->first; NULL != node; node = node->next) {
     p = (prototype_node_t*)snode->info.prototype_node;
-    fprintf(stderr, "DEBUG: func %s call %lu < %lu (%s) %d?\n", p->info.symbol, snode->info.offset, node->offset, node->prototype_node->info.symbol, node->search);
-    // if (snode->info.last_function_start < node->offset) {
     if (snode->info.offset < node->offset) {
-      fprintf(stderr, "DEBUG:   Found it %lu < %lu\n", snode->info.offset, node->offset);
       return node;
     }
   }
@@ -222,10 +147,7 @@ static replace_node_t* search_function_head(replace_list_t* list,
 {
   replace_node_t* node;
   for (node = list->first; NULL != node; node = node->next) {
-    fprintf(stderr, "DEBUG: func head %lu < %lu (%s) %d?\n", snode->info.offset, node->offset, node->prototype_node->info.symbol, node->search);
-    // if (snode->info.offset < node->offset) {
     if (snode->info.last_function_start < node->offset) {
-      fprintf(stderr, "DEBUG:   Found it %lu < %lu\n", snode->info.offset, node->offset);
       return node;
     }
   }
@@ -250,12 +172,10 @@ static replace_node_t* new_replace_node(prototype_node_t* pnode,
   node->search = search;
   node->offset = 0;
   if (NULL != pnode) {
-    fprintf(stderr, "DEBUG: Grabbing line and column from pnode\n");
     node->line = pnode->info.raw_prototype.line;
     node->column = pnode->info.raw_prototype.column;
   }
   else if (NULL != snode) {
-    fprintf(stderr, "DEBUG: Grabbing line and column from snode\n");
     node->line = snode->info.line;
     node->column = snode->info.col;
   }
@@ -273,7 +193,6 @@ static void replace_list_add(replace_list_t* list,
 
   if (NULL == node) {
     if (NULL != list->last) {
-      fprintf(stderr, "DEBUG: ---- Adding node %s last in list (offset %lu)\n", new_node->prototype_node->info.symbol, new_node->offset);
       list->last->next = new_node;
     }
     new_node->prev = list->last;
@@ -284,10 +203,8 @@ static void replace_list_add(replace_list_t* list,
 
     if (NULL == prev) {
       list->first = new_node;
-      fprintf(stderr, "DEBUG: ---- Inserting node %s first in list (offset %lu before %lu)\n", new_node->prototype_node->info.symbol, new_node->offset, node->offset);
     }
     else {
-      fprintf(stderr, "DEBUG: ---- Inserting node %s in list (offset %lu between %lu and %lu)\n", new_node->prototype_node->info.symbol, new_node->offset, node->offset, prev->offset);
       prev->next = new_node;
     }
     node->prev = new_node;
@@ -295,28 +212,6 @@ static void replace_list_add(replace_list_t* list,
     new_node->next = node;
   }
 }
-
-/*
-static int insert_first_function_offset(replace_list_t* list,
-                                        size_t offset)
-{
-  replace_node_t* new_node;
-  replace_node_t* node;
-  new_node = new_replace_node(NULL, NULL, SEARCH_FIRST_FUNCTION);
-  if (NULL == new_node) {
-    error0("Unable to create new sorted usage node");
-    return -1;
-  }
-
-  node = search_first_function(list, offset);
-
-  new_node->offset = offset;
-
-  replace_list_add(list, node, new_node);
-
-  return 0;
-}
-*/
 
 static int insert_static_function_offset(replace_list_t* list,
                                          prototype_node_t* pnode)
@@ -371,7 +266,6 @@ static int insert_calling_function_head_offset(replace_list_t* list,
   replace_node_t* node;
 
   if (0 == snode->info.last_function_start) {
-    fprintf(stderr, "DEBUG: No position\n");
     return 0;
   }
   new_node = new_replace_node(pnode, snode, SEARCH_FUNCTION_HEAD);
@@ -394,21 +288,7 @@ static int insert_calling_function_head_offset(replace_list_t* list,
 static int sort_usage(replace_list_t* slist, prototype_list_t* plist) {
   prototype_node_t* pnode;
   /*
-  size_t first_func_offs = first_func_offset(plist);
-  */
-  /*
-   * First add the offset to the first function found in the pre-processsed
-   * source code version of the design under test, because this is a good
-   * place to insert extern declarations to all the proxified versions that
-   * are generated in another file.
-   */
-
-  /*
-  insert_first_function_offset(slist, first_func_offs);
-  */
-
-  /*
-   * Lastly add offsets to all the usage (function calls) to any function
+   * First add offsets to all the usage (function calls) to any function
    * that is supposed to have a generated proxy function. This is the actual
    * auto-mocking consequence. ALWAYS making sure that the design under test
    * use the proxy functions instead of the real functions.
@@ -439,7 +319,6 @@ static int sort_usage(replace_list_t* slist, prototype_list_t* plist) {
    * the modal functions in the design under test can be called from the
    * testcases.
    */
-
   for (pnode = plist->first; NULL != pnode; pnode = pnode->next) {
     if (pnode->info.linkage_definition.is_static) {
       debug1("Finding offset where to put the static declaration for %s", pnode->info.symbol);
@@ -487,7 +366,6 @@ static void generate_proxified(prototype_list_t* list, file_t* file) {
   }
 
   for (node = slist.first; NULL != node; node = node->next) {
-    fprintf(stderr, "CHUNK %lu-%lu\n", offset, node->offset);
     offset = node->offset;
   }
 
@@ -530,78 +408,6 @@ static void generate_proxified(prototype_list_t* list, file_t* file) {
     }
     node = node->next;
   }
-
-  return;
-
-  node = slist.first;
-  while (offset <= file->len) {
-    if (NULL == node) {
-      /* Write the rest of the file and exit */
-      fwrite(&file->buf[offset], file->len - offset, 1, stdout);
-      break;
-    }
-    else if (SEARCH_FUNCTION_HEAD == node->search) {
-      /* TODO: This fucks up the line-numbering in the pre-processed file
-       *       when using GCC and others, since it inserts lines right
-       *       above the first usage of a proxyable function to have the
-       *       extern declarations of the proxy function declared before
-       *       the function call */
-      fprintf(stderr, "DEBUG: making som extern function before line: %lu column: %lu (offset %lu)\n", node->line, node->column, node->offset);
-      generate_extern_proxy_prototype(list, offset, node);
-      if (node->next && node->next->offset != node->offset) {
-        fwrite(&file->buf[offset], node->next->offset - offset, 1, stdout);
-        offset = node->next->offset;
-      }
-      /*
-      fwrite(&file->buf[offset], node->offset - offset, 1, stdout);
-      */
-      /*
-      offset = node->offset;
-      */
-    }
-    /*
-    else if (SEARCH_FIRST_FUNCTION == node->search) {
-      fprintf(stderr, "DEBUG: About to inser texterns %lu\n", node->offset);
-      while ('\n' != file->buf[node->offset]) {
-        fprintf(stderr, "DEBUG: '%c'\n", file->buf[node->offset]);
-        node->offset--;
-      }
-
-      fwrite(&file->buf[offset], node->offset - offset, 1, stdout);
-      generate_extern_proxy_prototypes(list);
-      offset = node->offset;
-    }
-    */
-    else if (SEARCH_STATIC_FUNCTION == node->search) {
-      /* Skip the 'static' keyword, so that all functions are callable from
-       * the checks. */
-      fprintf(stderr, "DEBUG: Stripping static at line: %lu column: %lu (offset %lu)\n", node->line, node->column, node->offset);
-      fprintf(stderr, "DEBUG:   offset: %lu\n", offset);
-      fprintf(stderr, "DEBUG:   node->offset: %lu\n", node->offset);
-      fprintf(stderr, "DEBUG:   node->offset - offset: %lu\n", node->offset - offset);
-      fprintf(stderr, "DEBUG:   node->offset + strlen(\"static \") + 1 = %lu\n", node->offset + strlen("static ") + 1);
-      fwrite(&file->buf[offset], node->offset - offset, 1, stdout);
-      offset = node->offset + strlen("static ") + 1;
-    }
-    else if (SEARCH_FUNCTION_CALL == node->search) {
-      /* Prefix _all_ function calls to known functions with the tarsio proxy
-       * prefix - So that we can be sure no real code is called directly, at
-       * least not without passing via the proxy function. */
-
-      fwrite(&file->buf[offset], node->offset - offset, 1, stdout);
-
-      printf("__tarsio_proxy_");
-      offset = node->offset;
-    }
-    else {
-      error0("No search type should never happen :)");
-      return;
-    }
-
-    node = node->next;
-  }
-
-  return;
 }
 
 /****************************************************************************

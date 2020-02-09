@@ -60,11 +60,6 @@ static void transform_structs(prototype_list_t* list, char* buf) {
 
     pn = (prototype_node_t*)buf;
 
-    /*
-    fprintf(stderr, "DEBUG: idx: %lu of %lu pn: %p %s", i, l->cnt, pn, pn->info.symbol);
-    */
-    fprintf(stderr, "DEBUG: idx: %lu of %lu pn: %p", i, l->cnt, pn);
-
     if (NULL == pn) {
       error0("Prototype node was NULL in file, regardles of the number of nodes in list");
     }
@@ -101,9 +96,8 @@ static void transform_structs(prototype_list_t* list, char* buf) {
 
     debug0(" DONE");
 
-    debug1(" Transforming symbol usage list pointer to first node %lu usages", pn->info.symbol_usage_list.cnt);
     /*
-    fprintf(stderr, "DEBUG: Transforming symbol '%s' usage list pointer to first node %lu usages\n", pn->info.symbol, pn->info.symbol_usage_list.cnt);
+    debug1(" Transforming symbol usage list pointer to first node %lu usages", pn->info.symbol_usage_list.cnt);
     */
     if (0 == pn->info.symbol_usage_list.cnt) {
       sl->first = sl->last = NULL;
@@ -114,7 +108,9 @@ static void transform_structs(prototype_list_t* list, char* buf) {
     sn = NULL;
     for (k = 0; k < pn->info.symbol_usage_list.cnt; k++) {
       sn = (symbol_usage_node_t*)buf;
+      /*
       debug4("  %p line: %lu col: %lu offset: %lu", sn, sn->info.line, sn->info.col, sn->info.offset);
+      */
       /*
       fprintf(stderr, "DEBUG: REREAD %s usage %p line: %lu col: %lu offset: %lu must be extern before %lu\n", pn->info.symbol, sn, sn->info.line, sn->info.col, sn->info.offset, sn->info.last_function_start);
       */
