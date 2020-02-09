@@ -8,9 +8,9 @@
 # define ASSERT __assert
 #else
 # ifdef VBCC
-#  define MEMSET __asm_memset
-#  define STRLEN __asm_strlen
-#  define STRCPY __asm_strcpy
+#  define MEMSET memset
+#  define STRLEN strlen
+#  define STRCPY strcpy
 #  define ASSERT abort
 # else
 #  define MEMSET memset

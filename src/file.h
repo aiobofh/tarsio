@@ -17,6 +17,7 @@ struct file_parse_state_s {
   int found_parenthesis;
   int skip_until_linefeed;
   char last_c;
+  char prev_last_c;
   char* buf;
   size_t idx;
   size_t line_feeds_in_declaration;
@@ -24,7 +25,7 @@ struct file_parse_state_s {
 };
 typedef struct file_parse_state_s file_parse_state_t;
 
-#define EMPTY_FILE_PARSE_STATE {0, 0, 0, 0, NULL, 0, 0, 0}
+#define EMPTY_FILE_PARSE_STATE {0, 0, 0, 0, 0, NULL, 0, 0, 0}
 
 typedef int (*file_parse_cb_t)(void* list_ptr, file_parse_state_t* state, const char c, const size_t line ,const size_t col, const size_t offset, const size_t last_function_start);
 

@@ -60,7 +60,7 @@ struct prototype_list_s {
 };
 typedef struct prototype_list_s prototype_list_t;
 
-#define PROTOTYPE_LIST_EMPTY {0, 0, 0, NULL, NULL}
+#define PROTOTYPE_LIST_EMPTY {NULL, 0, 0, 0, NULL, NULL}
 
 int prototype_list_init(prototype_list_t* list, const file_t* file);
 int prototype_usage(prototype_list_t* list, const file_t* file);

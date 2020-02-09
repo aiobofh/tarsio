@@ -206,6 +206,7 @@ static void prototype_list_append(prototype_list_t* list, const char* raw, size_
 static int extract_prototypes(void* list_ptr, file_parse_state_t* state, const char c, const size_t line, const size_t col, const size_t offset, const size_t last_function_start) {
   prototype_list_t* list = (prototype_list_t*)list_ptr;
   const char last_c = state->last_c;
+  const char prev_last_c = state->prev_last_c;
   const int is_preprocessor = (('#' == c) && ('\n' == last_c));
   const int is_white_space = ((' ' == c) || ('\n' == c));
   const int last_is_white_space = ((' ' == last_c) || ('\n' == last_c));
@@ -227,7 +228,7 @@ static int extract_prototypes(void* list_ptr, file_parse_state_t* state, const c
 #endif
   state->line_feeds_in_declaration += ('\n' == c);
 
-  if (state->skip_until_linefeed && ('\n' == last_c)) {
+  if (state->skip_until_linefeed && ('\n' == prev_last_c)) {
     state->skip_until_linefeed = 0;
   }
   if (is_preprocessor) {
@@ -292,6 +293,7 @@ static int extract_prototypes(void* list_ptr, file_parse_state_t* state, const c
     state->line_feeds_in_declaration = 0;
   }
 
+  state->prev_last_c = state->last_c;
   state->last_c = c;
 
   return 0;

@@ -10,7 +10,7 @@
 # define ASSERT __assert
 #else
 # ifdef VBCC
-#  define MEMSET __asm_memset
+#  define MEMSET memset
 #  define ASSERT abort
 # else
 #  define MEMSET memset

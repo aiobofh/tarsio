@@ -293,9 +293,9 @@ static int sort_usage(replace_list_t* slist, prototype_list_t* plist) {
    */
 
   for (pnode = plist->first; NULL != pnode; pnode = pnode->next) {
-    debug1("Finding offset where to put the declaration for %s", pnode->info.symbol);
     symbol_usage_list_t* sl = &pnode->info.symbol_usage_list;
     symbol_usage_node_t* sn;
+    debug1("Finding offset where to put the declaration for %s", pnode->info.symbol);
     for (sn = sl->first; NULL != sn; sn = sn->next) {
       debug3("  line: %lu column: %lu (offset: %lu)", sn->info.line, sn->info.col, sn->info.offset);
       if (insert_calling_function_head_offset(slist, pnode, sn)) {
@@ -379,6 +379,9 @@ static void generate_proxified(prototype_list_t* list, file_t* file) {
     else if (SEARCH_FUNCTION_HEAD == node->search) {
       fwrite(&file->buf[offset], node->offset - offset, 1, stdout);
       debug4("Writing %lu %lu %lu bytes chunk (before function head exetern %s)", offset, node->offset, node->offset - offset, node->prototype_node->info.symbol);
+#ifdef VBCC
+      fprintf(stderr, "DEBUG: '%d'\n", (int)file->buf[offset + node->offset]);
+#endif
       generate_extern_proxy_prototype(list, offset, node);
       offset = node->offset;
     }
