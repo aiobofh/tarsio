@@ -132,9 +132,7 @@ static replace_node_t* search_function_call(replace_list_t* list,
                                             symbol_usage_node_t* snode)
 {
   replace_node_t* node;
-  prototype_node_t* p;
   for (node = list->first; NULL != node; node = node->next) {
-    p = (prototype_node_t*)snode->info.prototype_node;
     if (snode->info.offset < node->offset) {
       return node;
     }
@@ -358,7 +356,6 @@ static void generate_proxified(prototype_list_t* list, file_t* file) {
   replace_list_t slist;
   replace_node_t* node;
   size_t offset = 0;
-  size_t line = 0;
   slist.first = slist.last = NULL;
   if (0 != sort_usage(&slist, list)) {
     error0("Out of memory while sorting usage list\n");
@@ -370,37 +367,33 @@ static void generate_proxified(prototype_list_t* list, file_t* file) {
   }
 
   offset = 0;
-  line = 0;
 
   node = slist.first;
   while (offset < file->len) {
     if (NULL == node) {
       /* Write the rest of the file and exit */
       fwrite(&file->buf[offset], file->len - offset, 1, stdout);
-      debug2("Writing %lu bytes chunk line %lu to end (file end)", file->len - offset, line);
+      debug1("Writing %lu bytes chunk to end (file end)", file->len - offset);
       break;
     }
     else if (SEARCH_FUNCTION_HEAD == node->search) {
       fwrite(&file->buf[offset], node->offset - offset, 1, stdout);
-      debug6("Writing %lu %lu %lu bytes chunk line %lu-%lu (before function head exetern %s)", offset, node->offset, node->offset - offset, line, node->line, node->prototype_node->info.symbol);
+      debug4("Writing %lu %lu %lu bytes chunk (before function head exetern %s)", offset, node->offset, node->offset - offset, node->prototype_node->info.symbol);
       generate_extern_proxy_prototype(list, offset, node);
       offset = node->offset;
-      line = node->line;
     }
     else if (SEARCH_STATIC_FUNCTION == node->search) {
       /* Output all file contents since last offset increase */
       fwrite(&file->buf[offset], node->offset - offset, 1, stdout);
-      debug6("Writing %lu %lu %lu bytes chunk line %lu-%lu (before static removal static %s)", offset, node->offset, node->offset - offset, line, node->line, node->prototype_node->info.symbol);
+      debug4("Writing %lu %lu %lu bytes chunk (before static removal static %s)", offset, node->offset, node->offset - offset, node->prototype_node->info.symbol);
       offset = node->offset + strlen("static ") + 1;
-      line = node->line;
     }
     else if (SEARCH_FUNCTION_CALL == node->search) {
       /* Output all file contents since last offset increase */
       fwrite(&file->buf[offset], node->offset - offset, 1, stdout);
-      debug6("Writing %lu %lu %lu bytes chunk line %lu-%lu (before function call __tarsio_proxy %s)", offset, node->offset, node->offset - offset, line, node->line, node->prototype_node->info.symbol);
+      debug4("Writing %lu %lu %lu bytes chunk (before function call __tarsio_proxy %s)", offset, node->offset, node->offset - offset, node->prototype_node->info.symbol);
       printf("__tarsio_proxy_");
       offset = node->offset;
-      line = node->line;
     }
     else {
       error0("This should never happen");

@@ -353,8 +353,6 @@ static void prototype_list_remove(prototype_list_t* list, prototype_node_t* node
 
 
 int prototype_list_init(prototype_list_t* list, const file_t* file) {
-  prototype_node_t* node;
-
   assert((NULL != list) && "Argument 'list' must not be NULL");
   assert((NULL != file) && "Argument 'file' must not be NULL");
 
@@ -445,7 +443,6 @@ static int extract_return_type(prototype_node_t* node) {
   size_t tmpbuf_i = 0;
   size_t i;
   size_t asterisks = 0;
-  size_t rawlen;
 
   if (NULL == symbol_start) {
     error2("Could not find expected symbol '%s' in '%s'", symbol, raw);
@@ -489,8 +486,6 @@ static int extract_return_type(prototype_node_t* node) {
   }
 
   len = symbol_start - raw - 1;
-
-  rawlen = strlen(raw);
 
   /*
    * Remove compiler specific keywords
