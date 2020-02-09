@@ -6,7 +6,7 @@
 #include "debug.h"
 #include "symbol_usage.h"
 
-static symbol_usage_node_t* symbol_usage_node_new(const size_t line, const size_t col, const size_t offset) {
+static symbol_usage_node_t* symbol_usage_node_new(const size_t line, const size_t col, const size_t offset, const size_t last_function_start, void* prototype_node) {
   symbol_usage_node_t* node = malloc(sizeof(*node));
   if (NULL == node) {
     error0("Out of memory while allocating usage node");
@@ -16,12 +16,13 @@ static symbol_usage_node_t* symbol_usage_node_new(const size_t line, const size_
   node->info.line = line;
   node->info.col = col;
   node->info.offset = offset;
-
+  node->info.last_function_start = last_function_start;
+  node->info.prototype_node = prototype_node; /* Loose connection via void* */
   return node;
 }
 
-void symbol_usage_append(symbol_usage_list_t* list, const size_t line, const size_t col, const size_t offset) {
-  symbol_usage_node_t* node = symbol_usage_node_new(line, col, offset);
+void symbol_usage_append(symbol_usage_list_t* list, const size_t line, const size_t col, const size_t offset, const size_t last_function_start, void* prototype_node) {
+  symbol_usage_node_t* node = symbol_usage_node_new(line, col, offset, last_function_start, prototype_node);
   if (NULL == node) {
     return;
   }

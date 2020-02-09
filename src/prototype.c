@@ -11,7 +11,13 @@
 static char* extract_symbol(const char* raw) {
   char* symbol;
   size_t len = 0;
-  char* p = strstr(raw, "(");
+  char* ptr;
+  char* p;
+  char* r = (char*)raw;
+  if (NULL != (ptr = strstr(r, " __cdecl "))) {
+    r = ptr;
+  }
+  p = strstr(r, "(");
   if (NULL == p) {
     error1("Could not find first parenthesis in the detected funciton delcaration '%s'", raw);
     return NULL;
@@ -26,7 +32,10 @@ static char* extract_symbol(const char* raw) {
   while (((' ' == *p) || ('\t' == *p)) && (p > raw)) {
     p--;
   }
+  /*
   while ((p > raw) && ((' ' != *p) && ('*' != *p))) {
+  */
+  while ((p > r) && ((' ' != *p) && ('*' != *p))) {
     len++;
     p--;
   }
@@ -40,7 +49,9 @@ static char* extract_symbol(const char* raw) {
   memcpy(symbol, p, len);
   symbol[len] = '\0';
 
-  debug2("Extracted symbol '%s' '%s'", symbol, raw);
+  debug2("Extracted symbol '%s' from >>'%s'<<", symbol, raw);
+
+  fprintf(stderr, "DEBUG: extracted '%s'\n", symbol);
 
   return symbol;
 }
@@ -66,12 +77,15 @@ static char* washing_machine(const char* raw) {
     error1("Out of memory when allocating washed string for '%s'", raw);
     return NULL;
   }
-
+  memset(d, 0, len + 1);
   for (i = 0; i < len; i++) {
     const char c = raw[i];
     const char next_c = raw[i + 1];
     if (&raw[i] == strstr(&raw[i], " __reg (")) {
-      i += strlen(" __reg( 'a0' ) ");
+      i += strlen(" __reg ( ");
+      while (')' != raw[i]) {
+        i++;
+      }
     }
     if (('(' == next_c) && (' ' == c)) {
       continue;
@@ -85,9 +99,18 @@ static char* washing_machine(const char* raw) {
     if ((';' == next_c) && (' ' == c)) {
       continue;
     }
+    if ((' ' == last_c) && (' ' == c)) {
+      continue;
+    }
+#ifdef VBCC
+    if ((' ' == c) && ('*' == last_c)) {
+      continue;
+    }
+#else
     if ((' ' == last_c) && ('*' == c) && (' ' == next_c)) {
       idx--;
     }
+#endif
     if ((' ' == last_c) && (',' == c)) {
       idx--;
     }
@@ -105,7 +128,7 @@ static char* washing_machine(const char* raw) {
 
 static void prototype_list_remove(prototype_list_t* list, prototype_node_t* node);
 
-static prototype_node_t* prototype_node_new(const char* raw, const prototype_list_t* list, const size_t offset) {
+static prototype_node_t* prototype_node_new(const char* raw, const prototype_list_t* list, const size_t offset, const size_t line, const size_t col) {
   prototype_node_t* node = NULL;
   prototype_node_t* n;
   char* symbol;
@@ -135,14 +158,18 @@ static prototype_node_t* prototype_node_new(const char* raw, const prototype_lis
 
   memset(node, 0, sizeof(*node));
 
+  node->info.raw_prototype.decl_len = strlen(raw) + 1;
   node->info.raw_prototype.decl = washing_machine(raw);
   if (NULL == node->info.raw_prototype.decl) {
     error1("Out of memory while allocating raw prototype for '%s'", raw);
     goto raw_prototype_malloc_failed;
   }
 
+  node->info.symbol_len = strlen(symbol) + 1;
   node->info.symbol = symbol;
   node->info.raw_prototype.offset = offset;
+  node->info.raw_prototype.line = line;
+  node->info.raw_prototype.column = col;
   goto normal_exit;
 
  raw_prototype_malloc_failed:
@@ -156,8 +183,8 @@ static prototype_node_t* prototype_node_new(const char* raw, const prototype_lis
   return node;
 }
 
-static void prototype_list_append(prototype_list_t* list, const char* raw, size_t is_function_implementation, const size_t offset) {
-  prototype_node_t* node = prototype_node_new(raw, list, offset);
+static void prototype_list_append(prototype_list_t* list, const char* raw, size_t is_function_implementation, const size_t offset, const size_t line, const size_t col) {
+  prototype_node_t* node = prototype_node_new(raw, list, offset, line, col);
   if (NULL == node) {
     return;
   }
@@ -174,12 +201,14 @@ static void prototype_list_append(prototype_list_t* list, const char* raw, size_
     }
     node->info.is_function_implementation = offset;
   }
+  list->size += (sizeof(node) + node->info.raw_prototype.decl_len + node->info.symbol_len);
   list->cnt++;
 }
 
-static int extract_prototypes(void* list_ptr, file_parse_state_t* state, const char c, const size_t line, const size_t col, const size_t offset) {
+static int extract_prototypes(void* list_ptr, file_parse_state_t* state, const char c, const size_t line, const size_t col, const size_t offset, const size_t last_function_start) {
   prototype_list_t* list = (prototype_list_t*)list_ptr;
   const char last_c = state->last_c;
+  const int is_preprocessor = (('#' == c) && ('\n' == last_c));
   const int is_white_space = ((' ' == c) || ('\n' == c));
   const int last_is_white_space = ((' ' == last_c) || ('\n' == last_c));
   const int is_line_feed = ('\n' == c);
@@ -188,13 +217,24 @@ static int extract_prototypes(void* list_ptr, file_parse_state_t* state, const c
   const int is_right_parenthesis = (')' == c);
   const int multiple_line_feeds = (is_line_feed && last_is_line_feed);
   const int multiple_whitespaces = (is_white_space && last_is_white_space);
-  const int is_last_character_of_prototype = ((is_line_feed && (';' == last_c)) || ('{' == c));
+  const int is_last_character_of_prototype = ((is_line_feed && (';' == last_c)) || ('{' == c) || ('=' == c));
   const int is_last_character = (state->found_parenthesis && is_last_character_of_prototype);
+
   int skip_character;
   int linefeed_in_argument_list;
+#ifndef VBCC
   (void)col;
   (void)offset;
+  (void)last_function_start;
+#endif
   state->line_feeds_in_declaration += ('\n' == c);
+
+  if (state->skip_until_linefeed && ('\n' == last_c)) {
+    state->skip_until_linefeed = 0;
+  }
+  if (is_preprocessor) {
+    state->skip_until_linefeed = 1;
+  }
 
   state->paren_count += is_left_parenthesis;
   if (is_right_parenthesis && (--state->paren_count == 0)) {
@@ -219,7 +259,8 @@ static int extract_prototypes(void* list_ptr, file_parse_state_t* state, const c
   }
 
   /*
-   * A bit tweaky.... Do only reset the buffer if any number of variables indicate we're not still in a function prototype.
+   * A bit tweaky.... Do only reset the buffer if any number of variables
+   * indicate we're not still in a function prototype.
    */
   if ((0 == state->paren_count) &&
       is_line_feed &&
@@ -245,7 +286,8 @@ static int extract_prototypes(void* list_ptr, file_parse_state_t* state, const c
      * A new prototype is found and should be added to the list of prototypes.
      */
     if (state->buf != strstr(state->buf, "typedef ")) {
-      prototype_list_append(list, state->buf, is_function_implementation, offset - strlen(state->buf));
+      fprintf(stderr, "DEBUG: adding '%s'\n", state->buf);
+      prototype_list_append(list, state->buf, is_function_implementation, offset - strlen(state->buf), line, col);
     }
     state->found_parenthesis = 0;
     state->idx = 0;
@@ -314,24 +356,36 @@ static void prototype_list_remove(prototype_list_t* list, prototype_node_t* node
 
 
 int prototype_list_init(prototype_list_t* list, const file_t* file) {
+  prototype_node_t* node;
+
   assert((NULL != list) && "Argument 'list' must not be NULL");
   assert((NULL != file) && "Argument 'file' must not be NULL");
 
+  list->filename = file->filename;
   list->first_function_implementation_offset = file->len;
 
-  file_parse(extract_prototypes, list, file, PARSE_DECLARATIONS);
+  file_parse(extract_prototypes, list, file, PARSE_DECLARATIONS, 1);
+
+  for (node = list->first; NULL != node; node = node->next) {
+    fprintf(stderr, "DEBUG:   %s\n", node->info.symbol);
+  }
 
   return 0;
 }
 
-static int find_symbol_usage(void* list_ptr, file_parse_state_t* state, const char c, const size_t line, const size_t col, const size_t offset) {
+static int find_symbol_usage(void* list_ptr, file_parse_state_t* state, const char c, const size_t line, const size_t col, const size_t offset, const size_t last_function_start) {
   prototype_list_t* list = (prototype_list_t*)list_ptr;
   prototype_node_t* node;
 
   if ((('a' > c) || ('z' < c)) && (('0' > c) || ('9' < c)) && ('_' != c)) {
     for (node = list->first; NULL != node; node = node->next) {
+      if (strcmp(state->buf, node->info.symbol) == 0) {
+        fprintf(stderr, "DEBUG: Potential hit: '%s' %s line: %lu col: %lu offs: %lu\n", node->info.symbol, state->buf, line, col-strlen(node->info.symbol), offset);
+      }
       if (0 == strcmp(state->buf, node->info.symbol)) {
-        symbol_usage_append(&node->info.symbol_usage_list, line, col, offset);
+        debug1("Possible hit: '%s'", state->buf);
+        fprintf(stderr, "DEBUG: Found symbol usage '%s' %lu offs: %lu\n", node->info.symbol, last_function_start, offset);
+        symbol_usage_append(&node->info.symbol_usage_list, line, col - strlen(node->info.symbol), offset, last_function_start, (void*)node);
         break;
       }
     }
@@ -350,7 +404,7 @@ int prototype_usage(prototype_list_t* list, const file_t* file) {
   assert((NULL != list) && "Argument 'list' must not be NULL");
   assert((NULL != file) && "Argument 'file' must not be NULL");
 
-  file_parse(find_symbol_usage, list, file, PARSE_FUNCTION_BODIES);
+  file_parse(find_symbol_usage, list, file, PARSE_FUNCTION_BODIES, 1);
 
   return 0;
 }
@@ -381,10 +435,21 @@ int prototype_remove_unused(prototype_list_t* list) {
 
     debug1("Removing '%s'", node->info.symbol);
 
+    list->size -= (sizeof(node) + node->info.raw_prototype.decl_len + node->info.symbol_len);
+
     prototype_node_cleanup(node);
 
     node = next_node;
     list->cnt--;
+  }
+
+  fprintf(stderr, "DEBUG: NODES LEFT AFTER CLEANUP:\n");
+  for (node = list->first; NULL != node; node = node->next) {
+    symbol_usage_node_t* snode;
+    fprintf(stderr, "DEBUG:   %s used in %s at: \n", node->info.symbol, list->filename);
+    for (snode = node->info.symbol_usage_list.first; NULL != snode; snode = snode->next) {
+      fprintf(stderr, "DEBUG:    line: %lu col %lu (offs: %lu)\n", snode->info.line, snode->info.col, snode->info.offset);
+    }
   }
 
   return 0;
@@ -396,7 +461,11 @@ static int extract_return_type(prototype_node_t* node) {
   const char* symbol_start = strstr(raw, symbol);
   size_t len;
   char* buf;
+  char* tmpbuf;
+  size_t tmpbuf_i = 0;
+  size_t i;
   size_t asterisks = 0;
+  size_t rawlen;
 
   if (NULL == symbol_start) {
     error2("Could not find expected symbol '%s' in '%s'", symbol, raw);
@@ -407,6 +476,10 @@ static int extract_return_type(prototype_node_t* node) {
    * Detect linkage definitions for the function prototype.
    */
   while (raw < symbol_start) {
+    if ((' ' == raw[0]) && (' ' == raw[1])) {
+      raw += 1;
+      continue;
+    }
     if (raw == strstr(raw, "extern ")) {
       raw += strlen("extern ");
       node->info.linkage_definition.is_extern = 1;
@@ -417,9 +490,19 @@ static int extract_return_type(prototype_node_t* node) {
       node->info.linkage_definition.is_static = 1;
       continue;
     }
+    if (raw == strstr(raw, "__inline ")) {
+      raw += strlen("__inline ");
+      node->info.linkage_definition.is_inline = 1;
+      continue;
+    }
     if (raw == strstr(raw, "inline ")) {
       raw += strlen("inline ");
       node->info.linkage_definition.is_inline = 1;
+      continue;
+    }
+    if (raw == strstr(raw, "__declspec(")) {
+      raw = strstr(raw, ") ") + 2;
+      node->info.linkage_definition.is_declspec = 1;
       continue;
     }
     break;
@@ -427,11 +510,58 @@ static int extract_return_type(prototype_node_t* node) {
 
   len = symbol_start - raw - 1;
 
+  rawlen = strlen(raw);
+
+
+  fprintf(stderr, "Before '%s'\n", raw);
+
+  /*
+   * Remove compiler specific keywords
+   */
+  tmpbuf = malloc(len + 1);
+  tmpbuf[0] = '\0';
+  i = 0;
+  tmpbuf_i = 0;
+  while (i < len + 1) {
+    /*
+    fprintf(stderr, "DEBUG: '%s' '%c' %lu %lu\n", &raw[i], raw[i], i, rawlen);
+    */
+    if ((' ' == raw[i + 0]) &&
+        ('_' == raw[i + 1]) &&
+        ('_' == raw[i + 2]) &&
+        ('c' == raw[i + 3]) &&
+        ('d' == raw[i + 4]) &&
+        ('e' == raw[i + 5]) &&
+        ('c' == raw[i + 6]) &&
+        ('l' == raw[i + 7]) &&
+        (' ' == raw[i + 8])) {
+      i += 8;
+      node->info.linkage_definition.is_cdecl = 1;
+      continue;
+    }
+    tmpbuf[tmpbuf_i] = raw[i];
+    tmpbuf_i++;
+    tmpbuf[tmpbuf_i] = '\0';
+    i++;
+  }
+
+  if (' ' == tmpbuf[tmpbuf_i - 1]) {
+    tmpbuf[tmpbuf_i - 1] = '\0';
+    tmpbuf_i--;
+  }
+
+  len = tmpbuf_i;
+
+  fprintf(stderr, "After '%s'\n", tmpbuf);
+
   /*
    * Count asterisks
    */
   while (len > 0) {
+    /*
     char c = raw[len];
+    */
+    char c = tmpbuf[len];
     if (' ' == c) {
       /* Nop - just ignore spaces */
     }
@@ -452,14 +582,19 @@ static int extract_return_type(prototype_node_t* node) {
   buf = malloc(len + 1);
   if (NULL == buf) {
     error1("Out of memory while allocating return type for '%s'", symbol);
+    free(tmpbuf);
     return -2;
   }
 
-  memcpy(buf, raw, len);
+  memcpy(buf, tmpbuf, len);
   buf[len] = '\0';
 
+  node->info.datatype.name_len = strlen(buf) + 1;
   node->info.datatype.name = buf;
 
+  fprintf(stderr, "DEBUG: Retval '%s'\n", node->info.datatype.name);
+
+  free(tmpbuf);
   return 0;
 }
 
@@ -531,7 +666,10 @@ static int extract_arguments(prototype_node_t* node) {
        * Argument name length
        */
       len = end - last_space;
-      /* TODO: Check if there was a datatype name still... like "int" in "long int", in that case it's not an arg name. */
+      /*
+       * TODO: Check if there was a datatype name still... like "int" in
+       *       "long int", in that case it's not an arg name.
+       */
       arg_name = malloc(len + 1);
       if (NULL == arg_name) {
         error1("Out of memory while allocating argument name for '%s'", symbol);
@@ -554,14 +692,21 @@ static int extract_arguments(prototype_node_t* node) {
          */
         last_space--;
         while ((' ' == *last_space) || ('*' == *last_space) || (')' == *last_space)) {
+          debug2(" Moving last space to left '%c' '%c'", *last_space, *last_start);
           last_space--;
         }
+        if (-1 == last_space - last_start + 1) {
+          last_space++;
+        }
+
         len = last_space - last_start + 1;
 
         if (0 > last_space - last_start + 1) {
-          debug0(" Probably the last (anonymous) argument...");
+          debug1(" Probably the last (anonymous) argument... (%ld)", (long)(last_space - last_start + 1));
           len = 0;
         }
+
+        debug1(" len: %lu", len);
 
         type_name = malloc(len + 1);
         if (NULL == type_name) {
@@ -582,6 +727,7 @@ static int extract_arguments(prototype_node_t* node) {
           strcat(type_name, " ");
           strcat(type_name, arg_name);
           arg_name[0] = 0;
+          debug0("'long int' detected");
         }
 
         /*
@@ -600,8 +746,10 @@ static int extract_arguments(prototype_node_t* node) {
           free(type_name);
           type_name = arg_name;
           arg_name = malloc(strlen("dummyXX") + 1 + 8);
+          memset(arg_name, 0, strlen("dummyXX") + 1 + 8);
           sprintf(arg_name, "dummy%02d", dummy_cnt);
           dummy_cnt++;
+          debug0(" Swapped empty type_name and existing arg_name");
         }
 
         /*
@@ -636,7 +784,7 @@ static int extract_arguments(prototype_node_t* node) {
           error2("Could not allocate new argument node '%s' to '%s'", arg_name, symbol);
           return -3;
         }
-        debug2(" Appending '%s' '%s' to list", type_name, arg_name);
+        debug3(" Appending '%s' astrisks; %d '%s' to list", type_name, astrisks, arg_name);
 
         if (0 != argument_list_append(&node->info.argument_list, argnode)) {
           error2("Could not append argument '%s' to '%s'", arg_name, symbol);
@@ -695,6 +843,9 @@ void generate_prototype(prototype_node_t* node, const char* prefix, const char* 
     printf("%s", prepend);
   }
   printf("%s(", node->info.symbol);
+  if (NULL == node->info.argument_list.first) {
+    printf("void");
+  }
   for (anode = node->info.argument_list.first; NULL != anode; anode = anode->next) {
     if (anode->info.datatype.datatype_definition.is_variadic) {
       printf("...");
@@ -714,5 +865,5 @@ void generate_prototype(prototype_node_t* node, const char* prefix, const char* 
       printf(", ");
     }
   }
-  printf(")%s /* %lu */\n", suffix, node->info.is_function_implementation);
+  printf(")%s\n", suffix);
 }

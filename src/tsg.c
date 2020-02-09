@@ -21,12 +21,25 @@
 #include "cpp.h"
 #include "symbol_cache.h"
 
+#include "version.h"
+
+static char field[] = "$Id: tsg,v " VERSION " " __DATE__ " " __TIME__ " " AUTHOR " Exp $";
+static char version[] = VERSION;
+static char timestamp[] = __DATE__ " " __TIME__;
+
 /****************************************************************************
  * Program usage
  */
 static void usage(const char* program_name)
 {
   printf("USAGE: %s <pre-processed-source> <test-suite>\n", program_name);
+}
+
+/****************************************************************************
+ * Program version
+ */
+static void ver(const char* program_name) {
+  printf("%s v%s %s (%s)\n", program_name, version, timestamp, field);
 }
 
 /****************************************************************************
@@ -40,6 +53,17 @@ typedef struct tsg_options_s tsg_options_t;
 
 static int tsg_options_init(tsg_options_t* options, int argc, char* argv[])
 {
+  if (argc == 2) {
+    if ((0 == strcmp("-v", argv[1])) || (0 == strcmp("--version", argv[1])) || (0 == strcmp("VERSION", argv[1]))) {
+      ver(argv[0]);
+      return -1;
+    }
+    if ((0 == strcmp("-h", argv[1])) || (0 == strcmp("--help", argv[1])) || (0 == strcmp("?", argv[1]))) {
+      usage(argv[0]);
+      return -1;
+    }
+  }
+
   if (argc != 3) {
     error1("ERROR: Illegal number (%d) of arguments", argc);
     usage(argv[0]);
@@ -113,6 +137,9 @@ static void generate_struct(prototype_list_t* list, cpp_list_t* cpp_list) {
     }
 
     printf(" (*func)(");
+    if (NULL == node->info.argument_list.first) {
+      printf("void");
+    }
     for (anode = node->info.argument_list.first; NULL != anode; anode = anode->next) {
       int i;
       if (anode->info.datatype.datatype_definition.is_variadic) {

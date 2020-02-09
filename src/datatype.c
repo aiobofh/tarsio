@@ -10,9 +10,6 @@ void datatype_init(datatype_t* datatype, char* name, int is_static, int is_funct
   datatype->datatype_definition.is_const = (int)is_const;
   datatype->datatype_definition.is_function_pointer = (int)is_function_pointer;
   datatype->datatype_definition.is_variadic = (int)is_variadic;
-  if (1 == 2) {
-    datatype->name = name;
-  }
 }
 
 void datatype_cleanup(datatype_t* datatype) {

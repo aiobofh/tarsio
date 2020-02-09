@@ -26,26 +26,33 @@ static void transform_structs(prototype_list_t* list, char* buf) {
   prototype_node_t* pn = NULL;
   size_t i;
   size_t j;
+  size_t k;
 
   if (('T' != buf[0]) || ('C' != buf[1]) || ('H' != buf[2]) || ('1' != buf[3])) {
     error0("Wrong symbol cache file format");
     return;
   }
 
+  debug0("Found valid header TCH1 in first 4 bytes of the file");
+
   buf += 4;
 
   l = (prototype_list_t*)buf;
-  l->first = NULL;
-  l->last = NULL;
 
   /* Move offset into the first node */
   buf += sizeof(*l);
 
-  l->first = (prototype_node_t*)buf;
+  if (0 == l->cnt) {
+    l->first = l->last = NULL;
+  }
+  else {
+    l->first = (prototype_node_t*)buf;
+  }
 
-  debug0("Transforming prototype list pointer to first node");
+  debug1("Transforming prototype list pointer to first node %lu nodes available", l->cnt);
 
   for (i = 0; i < l->cnt; i++) {
+
     argument_list_t* al;
     symbol_usage_list_t* sl;
     argument_node_t* an = NULL;
@@ -53,34 +60,83 @@ static void transform_structs(prototype_list_t* list, char* buf) {
 
     pn = (prototype_node_t*)buf;
 
+    /*
+    fprintf(stderr, "DEBUG: idx: %lu of %lu pn: %p %s", i, l->cnt, pn, pn->info.symbol);
+    */
+    fprintf(stderr, "DEBUG: idx: %lu of %lu pn: %p", i, l->cnt, pn);
+
+    if (NULL == pn) {
+      error0("Prototype node was NULL in file, regardles of the number of nodes in list");
+    }
+
     al = &pn->info.argument_list;
     sl = &pn->info.symbol_usage_list;
 
     buf += sizeof(*pn);
 
-    debug2(" Transforming argument list pointer to first node %s %lu", pn->info.symbol, pn->info.is_function_implementation);
-    al->first = (argument_node_t*)buf;
+    /*
+    debug4(" Transforming argument list pointer to first node %s %lu %lu arguments %p", pn->info.symbol, pn->info.is_function_implementation, pn->info.argument_list.cnt, al);
+    */
+    if (0 == pn->info.argument_list.cnt) {
+      al->first = al->last = NULL;
+    }
+    else {
+      al->first = (argument_node_t*)buf;
+    }
+    an = NULL;
+    debug2("  first: %p last: %p", al->first, al->last);
     for (j = 0; j < pn->info.argument_list.cnt; j++) {
+      debug1("  Handling argument %lu", j);
       an = (argument_node_t*)buf;
+      /*
+      debug4("  %p %s %s %d", an, an->info.datatype.name, an->info.name, an->info.datatype.datatype_definition.is_pointer);
+      */
       buf += sizeof(*an);
       an->next = (argument_node_t*)buf;
       al->last = an;
     }
-    an->next = NULL;
+    if (NULL != an) {
+      an->next = NULL;
+    }
 
-    debug0(" Transforming symbol usage list pointer to first node");
-    sl->first = (symbol_usage_node_t*)buf;
-    for (j = 0; j < pn->info.symbol_usage_list.cnt; j++) {
+    debug0(" DONE");
+
+    debug1(" Transforming symbol usage list pointer to first node %lu usages", pn->info.symbol_usage_list.cnt);
+    /*
+    fprintf(stderr, "DEBUG: Transforming symbol '%s' usage list pointer to first node %lu usages\n", pn->info.symbol, pn->info.symbol_usage_list.cnt);
+    */
+    if (0 == pn->info.symbol_usage_list.cnt) {
+      sl->first = sl->last = NULL;
+    }
+    else {
+      sl->first = (symbol_usage_node_t*)buf;
+    }
+    sn = NULL;
+    for (k = 0; k < pn->info.symbol_usage_list.cnt; k++) {
       sn = (symbol_usage_node_t*)buf;
+      debug4("  %p line: %lu col: %lu offset: %lu", sn, sn->info.line, sn->info.col, sn->info.offset);
+      /*
+      fprintf(stderr, "DEBUG: REREAD %s usage %p line: %lu col: %lu offset: %lu must be extern before %lu\n", pn->info.symbol, sn, sn->info.line, sn->info.col, sn->info.offset, sn->info.last_function_start);
+      */
       buf += sizeof(*sn);
       sn->next = (symbol_usage_node_t*)buf;
+      sn->info.prototype_node = pn; /* IS THIS WORKING???? */
+
       sl->last = sn;
     }
-    sn->next = NULL;
+    if (NULL != sn) {
+      sn->next = NULL;
+    }
+
+    debug0(" DONE");
 
     pn->next = (prototype_node_t*)buf;
     l->last = pn;
+
+    debug0("Fetching next symbol");
   }
+
+  debug0("All symbols processed");
 
   if (NULL == pn) {
     return;
@@ -102,7 +158,11 @@ static void transform_structs(prototype_list_t* list, char* buf) {
 
   for (n = list->first; NULL != n; n = n->next) {
     argument_node_t* an;
-    debug1("Finding usages for '%s'", n->info.symbol);
+    debug2("Finding usages for '%s' %li", n->info.symbol, n->info.argument_list.cnt);
+    if (0 == n->info.argument_list.cnt) {
+      n->info.argument_list.first = NULL;
+      n->info.argument_list.last = NULL;
+    }
     for (an = n->info.argument_list.first; NULL != an; an = an->next) {
       an->info.name = buf;
       buf += strlen(an->info.name) + 1;
@@ -114,7 +174,7 @@ static void transform_structs(prototype_list_t* list, char* buf) {
       if (0 == strlen(an->info.datatype.name)) {
         an->info.datatype.name = NULL;
       }
-      debug2(" '%s' '%s'", n->info.datatype.name, n->info.symbol);
+      debug2(" '%s' '%s'", an->info.datatype.name, an->info.name);
     }
   }
 }
@@ -147,6 +207,8 @@ int reload_symbol_cache(prototype_list_t* list, const char* file) {
 
   fclose(fd);
 
+  debug2("Loaded %s (%lu bytes)", file, len);
+ 
   transform_structs(list, buf);
 
   goto normal_exit;
@@ -159,3 +221,26 @@ int reload_symbol_cache(prototype_list_t* list, const char* file) {
  normal_exit:
   return retval;
 }
+
+/* static void get_memory_usage(prototype_list_t* list, size_t* listsize, size_t* stringssize) { */
+/*   *listsize = sizeof(*list); */
+/*   *stringssize = 0; */
+/*   prototype_node_t* pn; */
+/*   for (pn = list->first; NULL != pn; pn = pn->next) { */
+/*     symbol_usage_node_t* sn; */
+/*     argument_node_t* an; */
+/*     *listsize += sizeof(*pn); */
+/*     *stringssize += strlen(pn->info.symbol) + 1; */
+/*     *stringssize += strlen(pn->info.datatype.name); */
+/*     *stringssize += strlen(pn->info.raw_prototype.decl) + 1; */
+/*     *stringssize += strlen(pn->info.raw_prototype.args) + 1; */
+/*     for (an = pn->info.argument_list.first; NULL != an; an = an->next) { */
+/*       *listsize += sizeof(*an); */
+/*       *stringssize += strlen(an->info.name) + 1; */
+/*       *stringssize += strlen(an->info.datatype.name) + 1; */
+/*     } */
+/*     for (sn = pn->info.symbol_usage_list.first; NULL != sn; sn = sn->next) { */
+/*       *listsize += sizeof(*sn); */
+/*     } */
+/*   } */
+/* } */

@@ -128,6 +128,8 @@ static int extract(testcase_list_t* list, char* buf) {
   return retval;
 }
 
+int call = 0;
+
 static int parse(testcase_list_t* list, const file_t* file) {
   const size_t len = file->len;
 

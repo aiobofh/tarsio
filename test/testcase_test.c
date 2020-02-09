@@ -5,6 +5,7 @@
 #include "testcase.h"
 #include "testcase_data.h"
 #include "tarsio.h"
+#include "helpers.h"
 
 #define m tarsio_mock
 
@@ -54,17 +55,10 @@ test(new_node_shall_zero_allocated_memory) {
   testcase_node_t node;
   m.malloc.retval = (void*)&node;
   new_node(NULL, TESTCASE_IS_UNKNOWN);
-#ifdef SASC
-  assert_eq(1, m.__builtin_memset.call_count);
-  assert_eq((void*)&node, m.__builtin_memset.args.arg0);
-  assert_eq(0, m.__builtin_memset.args.arg1);
-  assert_eq(sizeof(testcase_node_t), m.__builtin_memset.args.arg2);
-#else
-  assert_eq(1, m.memset.call_count);
-  assert_eq((void*)&node, m.memset.args.arg0);
-  assert_eq(0, m.memset.args.arg1);
-  assert_eq(sizeof(testcase_node_t), m.memset.args.arg2);
-#endif
+  assert_eq(1, m.MEMSET.call_count);
+  assert_eq((void*)&node, m.MEMSET.args.arg0);
+  assert_eq(0, m.MEMSET.args.arg1);
+  assert_eq(sizeof(testcase_node_t), m.MEMSET.args.arg2);
 }
 
 test(new_node_shall_set_contents_correctly) {
@@ -88,11 +82,7 @@ test(print_len_warning_shall_print_to_stderr) {
  * testcase_append()
  */
 test(0_testcase_append_shall_warn_if_long_testcase_name) {
-#ifdef SASC
-  m.__builtin_strlen.retval = 80 + 1;
-#else
-  m.strlen.retval = 80 + 1;
-#endif
+  m.STRLEN.retval = 80 + 1;
   testcase_append(NULL, (const char*)0x1234, TESTCASE_IS_UNKNOWN);
   assert_eq(1, m.print_len_warning.call_count);
 }
@@ -134,7 +124,9 @@ test(5_testcase_append_shall_call_testcase_list_append_correctly) {
  */
 test(index_of_shall_return_the_pointer_to_the_position_of_a_specific_char) {
   char* teststring = "12345";
+#ifndef VBCC
   (void)m;
+#endif
   assert_eq(&teststring[4], index_of(teststring, '5'));
 }
 
@@ -142,7 +134,9 @@ test(index_of_shall_return_the_pointer_to_the_position_of_a_specific_char) {
  * extract()
  */
 test(extract_return_0_on_success) {
+#ifndef VBCC
   (void)m;
+#endif
   assert_eq(0, extract(NULL, NULL));
 }
 
@@ -164,17 +158,11 @@ test(extract_search_for_module_test_names) {
   assert_eq(0, strcmp("module_test(", m.strstr.args.arg1));
 }
 
-#ifdef SASC
 #define quick_setup				\
   m.strstr.func = strstr;			\
-  m.__builtin_strlen.func = strlen
-#else
-#define quick_setup				\
-  m.strstr.func = strstr;			\
-  m.strlen.func = strlen
-#endif
+  m.STRLEN.func = strlen
 
-test(extract_search_for_en_parentheis_using_index_of) {
+test(extract_search_for_end_parentheis_using_index_of) {
   quick_setup;
 
   extract(NULL, "test(a_name)");
@@ -318,42 +306,51 @@ test(parse_free_the_allocated_buffer_if_not_out_of_memory) {
   assert_eq(0, parse(NULL, &file));
 }
 
-#define quick_setup                             \
+#define quick_setup(LEN)                        \
   file_t file;                                  \
   char buf[15];                                 \
-  file.len = strlen(teststring);                \
+  file.len = LEN;                               \
   file.buf = (char*)teststring;                 \
-  m.malloc.retval = buf;                        \
-  parse(NULL, &file)
+  m.malloc.retval = buf
+
+extern void __tarsio_proxy_printint(const char* str, const int val);
 
 test(parse_extract_if_end_of_line_is_found) {
   const char* teststring = "something\n";
+  const size_t len = 11; /* Don't know why strlen wont work with vbcc here */
 
-  quick_setup;
+  quick_setup(len);
+  parse(NULL, &file);
 
   assert_eq(1, m.extract.call_count);
 }
 
 test(parse_extract_if_code_block_start_is_found) {
   const char* teststring = "something{";
+  const size_t len = 10; /* Don't know why strlen wont work with vbcc here */
 
-  quick_setup;
+  quick_setup(len);
+  parse(NULL, &file);
 
   assert_eq(1, m.extract.call_count);
 }
 
 test(parse_not_extract_if_eol_in_block_comment) {
   const char* teststring = "/* something\n";
+  const size_t len = 14; /* Don't know why strlen wont work with vbcc here */
 
-  quick_setup;
+  quick_setup(len);
+  parse(NULL, &file);
 
   assert_eq(0, m.extract.call_count);
 }
 
 test(parse_not_extract_if_eol_in_row_comment) {
   const char* teststring = "// something\n";
+  const size_t len = 14; /* Don't know why strlen wont work with vbcc here */
 
-  quick_setup;
+  quick_setup(len);
+  parse(NULL, &file);
 
   assert_eq(0, m.extract.call_count);
 }
@@ -364,7 +361,7 @@ test(parse_return_negative_2_if_extract_fail) {
   const char* teststring = "something;\n";
   file_t file;
   char buf[15];
-  file.len = strlen(teststring);
+  file.len = 12;
   file.buf = (char*)teststring;
   m.malloc.retval = buf;
   m.extract.retval = -1;
@@ -376,19 +373,19 @@ test(parse_return_negative_2_if_extract_fail) {
  */
 test(testcase_list_init_list_NULL_assert) {
   testcase_list_init(NULL, (file_t*)0x1234);
-#ifdef SASC
-  assert_eq(2, m.__assert.call_count);
+#ifndef SASC
+  assert_eq(1, m.ASSERT.call_count);
 #else
-  assert_eq(1, m.__assert_fail.call_count);
+  skip("Not applicable on SASC");
 #endif
 }
 
 test(testcase_list_init_file_NULL_assert) {
   testcase_list_init((testcase_list_t*)0x1234, NULL);
-#ifdef SASC
-  assert_eq(2, m.__assert.call_count);
+#ifndef SASC
+  assert_eq(1, m.ASSERT.call_count);
 #else
-  assert_eq(1, m.__assert_fail.call_count);
+  skip("Not applicable on SASC");
 #endif
 }
 

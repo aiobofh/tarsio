@@ -6,27 +6,33 @@
 #include "symbol_usage.h"
 
 struct raw_prototype_s {
+  size_t decl_len;
   char* decl;
   char* args;
   size_t offset;
+  size_t line;
+  size_t column;
 };
 typedef struct raw_prototype_s raw_prototype_t;
 
-#define RAW_PROTOTYPE_EMPTY {NULL, NULL}
+#define RAW_PROTOTYPE_EMPTY {0, NULL, NULL, 0}
 
 struct linkage_definition_s {
   int is_inline;
   int is_static;
   int is_extern;
+  int is_declspec;
+  int is_cdecl;
 };
 typedef struct linkage_definition_s linkage_definition_t;
 
-#define LINKAGE_DEFINITION_EMPTY {0, 0, 0}
+#define LINKAGE_DEFINITION_EMPTY {0, 0, 0, 0}
 
 struct prototype_s {
   raw_prototype_t raw_prototype;
   linkage_definition_t linkage_definition;
   datatype_t datatype;
+  size_t symbol_len;
   char* symbol;
   argument_list_t argument_list;
   symbol_usage_list_t symbol_usage_list;
@@ -34,7 +40,7 @@ struct prototype_s {
 };
 typedef struct prototype_s prototype_t;
 
-#define PROTOTYPE_EMPTY {RAW_PROTOTYPE_EMPTY, LINKAGE_DEFINITION_EMPTY, DATATYPE_EMPTY, NULL, ARGUMENT_LIST_EMPTY, SYMBOL_USAGE_LIST_EMPTY}
+#define PROTOTYPE_EMPTY {RAW_PROTOTYPE_EMPTY, LINKAGE_DEFINITION_EMPTY, DATATYPE_EMPTY, 0, NULL, ARGUMENT_LIST_EMPTY, SYMBOL_USAGE_LIST_EMPTY}
 
 struct prototype_node_s {
   struct prototype_node_s* next;
@@ -45,6 +51,8 @@ typedef struct prototype_node_s prototype_node_t;
 #define PROTOTYPE_NODE_EMPTY {NULL, PROTOTYPE_EMPTY}
 
 struct prototype_list_s {
+  char* filename;
+  size_t size;
   size_t cnt;
   size_t first_function_implementation_offset;
   prototype_node_t* first;
@@ -52,7 +60,7 @@ struct prototype_list_s {
 };
 typedef struct prototype_list_s prototype_list_t;
 
-#define PROTOTYPE_LIST_EMPTY {0, 0, NULL, NULL}
+#define PROTOTYPE_LIST_EMPTY {0, 0, 0, NULL, NULL}
 
 int prototype_list_init(prototype_list_t* list, const file_t* file);
 int prototype_usage(prototype_list_t* list, const file_t* file);

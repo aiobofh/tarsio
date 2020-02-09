@@ -43,7 +43,7 @@ static void cpp_list_append(cpp_list_t* list, const char* buf) {
   list_append(list, node);
 }
 
-static int extract_cpp_directives(void* list_ptr, file_parse_state_t* state, const char c, const size_t line, const size_t col, const size_t offset) {
+static int extract_cpp_directives(void* list_ptr, file_parse_state_t* state, const char c, const size_t line, const size_t col, const size_t offset, const size_t last_function_start) {
   /*
    * This is a bit of guess-work. If the code under test and the test-cases
    * are written with some kind of dicipline we'll be fine with this
@@ -51,11 +51,12 @@ static int extract_cpp_directives(void* list_ptr, file_parse_state_t* state, con
    * the best i think there will be no real problems here :D
    */
   cpp_list_t* list = (cpp_list_t*)list_ptr;
-
+#ifndef VBCC
   (void)line;
   (void)col;
   (void)offset;
-
+  (void)last_function_start;
+#endif
   if (('#' == c) && ('\n' == state->last_c)) {
     state->idx = 0;
     state->buf[state->idx] = '\0';
@@ -64,13 +65,14 @@ static int extract_cpp_directives(void* list_ptr, file_parse_state_t* state, con
   if ('\n' == c) {
     if ('#' == state->buf[0]) {
       if (strstr(state->buf, "#ifndef _TARSIO_DATA_")) {
-        /* Prevent multiple declarations of the gnerated things */
+        /* Prevent multiple declarations of the generated things */
 	debug1("%s", state->buf);
 	cpp_list_append(list, "#ifdef _TARSIO_DATA_");
       }
       else {
-	debug1("%s", state->buf);
+	debug1("Found CPP direciive '%s'", state->buf);
 	cpp_list_append(list, state->buf);
+        debug0("Added to list");
       }
     }
     state->buf[0] = '\0';
@@ -105,7 +107,7 @@ int cpp_list_init(cpp_list_t* list, const file_t* file) {
     return -1;
   }
 
-  file_parse(extract_cpp_directives, list, file, PARSE_DECLARATIONS);
+  file_parse(extract_cpp_directives, list, file, PARSE_DECLARATIONS, 0);
 
   return 0;
 }

@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <assert.h>
+#include <string.h>
 
 #include "debug.h"
 #include "file.h"
@@ -13,24 +14,27 @@ static size_t fsize(FILE *fd) {
   return file_size;
 }
 
-int file_parse(file_parse_cb_t func, void* list_ptr, const file_t* file, parse_part_t parse_part) {
+int file_parse(file_parse_cb_t func, void* list_ptr, const file_t* file, parse_part_t parse_part, int skip_strings) {
 
   const int parse_function_bodies = ((PARSE_FUNCTION_BODIES == parse_part) || (PARSE_ALL == parse_part));
   const int parse_declarations = ((PARSE_DECLARATIONS == parse_part) || (PARSE_ALL == parse_part));
 
   size_t i;
-  size_t line_count = 0;
+  size_t line_count = 1;
   size_t column_count = 0;
   int num_braces = 0;
   int num_paren = 0;
   int in_function_body = 0;
   int in_single_quote_string = 0;
   int in_double_quote_string = 0;
+  int last_in_string = 0;
   int in_string = 0;
   int in_comment = 0;
   file_parse_state_t state = EMPTY_FILE_PARSE_STATE;
   char last_c = 0;
   char last_last_c = 0;
+  size_t last_linefeed_offset = 0;
+  size_t last_function_start = 0;
 
   assert((0 == ('0' == ' ')) && "This code assumes that bool false is 0 for mathematical operations");
   assert((1 == ('0' == '0')) && "This code assumes that bool true is 1 for mathematical operations");
@@ -82,11 +86,24 @@ int file_parse(file_parse_cb_t func, void* list_ptr, const file_t* file, parse_p
     in_comment += is_comment_start;
     in_comment -= is_comment_end;
 
+    if (is_entering_function_body) {
+      last_function_start = last_linefeed_offset;
+    }
+
     in_function_body += is_entering_function_body;
     in_function_body -= is_exiting_function_body;
 
-    if (!in_string && !in_comment && !in_function_body && !no_parenthesis_count && no_braces_count && '\n' == c) {
+    if (!in_string &&
+        !in_comment &&
+        !in_function_body &&
+        !no_parenthesis_count &&
+        no_braces_count &&
+        '\n' == c) {
       is_inserted_space = 1;
+      if ('\n' == c) {
+        line_count += 1;
+        column_count = 1;
+      }
       c = ' ';
     }
 
@@ -95,17 +112,29 @@ int file_parse(file_parse_cb_t func, void* list_ptr, const file_t* file, parse_p
 				is_code_block_start || is_inserted_space));
 
     if (do_parse) {
-      func(list_ptr, &state, c, line_count, column_count, i);
+      if ((in_string || last_in_string) && skip_strings) {
+        /* Do not care about strings kontents */
+      }
+      else if ('\r' == c) {
+        /* Skip windows file format line feeds */
+      }
+      else {
+        func(list_ptr, &state, c, line_count, column_count, i, last_function_start);
+      }
     }
 
     line_count += ('\n' == c);
     column_count -= (('\n' != c) ? -1 : column_count);
+    if ('\n' == c) {
+      last_linefeed_offset = i;
+    }
 
     num_braces -= is_code_block_end;
     num_paren += is_left_parentheis;
     num_paren -= is_right_parentheis;
     last_last_c = last_c;
     last_c = c;
+    last_in_string = in_string;
   }
 
   free(state.buf);
@@ -117,6 +146,7 @@ int file_init(file_t* file, const char* filename) {
   int retval = 0;
   FILE* fd;
   size_t len;
+  size_t rlen;
   char* buf;
 
   assert((NULL != file) && "Argument 'file' must not be NULL");
@@ -126,7 +156,7 @@ int file_init(file_t* file, const char* filename) {
     return -5;
   }
 
-  if (NULL == (fd = fopen(filename, "r"))) {
+  if (NULL == (fd = fopen(filename, "rb"))) {
     fprintf(stderr, "ERROR: File '%s' not found.\n", filename);
     retval = -1;
     goto fopen_failed;
@@ -144,13 +174,16 @@ int file_init(file_t* file, const char* filename) {
     goto malloc_failed;
   }
 
-  if (len != fread(buf, 1, len, fd)) {
-    fprintf(stderr, "ERROR: Invalid read size while reading '%s'.\n", filename);
+  if (len != (rlen = fread(buf, sizeof(char), len, fd))) {
+    if (feof(fd)) {
+      fprintf(stderr, "WARNING: End of file reached before expected\n");
+    }
+    fprintf(stderr, "ERROR: Invalid read size while reading '%s' read %lu bytes, expected %lu.\n", filename, rlen, len);
     retval = -4;
     goto fread_failed;
   }
 
-  file->len = len;
+  file->len = rlen;
   file->buf = buf;
   file->filename = (char*)filename;
 

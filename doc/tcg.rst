@@ -17,8 +17,8 @@ tgc generate a binary file with all the symbols that can be parsed from a
 pre-processed C-source file.
 
 Only information relevant for generating other files with the automated
-testing framework "Tarsio" are stored in this file and the file-format may
-change between versions of the "Tarsio" unit-testing frame-work.
+checking framework "Tarsio" are stored in this file and the file-format may
+change between versions of the "Tarsio" unit-checking framework.
 
 This tool is usually invoked from a build-system as an early step to enable
 the other "Tarsio"-tools to be able to generate various C source code files
@@ -32,6 +32,13 @@ OPTIONS
 -------
 
 tgc only take input/output file paths as aguments.
+
+The input file should be a C-pre-processed C source file (produced with the
+-E flag with GCC for example).
+
+The output file is a file containing all the symbols and usage of them. The
+file format is Tarsio internal, and this file enables speedups and state
+storage between different Tarsio tools.
 
 SEE ALSO
 --------

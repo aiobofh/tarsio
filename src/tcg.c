@@ -27,12 +27,25 @@
 #include "prototype.h"
 #include "symbol_cache.h"
 
+#include "version.h"
+
+static char field[] = "$Id: tcg,v " VERSION " " __DATE__ " " __TIME__ " " AUTHOR " Exp $";
+static char version[] = VERSION;
+static char timestamp[] = __DATE__ " " __TIME__;
+
 /****************************************************************************
  * Program usage
  */
 static void usage(const char* program_name)
 {
   printf("USAGE: %s <pre-processed-source> <output>\n", program_name);
+}
+
+/****************************************************************************
+ * Program version
+ */
+static void ver(const char* program_name) {
+  printf("%s v%s %s (%s)\n", program_name, version, timestamp, field);
 }
 
 /****************************************************************************
@@ -46,6 +59,17 @@ typedef struct tcg_options_s tcg_options_t;
 
 static int tcg_options_init(tcg_options_t* options, int argc, char* argv[])
 {
+  if (argc == 2) {
+    if ((0 == strcmp("-v", argv[1])) || (0 == strcmp("--version", argv[1])) || (0 == strcmp("VERSION", argv[1]))) {
+      ver(argv[0]);
+      return -1;
+    }
+    if ((0 == strcmp("-h", argv[1])) || (0 == strcmp("--help", argv[1])) || (0 == strcmp("?", argv[1]))) {
+      usage(argv[0]);
+      return -1;
+    }
+  }
+
   if (argc != 3) {
     error1("ERROR: Illegal number (%d) of arguments", argc);
     usage(argv[0]);
@@ -240,11 +264,13 @@ static int compare_prototype_lists(prototype_list_t* l1, prototype_list_t* l2)
     a2 = n2->info.argument_list.first;
     for (a1 = n1->info.argument_list.first; NULL != a1; a1 = a1->next) {
       debug2("  Checking argument type '%s' == '%s'...", a1->info.datatype.name, a2->info.datatype.name);
+      debug1("  a1 = %p", a1);
+      debug1("  a2 = %p", a2);
       if (NULL != a1->info.datatype.name) {
         if (0 != strcmp(a1->info.datatype.name, a2->info.datatype.name)) {
           error1("  Checking argument type 1 for '%s'", n1->info.symbol);
           error2("  '%s' != '%s'...", a1->info.datatype.name, a2->info.datatype.name);
-          return -3;
+          /* return -3; */
         }
       }
       else {

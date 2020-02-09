@@ -6,6 +6,7 @@ HOSTSRCDIR:=../src/
 HOSTTSTDIR:=../test/
 
 ifdef SASC
+EXE:=
 CPPEXT:=.p
 SRCDIR:=/src/
 INCDIR:=/include/
@@ -27,8 +28,10 @@ LDFLAGS=noicons noversion $(subst ${HOSTTMPDIR},${TMPDIR},$(subst ${HOSTTSTDIR},
 CC:=sc
 TESTO=mv $(subst ${HOSTTMPDIR},${HOSTTSTDIR},$@) $@
 PROXIFIEDO=mv $(subst ${HOSTSRCDIR},${HOSTTMPDIR},$@) $@
+LD:=${CC}
 else
 ifdef VBCC
+EXE:=
 CPPEXT:=.i
 TCG=vamos -c ~/.vamosrc ${TARSIO_BIN}/tcg $(subst ${HOSTTMPDIR},T:,$^) $(subst ${HOSTTMPDIR},T:,$@)
 TSG=vamos -c ~/.vamosrc ${TARSIO_BIN}/tsg $(subst ${HOSTTMPDIR},T:,$^) > $@
@@ -38,17 +41,43 @@ TTG=vamos -c ~/.vamosrc ${TARSIO_BIN}/ttg $(subst ${HOSTTMPDIR},T:,$^) > $@
 
 SRCDIR:=${HOSTSRCDIR}
 INCDIR:=${HOSTINCDIR}
-TSTDIR:=
+TSTDIR:=/test/
 COVDIR:=${HOSTTMPDIR}
 TMPDIR:=${HOSTTMPDIR}
-TMPCFLAGS=-O0 -c99 -g -I. -I${TMPDIR} -I${INCDIR} -I${SRCDIR}
+TMPCFLAGS=-DVBCC -O0 -c99 -g -I. -I${TMPDIR} -I${INCDIR} -I${SRCDIR}
 PPFLAGS=${TMPCFLAGS} -Dmain=__tarsio_replace_main -E -c $<; cp $(subst .c,${CPPEXT},$<) $@; rm $(subst .c,${CPPEXT},$^)
 CFLAGS=${TMPCFLAGS} -o $@ -c $<
-CFLAGSPP=${TMPCFLAGS} $< -o $@
-LDFLAGS=-o $@ $^
+CFLAGSPP=${TMPCFLAGS} -c $< -o $@
+#LDFLAGS=-o $@ $^
+LDFLAGS=-c99 $^ -o $@
 TESTO:=
 PROXIFIEDO:=
 CC:=vc
+LD:=${CC}
+else
+ifdef VC
+EXE:=.exe
+CPPEXT:=.i
+TMPDIR:=T:\\
+TCG=wine ${TARSIO_BIN}/tcg.exe $(subst ${HOSTTMPDIR},${TMPDIR},$^) $(subst ${HOSTTMPDIR},${TMPDIR},$@)
+TSG=wine ${TARSIO_BIN}/tsg.exe $(subst ${HOSTTMPDIR},${TMPDIR},$^) > $@
+TMG=wine ${TARSIO_BIN}/tmg.exe $(subst ${HOSTTMPDIR},${TMPDIR},$^) > $@
+TAM=wine ${TARSIO_BIN}/tam.exe $(subst ${HOSTTMPDIR},${TMPDIR},$^) > $@
+TTG=wine ${TARSIO_BIN}/ttg.exe $(subst ${HOSTTMPDIR},${TMPDIR},$^) > $@
+
+SRCDIR:=${HOSTSRCDIR}
+INCDIR:=${HOSTINCDIR}
+TSTDIR:=
+COVDIR:=${HOSTTMPDIR}
+TMPCFLAGS=/nologo /Od /Wall /Zi /I. /I${TMPDIR} /I${INCDIR} /I${SRCDIR}
+PPFLAGS=${TMPCFLAGS} /Dmain=__tarsio_replace_main /P $<; cp $(subst ${SRCDIR},,$(subst .c,${CPPEXT},$<)) $@; rm $(subst ${SRCDIR},,$(subst .c,${CPPEXT},$^))
+CFLAGS=${TMPCFLAGS} /Fo$(subst ${HOSTTMPDIR},${TMPDIR},$@) $(subst ${HOSTTMPDIR},${TMPDIR},$<)
+CFLAGSPP=${TMPCFLAGS} /Fo$(subst ${HOSTTMPDIR},${TMPDIR},$@) /Tc$(subst ${HOSTTMPDIR},${TMPDIR},$<)
+LDFLAGS=/nologo /out:$@ $^
+TESTO:=
+PROXIFIEDO:=
+CC:=cl
+LD:=link
 else
 CPPEXT:=.pp
 TCG=tcg $^ $@
@@ -69,6 +98,8 @@ CFLAGSPP=${TMPCFLAGS} -x cpp-output -c -Wunused-function $< -o $@
 LDFLAGS=-o $@ $^
 TESTO:=
 PROXIFIEDO:=
+LD=${CC}
+endif
 endif
 endif
 
@@ -77,7 +108,7 @@ DATS=$(subst ${HOSTTSTDIR},${HOSTTMPDIR},$(subst _test,_data.h,${TESTSUITES}))
 
 info:
 	echo ${DATS}
-
+	echo ${CC}
 #
 # Produce a pre-processed file for the code to test
 #
@@ -133,17 +164,16 @@ ${HOSTTMPDIR}%_runner.o: ${HOSTTMPDIR}%_runner.c
 ${HOSTTMPDIR}%_test.o: ${HOSTTSTDIR}%_test.c ${HOSTTMPDIR}%_data.h
 	${Q}${CC} ${CFLAGS}; ${TESTO}
 
-
 #
 # Link the test suite object to the test case object
 #
 # TODO: Make tarsio.o a shared library instead
 #
-%_test: ${HOSTTMPDIR}%_test.o ${HOSTSRCDIR}%_proxified.o ${HOSTTMPDIR}%_runner.o ${HOSTTMPDIR}%_mocks.o
-	${Q}${CC} ${LDFLAGS}
+%_test${EXE}: ${HOSTTMPDIR}%_test.o ${HOSTSRCDIR}%_proxified.o ${HOSTTMPDIR}%_runner.o ${HOSTTMPDIR}%_mocks.o
+	${LD} ${LDFLAGS}
 
 .PHONY: clean
 clean::
-	${Q}${RM} *~ ${HOSTTMPDIR}*.sym ${HOSTTMPDIR}*_data.h ${HOSTTMPDIR}*_data.o ${HOSTTMPDIR}*.p ${HOSTTMPDIR}*.pp ${HOSTTMPDIR}*.i ${HOSTTMPDIR}*_proxified* ${HOSTSRCDIR}*_proxified* ${HOSTTMPDIR}*_runner* ${HOSTTMPDIR}*_mocks* ${HOSTTMPDIR}*_test* *_test *.o ${HOSTTMPDIR}file*.asm ${HOSTTMPDIR}file*.o
+	${Q}${RM} *~ ${HOSTTMPDIR}*.sym ${HOSTTMPDIR}*_data.h ${HOSTTMPDIR}*_data.o ${HOSTTMPDIR}*.p ${HOSTTMPDIR}*.pp ${HOSTTMPDIR}*.i ${HOSTTMPDIR}*_proxified* ${HOSTSRCDIR}*_proxified* ${HOSTTMPDIR}*_runner* ${HOSTTMPDIR}*_mocks* ${HOSTTMPDIR}*_test* *_test *.o ${HOSTTMPDIR}file*.asm ${HOSTTMPDIR}file*.o *.i
 
 check:: ${DATS}

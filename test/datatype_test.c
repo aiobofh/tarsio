@@ -13,6 +13,8 @@ test(datatype_init_shall_set_all_relevant_data) {
   const unsigned char* endptr = ref + sizeof(dt) - 4;
   memset(&dt, 0, sizeof(dt));
   datatype_init(&dt, (char*)-1, -1, -1, -1, -1, -1);
+  /* Check only the datatype definitions */
+  ref += (sizeof(datatype_t) - sizeof(datatype_definition_t));
   while (endptr > ref) {
     assert_eq(0, (*ref == 0));
     ref++;

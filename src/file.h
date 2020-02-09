@@ -26,7 +26,7 @@ typedef struct file_parse_state_s file_parse_state_t;
 
 #define EMPTY_FILE_PARSE_STATE {0, 0, 0, 0, NULL, 0, 0, 0}
 
-typedef int (*file_parse_cb_t)(void* list_ptr, file_parse_state_t* state, const char c, const size_t line ,const size_t col, const size_t offset);
+typedef int (*file_parse_cb_t)(void* list_ptr, file_parse_state_t* state, const char c, const size_t line ,const size_t col, const size_t offset, const size_t last_function_start);
 
 struct file_s {
   char* buf;
@@ -38,7 +38,7 @@ typedef struct file_s file_t;
 #define FILE_EMPTY {NULL, 0, NULL}
 
 int file_init(file_t* file, const char* filename);
-int file_parse(file_parse_cb_t func, void* list_ptr, const file_t* file, parse_part_t parse_part);
+int file_parse(file_parse_cb_t func, void* list_ptr, const file_t* file, parse_part_t parse_part, int skip_strings);
 void file_cleanup(file_t* file);
 
 #endif

@@ -4,6 +4,19 @@
 
 #define m tarsio_mock
 
+#ifdef SASC
+# define MEMSET __builtin_memset
+# define ASSERT __assert
+#else
+# ifdef VBCC
+#  define MEMSET __asm_memset
+#  define ASSERT abort
+# else
+#  define MEMSET memset
+#  define ASSERT __assert_fail
+# endif
+#endif
+
 test(new_shall_malloc_the_correct_size) {
   argument_node_new(NULL, NULL, 0, 0, 0);
   assert_eq(1, m.malloc.call_count);
@@ -25,17 +38,10 @@ test(new_shall_clear_the_whole_node) {
   argument_node_t node;
   m.malloc.retval = &node;
   argument_node_new(NULL, NULL, 0, 0, 0);
-#ifndef SASC
-  assert_eq(1, m.memset.call_count);
-  assert_eq(&node, m.memset.args.arg0);
-  assert_eq(0, m.memset.args.arg1);
-  assert_eq(sizeof(node), m.memset.args.arg2);
-#else
-  assert_eq(1, m.__builtin_memset.call_count);
-  assert_eq(&node, m.__builtin_memset.args.arg0);
-  assert_eq(0, m.__builtin_memset.args.arg1);
-  assert_eq(sizeof(node), m.__builtin_memset.args.arg2);
-#endif
+  assert_eq(1, m.MEMSET.call_count);
+  assert_eq(&node, m.MEMSET.args.arg0);
+  assert_eq(0, m.MEMSET.args.arg1);
+  assert_eq(sizeof(node), m.MEMSET.args.arg2);
 }
 
 test(append_shall_call_list_append) {
@@ -77,11 +83,7 @@ test(node_cleanup_shall_cleanup_argument_data) {
 
 test(node_cleanup_should_assert_on_NULL_arg) {
   argument_list_cleanup(NULL);
-#ifndef SASC
-  assert_eq(1, m.__assert_fail.call_count);
-#else
-  assert_eq(1, m.__assert.call_count);
-#endif
+  assert_eq(1, m.ASSERT.call_count);
 }
 
 test(list_cleanup_shall_free_all_nodes) {

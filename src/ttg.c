@@ -19,12 +19,25 @@
 #include "file.h"
 #include "testcase.h"
 
+#include "version.h"
+
+static char field[] = "$Id: ttg,v " VERSION " " __DATE__ " " __TIME__ " " AUTHOR " Exp $";
+static char version[] = VERSION;
+static char timestamp[] = __DATE__ " " __TIME__;
+
 /****************************************************************************
  * Program usage
  */
 static void usage(const char* program_name)
 {
   printf("USAGE: %s <test-file> <tarsio-pre-processed-source>\n", program_name);
+}
+
+/****************************************************************************
+ * Program version
+ */
+static void ver(const char* program_name) {
+  printf("%s v%s %s (%s)\n", program_name, version, timestamp, field);
 }
 
 /****************************************************************************
@@ -38,6 +51,17 @@ typedef struct ttg_options_s ttg_options_t;
 
 static int ttg_options_init(ttg_options_t* options, int argc, char* argv[])
 {
+  if (argc == 2) {
+    if ((0 == strcmp("-v", argv[1])) || (0 == strcmp("--version", argv[1])) || (0 == strcmp("VERSION", argv[1]))) {
+      ver(argv[0]);
+      return -1;
+    }
+    if ((0 == strcmp("-h", argv[1])) || (0 == strcmp("--help", argv[1])) || (0 == strcmp("?", argv[1]))) {
+      usage(argv[0]);
+      return -1;
+    }
+  }
+
   if (argc != 3) {
     error1("ERROR: Illegal number (%d) of arguments", argc);
     usage(argv[0]);
@@ -130,13 +154,22 @@ static void generate_tarsio_assert_eq(void) {
 
 static void generate_tarsio_init(void) {
   puts("void __tarsio_init(void) {\n"
-       "  memset(&__tarsio_stats, 0, sizeof(__tarsio_stats));\n"
-       "  memset(&__tarsio_failure_list, 0, sizeof(__tarsio_failure_list));\n"
-       "  memset(&__tarsio_options, 0, sizeof(__tarsio_options));\n"
+       "  __tarsio_stats.success = __tarsio_stats.fail = __tarsio_stats.error = __tarsio_stats.skip = 0;\n"
+       "  __tarsio_failure_list.first = __tarsio_failure_list.last = NULL;\n"
+       "  __tarsio_options.compact = __tarsio_options.verbose = __tarsio_options.xml_output = 0;\n"
        "}\n");
 }
 
-#ifndef SASC
+
+
+#ifdef SASC
+#define AMIGA
+#endif
+#ifdef VBCC
+#define AMIGA
+#endif
+
+#ifndef AMIGA
 static void generate_tarsio_handle_arguments(void) {
   puts("void __tarsio_handle_arguments(int argc, char* argv[]) {\n"
        "  int i;\n"
@@ -183,7 +216,11 @@ static void generate_tarsio_unit_test_execute(void) {
        "  size_t skip = __tarsio_stats.skip;\n"
        "  size_t fail = __tarsio_stats.fail;\n"
        "  size_t error = __tarsio_stats.error;\n"
-       "  memset(__tarsio_mock_data, 0, mock_data_size);\n"
+       "  size_t i = 0;\n"
+       "  char* ptr = (char*)__tarsio_mock_data;\n"
+       "  while (i < mock_data_size) {\n"
+       "    ptr[i++] = 0;\n"
+       "  }\n"
        "  func(__tarsio_mock_data, name);\n"
        "  if (1 == __tarsio_options.verbose) {\n"
        "    if (skip != __tarsio_stats.skip) {\n"
@@ -257,12 +294,24 @@ static void generate_tarsio_cleanup(void) {
 static int generate_test_runner(testcase_list_t* list, const char* file) {
   int retval = 0;
   testcase_node_t* node;
+  char* data_file = (char*)file;
+  char* ptr;
 
   printf("#include <stdio.h>\n");
   printf("#include <stdlib.h>\n\n");
   printf("#include \"tarsio.h\"\n");
 
-  printf("#include \"%s\"\n", file);
+  while (NULL != (ptr = strstr(data_file, ":"))) {
+    data_file = ptr + 1;
+  }
+  while (NULL != (ptr = strstr(data_file, "/"))) {
+    data_file = ptr + 1;
+  }
+  while (NULL != (ptr = strstr(data_file, "\\"))) {
+    data_file = ptr + 1;
+  }
+
+  printf("#include \"%s\"\n", data_file);
 
   for (node = list->first; NULL != node; node = node->next) {
     printf("extern int __%s(void*, const char*);\n", node->name);

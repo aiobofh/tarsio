@@ -5,6 +5,19 @@
 
 #define m tarsio_mock
 
+#ifdef SASC
+# define MEMSET __builtin_memset
+# define ASSERT __assert
+#else
+# ifdef VBCC
+#  define MEMSET __asm_memset
+#  define ASSERT abort
+# else
+#  define MEMSET memset
+#  define ASSERT __assert_fail
+# endif
+#endif
+
 /***************************************************************************
  * cpp_node_new()
  */
@@ -21,17 +34,10 @@ test(new_shall_set_all_allocated_memory_to_zero) {
   cpp_node_t node;
   m.malloc.retval = (void*)&node;
   cpp_node_new(NULL);
-#ifndef SASC
-  assert_eq(1, m.memset.call_count);
-  assert_eq((void*)&node, m.memset.args.arg0);
-  assert_eq(0, m.memset.args.arg1);
-  assert_eq(sizeof(cpp_node_t), m.memset.args.arg2);
-#else
-  assert_eq(1, m.__builtin_memset.call_count);
-  assert_eq((void*)&node, m.__builtin_memset.args.arg0);
-  assert_eq(0, m.__builtin_memset.args.arg1);
-  assert_eq(sizeof(cpp_node_t), m.__builtin_memset.args.arg2);
-#endif
+  assert_eq(1, m.MEMSET.call_count);
+  assert_eq((void*)&node, m.MEMSET.args.arg0);
+  assert_eq(0, m.MEMSET.args.arg1);
+  assert_eq(sizeof(cpp_node_t), m.MEMSET.args.arg2);
 }
 
 test(new_shall_clone_the_cpp_directive) {
@@ -86,7 +92,7 @@ test(append_should_append_if_new_cpp_node_was_ok) {
 test(list_init_shall_assert_list_is_not_NULL) {
   cpp_list_init(NULL, (file_t*)0x1234);
 #ifndef SASC
-  assert_eq(1, m.__assert_fail.call_count);
+  assert_eq(1, m.ASSERT.call_count);
 #else
   skip("Not applicable on SASC");
 #endif
@@ -95,7 +101,7 @@ test(list_init_shall_assert_list_is_not_NULL) {
 test(list_init_shall_assert_file_is_not_NULL) {
   cpp_list_init((cpp_list_t*)0x1234, NULL);
 #ifndef SASC
-  assert_eq(1, m.__assert_fail.call_count);
+  assert_eq(1, m.ASSERT.call_count);
 #else
   skip("Not applicable on SASC");
 #endif
@@ -132,7 +138,7 @@ test(node_cleanup_shall_free_cpp_directive) {
 test(list_cleanup_shall_assert_if_provided_list_is_null) {
   cpp_list_cleanup(NULL);
 #ifndef SASC
-  assert_eq(1, m.__assert_fail.call_count);
+  assert_eq(1, m.ASSERT.call_count);
 #else
   assert_eq(1, m.__assert.call_count);
 #endif

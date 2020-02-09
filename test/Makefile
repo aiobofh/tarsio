@@ -1,5 +1,5 @@
 # Makefile for Tarsio self-tests
-Q=@
+Q:=@
 
 COV=1
 export COV
@@ -15,21 +15,31 @@ SEP:=
 EXECUTOR=vamos -c ~/.vamosrc ${SEP}
 FAILCOLLECT:=COMPACT
 else
+ifdef VBCC
+SEP:=
+EXECUTOR=vamos -c ~/.vamosrc ${SEP}
+FAILCOLLECT:=COMPACT
+else
 EXECUTOR:=./
 FAILCOLLECT=-c || (echo "$$i failed")
 endif
+endif
 
 export TARSIO_BIN:=../src
-export Q
 export PATH:=${PATH}:../src
+export SASC:=${SASC}
+export VBCC:=${VBCC}
 
 ifndef VERBOSE
-.SILENT:
+#.SILENT:
 endif
 
 all:
 	${Q}${MAKE} --no-print-directory -C ../src/ && \
 	${MAKE} --no-print-directory check
+
+tools:
+	${Q}${MAKE} --no-print-directory -C ../src/
 
 include ../include/tarsio.mk
 
@@ -40,6 +50,14 @@ check:: $(subst .c,,$(wildcard *_test.c))
 clean::
 	${Q}${RM} *.uaem *.lnk *.info
 
+clean-all:
+	${Q}${MAKE} --no-print-directory clean && \
+	${MAKE} --no-print-directory -C ../src/ clean
+
 ifndef SASC
+ifndef VBCC
+ifndef VC
 include ../include/coverage.mk
+endif
+endif
 endif
