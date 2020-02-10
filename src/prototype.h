@@ -1,3 +1,23 @@
+/*
+ * Function prototype parsing and helper functions
+ *
+ *              _______          _____ ___        ______
+ *                 |      ||    |         |    | |      |
+ *                 |      ||    |         |    | |      |
+ *                 |   ___||___ |         |___ | |______|
+ *
+ *                   Copyleft AiO Secure Teletronics
+ *
+ * Function headers are parsed and interpreted to be transformed to other
+ * formats and test-suite data storage datatypes. But also to generate
+ * extern declarations in the correct place of the source code to ensure
+ * that the program compiles with close to zero incrase of work load for
+ * the programmer.
+ *
+ * Beware, this code is quite complex and also the very heart of Tarsio,
+ * so I can not say it enough times: Here be dragons!
+ */
+
 #ifndef _PROTOTYPE_H_
 #define _PROTOTYPE_H_
 
@@ -40,7 +60,14 @@ struct prototype_s {
 };
 typedef struct prototype_s prototype_t;
 
-#define PROTOTYPE_EMPTY {RAW_PROTOTYPE_EMPTY, LINKAGE_DEFINITION_EMPTY, DATATYPE_EMPTY, 0, NULL, ARGUMENT_LIST_EMPTY, SYMBOL_USAGE_LIST_EMPTY}
+#define PROTOTYPE_EMPTY {                       \
+      RAW_PROTOTYPE_EMPTY,                      \
+      LINKAGE_DEFINITION_EMPTY,                 \
+      DATATYPE_EMPTY,                           \
+      0,                                        \
+      NULL,                                     \
+      ARGUMENT_LIST_EMPTY,                      \
+      SYMBOL_USAGE_LIST_EMPTY}
 
 struct prototype_node_s {
   struct prototype_node_s* next;
@@ -70,6 +97,7 @@ int prototype_extract_arguments(prototype_list_t* list);
 size_t prototype_get_first_function_implementation_line(prototype_list_t* list);
 void prototype_list_cleanup(prototype_list_t* list);
 
-void generate_prototype(prototype_node_t* node, const char* prefix, const char* prepend, const char* suffix);
+void generate_prototype(prototype_node_t* node, const char* prefix,
+                        const char* prepend, const char* suffix);
 
 #endif

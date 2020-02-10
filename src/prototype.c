@@ -1,3 +1,23 @@
+/*
+ * Function prototype parsing and helper functions
+ *
+ *              _______          _____ ___        ______
+ *                 |      ||    |         |    | |      |
+ *                 |      ||    |         |    | |      |
+ *                 |   ___||___ |         |___ | |______|
+ *
+ *                   Copyleft AiO Secure Teletronics
+ *
+ * Function headers are parsed and interpreted to be transformed to other
+ * formats and test-suite data storage datatypes. But also to generate
+ * extern declarations in the correct place of the source code to ensure
+ * that the program compiles with close to zero incrase of work load for
+ * the programmer.
+ *
+ * Beware, this code is quite complex and also the very heart of Tarsio,
+ * so I can not say it enough times: Here be dragons!
+ */
+
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -56,6 +76,7 @@ static char* extract_symbol(const char* raw) {
 
 static prototype_node_t* prototype_list_find_symbol(const prototype_list_t* list, const char* symbol, const size_t offset) {
   prototype_node_t* node;
+  (void)offset; /* Currently not used */
   for (node = list->first; NULL != node; node = node->next) {
     if (0 == strcmp(symbol, node->info.symbol)) {
       return node;
@@ -126,7 +147,11 @@ static char* washing_machine(const char* raw) {
 
 static void prototype_list_remove(prototype_list_t* list, prototype_node_t* node);
 
-static prototype_node_t* prototype_node_new(const char* raw, const prototype_list_t* list, const size_t offset, const size_t line, const size_t col) {
+static prototype_node_t* prototype_node_new(const char* raw,
+                                            const prototype_list_t* list,
+                                            const size_t offset,
+                                            const size_t line,
+                                            const size_t col) {
   prototype_node_t* node = NULL;
   prototype_node_t* n;
   char* symbol;
@@ -353,7 +378,6 @@ static void prototype_list_remove(prototype_list_t* list, prototype_node_t* node
   }
 }
 
-
 int prototype_list_init(prototype_list_t* list, const file_t* file) {
   assert((NULL != list) && "Argument 'list' must not be NULL");
   assert((NULL != file) && "Argument 'file' must not be NULL");
@@ -366,7 +390,10 @@ int prototype_list_init(prototype_list_t* list, const file_t* file) {
   return 0;
 }
 
-static int find_symbol_usage(void* list_ptr, file_parse_state_t* state, const char c, const size_t line, const size_t col, const size_t offset, const size_t last_function_start) {
+static int find_symbol_usage(void* list_ptr, file_parse_state_t* state,
+                             const char c, const size_t line,
+                             const size_t col, const size_t offset,
+                             const size_t last_function_start) {
   prototype_list_t* list = (prototype_list_t*)list_ptr;
   prototype_node_t* node;
 
@@ -527,9 +554,6 @@ static int extract_return_type(prototype_node_t* node) {
    * Count asterisks
    */
   while (len > 0) {
-    /*
-    char c = raw[len];
-    */
     char c = tmpbuf[len];
     if (' ' == c) {
       /* Nop - just ignore spaces */
@@ -728,17 +752,6 @@ static int extract_arguments(prototype_node_t* node) {
           sprintf(arg_name, "dummy%02d", dummy_cnt);
           dummy_cnt++;
         }
-
-        /*
-         * Weird detection of anonymous void arguments.
-         */
-        /*
-        if ((0 == strcmp("void", arg_name)) == (0 == strcmp("", type_name))) {
-          char* tmp = arg_name;
-          arg_name = type_name;
-          type_name = tmp;
-        }
-        */
       }
 
       if ((0 == astrisks) && (0 == strcmp("void", type_name))) {
@@ -795,7 +808,8 @@ void prototype_list_cleanup(prototype_list_t* list) {
 /*
  * TODO: Refactor generate_prototype to write to disk more effeicient
  */
-void generate_prototype(prototype_node_t* node, const char* prefix, const char* prepend, const char* suffix) {
+void generate_prototype(prototype_node_t* node, const char* prefix,
+                        const char* prepend, const char* suffix) {
   argument_node_t* anode;
   int i;
   if (NULL != prefix) {
