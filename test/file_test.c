@@ -3,6 +3,7 @@
 
 #include "tarsio.h"
 #include "helpers.h"
+
 #define m tarsio_mock
 
 /*****************************************************************************
@@ -28,7 +29,6 @@ test(fsize_shall_use_ftell_to_determine_the_number_of_bytes) {
   assert_eq(1, m.ftell.call_count);
   assert_eq((FILE*)0x1234, m.ftell.args.arg0);
 }
-
 
 test(fsize_shall_rewind_to_beginning_of_file_when_done) {
   fsize((FILE*)0x1234);

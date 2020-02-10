@@ -1,3 +1,25 @@
+/*
+ * File-parser helper functions (very ad-hoc and need-based)
+ *
+ *              _______          _____ ___        ______
+ *                 |      ||    |         |    | |      |
+ *                 |      ||    |         |    | |      |
+ *                 |   ___||___ |         |___ | |______|
+ *
+ *                   Copyleft AiO Secure Teletronics
+ *
+ * This is where much of the dark magic of Tarsio resides. Here be
+ * dragons!
+ *
+ * This file contains all the basics for parsing pre-procsessed C
+ * source code files and gther as much information as possible about
+ * what should be generated and arranged in intermediate source files.
+ * There are, and probably always will be, flaws in this parser. But
+ * over time it will improve. The idea is to have as few dependencies
+ * to other third-party tools as possible, to make Tarsio truly
+ * portable and also quick.
+ */
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <assert.h>
@@ -14,7 +36,8 @@ static size_t fsize(FILE *fd) {
   return file_size;
 }
 
-int file_parse(file_parse_cb_t func, void* list_ptr, const file_t* file, parse_part_t parse_part, int skip_strings) {
+int file_parse(file_parse_cb_t func, void* list_ptr, const file_t* file,
+               parse_part_t parse_part, int skip_strings) {
 
   const int parse_function_bodies = ((PARSE_FUNCTION_BODIES == parse_part) || (PARSE_ALL == parse_part));
   const int parse_declarations = ((PARSE_DECLARATIONS == parse_part) || (PARSE_ALL == parse_part));
@@ -45,6 +68,8 @@ int file_parse(file_parse_cb_t func, void* list_ptr, const file_t* file, parse_p
     char c = file->buf[i];
     /*
      * TODO: Make the file-parser handle C++ style line-comments.
+     * TODO: Make the file-parser handle various weird function headers
+     *       with linefeeds here and there (is_entering_function_body)
      */
     const int is_comment_start = (!in_string && !in_comment && (('*' == c) && ('/' == last_c)));
     const int is_comment_end = (in_comment && (('/' == c) && ('*' == last_c)));

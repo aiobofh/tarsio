@@ -1,3 +1,25 @@
+/*
+ * File-parser helper functions (very ad-hoc and need-based)
+ *
+ *              _______          _____ ___        ______
+ *                 |      ||    |         |    | |      |
+ *                 |      ||    |         |    | |      |
+ *                 |   ___||___ |         |___ | |______|
+ *
+ *                   Copyleft AiO Secure Teletronics
+ *
+ * This is where much of the dark magic of Tarsio resides. Here be
+ * dragons!
+ *
+ * This file contains all the basics for parsing pre-procsessed C
+ * source code files and gther as much information as possible about
+ * what should be generated and arranged in intermediate source files.
+ * There are, and probably always will be, flaws in this parser. But
+ * over time it will improve. The idea is to have as few dependencies
+ * to other third-party tools as possible, to make Tarsio truly
+ * portable and also quick.
+ */
+
 #ifndef _FILE_H_
 #define _FILE_H_
 
@@ -27,7 +49,11 @@ typedef struct file_parse_state_s file_parse_state_t;
 
 #define EMPTY_FILE_PARSE_STATE {0, 0, 0, 0, 0, NULL, 0, 0, 0}
 
-typedef int (*file_parse_cb_t)(void* list_ptr, file_parse_state_t* state, const char c, const size_t line ,const size_t col, const size_t offset, const size_t last_function_start);
+/* Data-type for parser-plugin function pointers */
+typedef int (*file_parse_cb_t)(void* list_ptr, file_parse_state_t* state,
+                               const char c, const size_t line,
+                               const size_t col, const size_t offset,
+                               const size_t last_function_start);
 
 struct file_s {
   char* buf;
@@ -39,7 +65,8 @@ typedef struct file_s file_t;
 #define FILE_EMPTY {NULL, 0, NULL}
 
 int file_init(file_t* file, const char* filename);
-int file_parse(file_parse_cb_t func, void* list_ptr, const file_t* file, parse_part_t parse_part, int skip_strings);
+int file_parse(file_parse_cb_t func, void* list_ptr, const file_t* file,
+               parse_part_t parse_part, int skip_strings);
 void file_cleanup(file_t* file);
 
 #endif
