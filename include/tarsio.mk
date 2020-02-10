@@ -1,3 +1,5 @@
+MAKEFLAGS += --no-builtin-rules
+
 .SUFFIXES:
 
 HOSTTMPDIR:=/tmp/
@@ -21,7 +23,7 @@ TAM=vamos -c ~/.vamosrc ${TARSIO_BIN}/tam $(subst ${HOSTTMPDIR},${TMPDIR},$^) > 
 TTG=vamos -c ~/.vamosrc ${TARSIO_BIN}/ttg $(subst ${HOSTTMPDIR},${TMPDIR},$^) > $@
 
 TMPCFLAGS=define NODEBUG define SASC optimize noicons noversion includedirectory $(TMPDIR) includedirectory $(INCDIR) includedirectory $(SRCDIR)
-PPFLAGS=${TMPCFLAGS} define main=__tarsio_replace_main $(subst ${HOSTSRCDIR},${SRCDIR},$^) preprocessoronly; cp $(subst .c,${CPPEXT},$^) $@; rm $(subst .c,${CPPEXT},$^)
+PPFLAGS=${TMPCFLAGS} define main=__tarsio_replace_main $(subst ${HOSTSRCDIR},${SRCDIR},$^) preprocessoronly; cp $(subst .c,${CPPEXT},$^) $@; rm -f $(subst .c,${CPPEXT},$^)
 CFLAGS=${TMPCFLAGS} $(subst ${HOSTTMPDIR},${TMPDIR},$(subst ${HOSTTSTDIR},${TSTDIR},$(subst ${HOSTSRCDIR},${SRCDIR},$^))) IGNORE=105
 CFLAGSPP=${CFLAGS}
 LDFLAGS=noicons noversion $(subst ${HOSTTMPDIR},${TMPDIR},$(subst ${HOSTTSTDIR},${TSTDIR},$(subst ${HOSTSRCDIR},${SRCDIR},$^))) link to $(subst ${HOSTTMPDIR},${TMPDIR},$(subst ${HOSTTSTDIR},${TSTDIR},$(subst ${HOSTSRCDIR},${SRCDIR},$@)))
@@ -45,10 +47,9 @@ TSTDIR:=/test/
 COVDIR:=${HOSTTMPDIR}
 TMPDIR:=${HOSTTMPDIR}
 TMPCFLAGS=-DVBCC -O0 -c99 -g -I. -I${TMPDIR} -I${INCDIR} -I${SRCDIR}
-PPFLAGS=${TMPCFLAGS} -Dmain=__tarsio_replace_main -E -c $<; cp $(subst .c,${CPPEXT},$<) $@; rm $(subst .c,${CPPEXT},$^)
+PPFLAGS=${TMPCFLAGS} -Dmain=__tarsio_replace_main -E -c $<; cp $(subst .c,${CPPEXT},$<) $@; rm -f $(subst .c,${CPPEXT},$^)
 CFLAGS=${TMPCFLAGS} -o $@ -c $<
 CFLAGSPP=${TMPCFLAGS} -c $< -o $@
-#LDFLAGS=-o $@ $^
 LDFLAGS=-c99 $^ -o $@
 TESTO:=
 PROXIFIEDO:=
@@ -70,7 +71,7 @@ INCDIR:=${HOSTINCDIR}
 TSTDIR:=
 COVDIR:=${HOSTTMPDIR}
 TMPCFLAGS=/nologo /Od /Wall /Zi /I. /I${TMPDIR} /I${INCDIR} /I${SRCDIR}
-PPFLAGS=${TMPCFLAGS} /Dmain=__tarsio_replace_main /P $<; cp $(subst ${SRCDIR},,$(subst .c,${CPPEXT},$<)) $@; rm $(subst ${SRCDIR},,$(subst .c,${CPPEXT},$^))
+PPFLAGS=${TMPCFLAGS} /Dmain=__tarsio_replace_main /P $<; cp $(subst ${SRCDIR},,$(subst .c,${CPPEXT},$<)) $@; rm -f $(subst ${SRCDIR},,$(subst .c,${CPPEXT},$^))
 CFLAGS=${TMPCFLAGS} /Fo$(subst ${HOSTTMPDIR},${TMPDIR},$@) $(subst ${HOSTTMPDIR},${TMPDIR},$<)
 CFLAGSPP=${TMPCFLAGS} /Fo$(subst ${HOSTTMPDIR},${TMPDIR},$@) /Tc$(subst ${HOSTTMPDIR},${TMPDIR},$<)
 LDFLAGS=/nologo /out:$@ $^
@@ -133,21 +134,20 @@ ${HOSTTMPDIR}%_mocks.c: ${HOSTTMPDIR}%.sym ${HOSTTMPDIR}%_data.h
 ${HOSTTMPDIR}%_proxified${CPPEXT}: ${HOSTTMPDIR}%.sym ${HOSTTMPDIR}%${CPPEXT}
 	${Q}${TAM}
 
-.PRECIOIS: ${HOSTTMPDIR}%_runner.c
+.PRECIOUS: ${HOSTTMPDIR}%_runner.c
 ${HOSTTMPDIR}%_runner.c: ${HOSTTSTDIR}%_test.c ${HOSTTMPDIR}%_data.h
 	${Q}${TTG}
 
 #
 # Compile the test suite to an object file
 #
+.PRECIOUS: ${HOSTTMPDIR}%.o
 ${HOSTTMPDIR}%.o: ${HOSTTMPDIR}%.c
 	${Q}${CC} ${CFLAGS}
 
+.PRECIOUS: ${HOSTTMPDIR}%.o
 ${HOSTTMPDIR}%.o: ${HOSTTMPDIR}%${CPPEXT}
 	${Q}${CC} ${CFLAGSPP}
-
-#${HOSTSRCDIR}%.o: ${HOSTTMPDIR}%.p
-#	${Q}${CC} ${CFLAGSPP}
 
 .PRECIOUS: ${HOSTSRCDIR}%_proxified.o
 ${HOSTSRCDIR}%_proxified.o: ${HOSTTMPDIR}%_proxified${CPPEXT} ${HOSTTMPDIR}%_data.h
@@ -170,10 +170,11 @@ ${HOSTTMPDIR}%_test.o: ${HOSTTSTDIR}%_test.c ${HOSTTMPDIR}%_data.h
 # TODO: Make tarsio.o a shared library instead
 #
 %_test${EXE}: ${HOSTTMPDIR}%_test.o ${HOSTSRCDIR}%_proxified.o ${HOSTTMPDIR}%_runner.o ${HOSTTMPDIR}%_mocks.o
-	${LD} ${LDFLAGS}
+	${Q}${LD} ${LDFLAGS}
 
 .PHONY: clean
 clean::
-	${Q}${RM} *~ ${HOSTTMPDIR}*.sym ${HOSTTMPDIR}*_data.h ${HOSTTMPDIR}*_data.o ${HOSTTMPDIR}*.p ${HOSTTMPDIR}*.pp ${HOSTTMPDIR}*.i ${HOSTTMPDIR}*_proxified* ${HOSTSRCDIR}*_proxified* ${HOSTTMPDIR}*_runner* ${HOSTTMPDIR}*_mocks* ${HOSTTMPDIR}*_test* *_test *.o ${HOSTTMPDIR}file*.asm ${HOSTTMPDIR}file*.o *.i
+	${Q}${RM} -f *~ ${HOSTTMPDIR}*.sym ${HOSTTMPDIR}*_data.h ${HOSTTMPDIR}*_data.o ${HOSTTMPDIR}*.p ${HOSTTMPDIR}*.pp ${HOSTTMPDIR}*.i ${HOSTTMPDIR}*_proxified* ${HOSTSRCDIR}*_proxified* ${HOSTTMPDIR}*_runner* ${HOSTTMPDIR}*_mocks* ${HOSTTMPDIR}*_test* *_test *.o ${HOSTTMPDIR}file*.asm ${HOSTTMPDIR}file*.o *.i
 
+.PHONY: check
 check:: ${DATS}

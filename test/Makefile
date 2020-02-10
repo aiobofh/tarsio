@@ -1,8 +1,8 @@
 # Makefile for Tarsio self-tests
-Q:=@
+MAKEFLAGS += --no-builtin-rules
+.SUFFIXES:
 
-COV=1
-export COV
+Q:=@
 
 .SUFFIXES:
 
@@ -22,6 +22,8 @@ FAILCOLLECT:=COMPACT
 else
 EXECUTOR:=./
 FAILCOLLECT=-c || (echo "$$i failed")
+COV=1
+export COV
 endif
 endif
 
@@ -34,10 +36,12 @@ ifndef VERBOSE
 #.SILENT:
 endif
 
+.PHONY: all
 all:
 	${Q}${MAKE} --no-print-directory -C ../src/ && \
 	${MAKE} --no-print-directory check
 
+.PHONY: tools
 tools:
 	${Q}${MAKE} --no-print-directory -C ../src/
 
@@ -47,9 +51,11 @@ include ../include/tarsio.mk
 check:: $(subst .c,,$(wildcard *_test.c))
 	${Q}for i in $$(ls -1 *_test); do ${EXECUTOR}$$i $(FAILCOLLECT) ; done; echo
 
+.PHONY: clean
 clean::
-	${Q}${RM} *.uaem *.lnk *.info
+	${Q}${RM} -f *.uaem *.lnk *.info
 
+.PHONY: clean-all
 clean-all:
 	${Q}${MAKE} --no-print-directory clean && \
 	${MAKE} --no-print-directory -C ../src/ clean

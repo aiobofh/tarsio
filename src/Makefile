@@ -1,6 +1,7 @@
 #
 # Makefile for the Tarsio C Unit-testing framework
 #
+MAKEFLAGS += --no-builtin-rules
 
 NODEBUG?=-DNODEBUG
 Q:=@
@@ -87,5 +88,6 @@ tam${EXE}: tam.o list.o prototype.o symbol_cache.o file.o argument.o symbol_usag
 
 ttg${EXE}: ttg.o str.o file.o testcase.o
 
+.PHONY: clean
 clean::
-	$(Q)${RM} *~ *.o *.so *.library *.lnk *.p *.ueam version.h gts tsg tcg tmg tam ttg *.exe
+	$(Q)${RM} -f *~ *.o *.so *.library *.lnk *.p *.ueam version.h gts tsg tcg tmg tam ttg *.exe

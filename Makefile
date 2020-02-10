@@ -2,11 +2,15 @@
 # Makefile for Tarsio
 #
 
+MAKEFLAGS += --no-builtin-rules
+.SUFFIXES:
+
 export VERSION_MAJOR:=0
 export VERSION_MINOR:=0
 export VERSION_PATCH:=0
-
+export AUTHOR:=Joakim Ekblad
 export VERSION:=${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}
+export Q:=@
 
 all: build
 
@@ -14,8 +18,8 @@ info:
 	@echo ${VERSION} && \
 	$(MAKE) --no-print-directory -C src info
 
-.NOTPARALLEL: check
-.PHONY: check
+.NOTPARALLEL: check-all
+.PHONY: check-all
 check-all: clean
 	@echo $@ && \
 	echo "----------------------------------------------------------" && \
@@ -35,10 +39,13 @@ check-all: clean
 	$(MAKE) --no-print-directory -C src clean && \
 	$(MAKE) --no-print-directory -C test clean
 
+.NOTPARALLEL: check
+.PHONY: check
 check:
 	@${MAKE} --no-print-directory -C test && \
-	${MAKE} --no-print-directory -C clean
+	${MAKE} --no-print-directory -C test clean
 
+.PHONY: build
 build:
 	@${MAKE} --no-print-directory -C src
 
@@ -249,6 +256,7 @@ bin-dist: tarsio-${VERSION}-sasc-68000-bin.lha tarsio-${VERSION}-sasc-68020-bin.
 .PHONY: dist
 dist: source-dist bin-dist
 
+.PHONY: install
 install: build
 	mkdir -p $PREFIX/bin && \
 	install -s src/tcg $PREFIX/bin/tcg && \
@@ -262,6 +270,7 @@ install: build
 	install include/tarsio.h $PREFIX/include/tarsio/tarsio.h
 
 .NOTPARALLEL: clean
+.PHONY: clean
 clean:
 	@$(MAKE) --no-print-directory -C src clean && \
 	$(MAKE) --no-print-directory -C test clean && \
