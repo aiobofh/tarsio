@@ -52,9 +52,6 @@ static char* extract_symbol(const char* raw) {
   while (((' ' == *p) || ('\t' == *p)) && (p > raw)) {
     p--;
   }
-  /*
-  while ((p > raw) && ((' ' != *p) && ('*' != *p))) {
-  */
   while ((p > r) && ((' ' != *p) && ('*' != *p))) {
     len++;
     p--;
@@ -299,9 +296,6 @@ static int extract_prototypes(void* list_ptr, file_parse_state_t* state, const c
   if (1 == is_last_character) {
     int is_function_implementation = 0;
     if ('{' == c) {
-      /*
-      is_function_implementation = line - state->line_feeds_in_declaration;
-      */
       is_function_implementation = offset - strlen(state->buf);
       debug3("is_function_implementation %d %c '%s'", is_function_implementation, state->buf[state->idx - 1], state->buf);
       state->buf[state->idx - 1] = ';';
