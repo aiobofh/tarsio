@@ -380,7 +380,7 @@ static void generate_proxified(prototype_list_t* list, file_t* file) {
       fwrite(&file->buf[offset], node->offset - offset, 1, stdout);
       debug4("Writing %lu %lu %lu bytes chunk (before function head exetern %s)", offset, node->offset, node->offset - offset, node->prototype_node->info.symbol);
 #ifdef VBCC
-      fprintf(stderr, "DEBUG: '%d'\n", (int)file->buf[offset + node->offset]);
+      printf("\n");
 #endif
       generate_extern_proxy_prototype(list, offset, node);
       offset = node->offset;
