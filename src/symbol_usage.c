@@ -1,3 +1,21 @@
+/*
+ * Helper functions for handling symbols and their usage
+ *
+ *              _______          _____ ___        ______
+ *                 |      ||    |         |    | |      |
+ *                 |      ||    |         |    | |      |
+ *                 |   ___||___ |         |___ | |______|
+ *
+ *                   Copyleft AiO Secure Teletronics
+ *
+ * These are helper functions to handle, sort and organize argument lists
+ * for symols that may be used around the design under test. The lists are
+ * mainly used for code replacement on a source level, where e.g. function
+ * calls to specific functions are replaced with a call to a proxy-function
+ * that enables the programmer to control the program flow better from the
+ * testcases.
+ */
+
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
