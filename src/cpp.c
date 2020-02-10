@@ -1,3 +1,19 @@
+/*
+ * C pre-processor list helpers
+ *
+ *              _______          _____ ___        ______
+ *                 |      ||    |         |    | |      |
+ *                 |      ||    |         |    | |      |
+ *                 |   ___||___ |         |___ | |______|
+ *
+ *                   Copyleft AiO Secure Teletronics
+ *
+ * These are helper functions to handle, sort and organize the C
+ * pre-processor directives in a parsed source-file. Keeping track of
+ * #includes and putting them back in the correct order in generated code
+ * and such things.
+ */
+
 #include <assert.h>
 #include <string.h>
 
@@ -43,7 +59,10 @@ static void cpp_list_append(cpp_list_t* list, const char* buf) {
   list_append(list, node);
 }
 
-static int extract_cpp_directives(void* list_ptr, file_parse_state_t* state, const char c, const size_t line, const size_t col, const size_t offset, const size_t last_function_start) {
+static int extract_cpp_directives(void* list_ptr, file_parse_state_t* state,
+                                  const char c, const size_t line,
+                                  const size_t col, const size_t offset,
+                                  const size_t last_function_start) {
   /*
    * This is a bit of guess-work. If the code under test and the test-cases
    * are written with some kind of dicipline we'll be fine with this
@@ -51,7 +70,7 @@ static int extract_cpp_directives(void* list_ptr, file_parse_state_t* state, con
    * the best i think there will be no real problems here :D
    */
   cpp_list_t* list = (cpp_list_t*)list_ptr;
-#ifndef VBCC
+#ifndef VBCC /* sigh... */
   (void)line;
   (void)col;
   (void)offset;

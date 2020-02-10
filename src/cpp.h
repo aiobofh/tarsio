@@ -1,3 +1,19 @@
+/*
+ * C pre-processor list helpers
+ *
+ *              _______          _____ ___        ______
+ *                 |      ||    |         |    | |      |
+ *                 |      ||    |         |    | |      |
+ *                 |   ___||___ |         |___ | |______|
+ *
+ *                   Copyleft AiO Secure Teletronics
+ *
+ * These are helper functions to handle, sort and organize the C
+ * pre-processor directives in a parsed source-file. Keeping track of
+ * #includes and putting them back in the correct order in generated code
+ * and such things.
+ */
+
 #ifndef _CPP_H_
 #define _CPP_H_
 

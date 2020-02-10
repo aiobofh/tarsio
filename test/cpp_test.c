@@ -3,20 +3,9 @@
 
 #include "tarsio.h"
 
-#define m tarsio_mock
+#include "helpers.h"
 
-#ifdef SASC
-# define MEMSET __builtin_memset
-# define ASSERT __assert
-#else
-# ifdef VBCC
-#  define MEMSET memset
-#  define ASSERT abort
-# else
-#  define MEMSET memset
-#  define ASSERT __assert_fail
-# endif
-#endif
+#define m tarsio_mock
 
 /***************************************************************************
  * cpp_node_new()
