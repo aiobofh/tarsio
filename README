@@ -181,7 +181,7 @@ and textually replace every function call. So, for example if you have this code
   }
 
 Here there are a few function calls to printf() and strlen() both these calls will
-be replaced with calls to the mock-up functions. Looking something like this:
+be replaced with calls to the mock-up functions. Looking something like this::
 
   #include <string.h>
   void my_func(const char* string) {
@@ -242,7 +242,7 @@ Generate a test state data storage structure
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 This file is to be included in your source code file containing the test/check
-cases.
+cases::
 
   my_data.h: my.sym my_check.c
          tsg my.sym my_check.c > my_data.h
@@ -253,7 +253,7 @@ Generate the mock-up functions for controlling your checks
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 This step generate all the mock-up information in a file that is to be linked to
-your check case runner.
+your check case runner::
 
   my_mocks.c: my.sym my_data.h
          tmg my.sym my_data.h > my_mocks.c
@@ -262,7 +262,7 @@ Generate a proxified version of your source code
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 This step will rewrite your code to call only the mock-up functions generated in
-the my_mocks.c file instead of the real functions.
+the my_mocks.c file instead of the real functions::
 
   my_proxified.c: my.sym my.pp
          tam my.sym my.pp > my_proxified.c
@@ -272,7 +272,7 @@ Generate the check runner source code
 
 This step will generate a runable program (or rather the source code to a
 runable program) that later can be compiled to an executable binary that executes
-all the checks in the correct order.
+all the checks in the correct order::
 
   my_runner.c: my_check.c my_data.h
          ttg my_check.c my_data.h > my_runner.c
