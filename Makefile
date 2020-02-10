@@ -5,7 +5,7 @@
 MAKEFLAGS += --no-builtin-rules
 .SUFFIXES:
 
-export VERSION_MAJOR:=0
+export VERSION_MAJOR:=1
 export VERSION_MINOR:=0
 export VERSION_PATCH:=0
 export AUTHOR:=Joakim Ekblad
@@ -37,7 +37,12 @@ check-all: clean
 	$(MAKE) --no-print-directory -C src VBCC=1 && \
 	$(MAKE) --no-print-directory -C test VBCC=1 && \
 	$(MAKE) --no-print-directory -C src clean && \
-	$(MAKE) --no-print-directory -C test clean
+	$(MAKE) --no-print-directory -C test clean # && \ VisualC not working yet
+#	echo "VC cross compile, excution using Wine:" && \
+#	$(MAKE) --no-print-directory -C src VC=1 && \
+#	$(MAKE) --no-print-directory -C test VC=1 && \
+#	$(MAKE) --no-print-directory -C src clean && \
+#	$(MAKE) --no-print-directory -C test clean
 
 .NOTPARALLEL: check
 .PHONY: check

@@ -73,14 +73,15 @@ static int extract_cpp_directives(void* list_ptr, file_parse_state_t* state, con
   (void)offset;
   (void)last_function_start;
 #endif
-  if (('#' == c) && ('\n' == state->last_c)) {
+  if (('#' == c) && (('\n' == state->last_c) || ('\r' == state->last_c))) {
     state->idx = 0;
     state->buf[state->idx] = '\0';
   }
 
-  if ('\n' == c) {
+  if (('\n' == c) || ('\r' == c)) {
     if ('#' == state->buf[0]) {
-      if (strstr(state->buf, "#ifndef _TARSIO_DATA_")) {
+      /* BOFH!!! Verify that buf == should be here */
+      if (state->buf == strstr(state->buf, "#ifndef _TARSIO_DATA_")) {
         /* Prevent multiple declarations of the generated things */
 	debug1("%s", state->buf);
 	cpp_list_append(list, "#ifdef _TARSIO_DATA_");

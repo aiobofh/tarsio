@@ -48,7 +48,7 @@ tools:
 include ../include/tarsio.mk
 
 .PHONY: check
-check:: $(subst .c,,$(wildcard *_test.c))
+check:: $(subst .c,${EXE},$(wildcard *_test.c))
 	${Q}for i in $$(ls -1 *_test); do ${EXECUTOR}$$i $(FAILCOLLECT) ; done; echo
 
 .PHONY: clean

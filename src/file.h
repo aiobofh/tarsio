@@ -38,6 +38,7 @@ struct file_parse_state_s {
   int paren_count;
   int found_parenthesis;
   int skip_until_linefeed;
+  int skip_until_alpha_numeric_character;
   char last_c;
   char prev_last_c;
   char* buf;
@@ -47,7 +48,7 @@ struct file_parse_state_s {
 };
 typedef struct file_parse_state_s file_parse_state_t;
 
-#define EMPTY_FILE_PARSE_STATE {0, 0, 0, 0, 0, NULL, 0, 0, 0}
+#define EMPTY_FILE_PARSE_STATE {0, 0, 0, 0, 0, 0, NULL, 0, 0, 0}
 
 /* Data-type for parser-plugin function pointers */
 typedef int (*file_parse_cb_t)(void* list_ptr, file_parse_state_t* state,

@@ -230,10 +230,9 @@ static void prototype_list_append(prototype_list_t* list, const char* raw, size_
 static int extract_prototypes(void* list_ptr, file_parse_state_t* state, const char c, const size_t line, const size_t col, const size_t offset, const size_t last_function_start) {
   prototype_list_t* list = (prototype_list_t*)list_ptr;
   const char last_c = state->last_c;
-  const char prev_last_c = state->prev_last_c;
-  const int is_preprocessor = (('#' == c) && ('\n' == last_c));
-  const int is_white_space = ((' ' == c) || ('\n' == c));
-  const int last_is_white_space = ((' ' == last_c) || ('\n' == last_c));
+  const int is_preprocessor = (('#' == c) && (('\n' == last_c) || (' ' == last_c)));
+  const int is_white_space = ((' ' == c) || ('\n' == c) || ('\r' == c));
+  const int last_is_white_space = ((' ' == last_c) || ('\n' == last_c) || ('\r' == last_c));
   const int is_line_feed = ('\n' == c);
   const int last_is_line_feed = ('\n' == last_c);
   const int is_left_parenthesis = ('(' == c);
@@ -242,6 +241,7 @@ static int extract_prototypes(void* list_ptr, file_parse_state_t* state, const c
   const int multiple_whitespaces = (is_white_space && last_is_white_space);
   const int is_last_character_of_prototype = ((is_line_feed && (';' == last_c)) || ('{' == c) || ('=' == c));
   const int is_last_character = (state->found_parenthesis && is_last_character_of_prototype);
+  const int is_whitespace_for_no_good_reason = ((' ' == c) && ('\n' == last_c));
 
   int skip_character;
   int linefeed_in_argument_list;
@@ -252,11 +252,21 @@ static int extract_prototypes(void* list_ptr, file_parse_state_t* state, const c
 #endif
   state->line_feeds_in_declaration += ('\n' == c);
 
-  if (state->skip_until_linefeed && ('\n' == prev_last_c)) {
+  if (state->skip_until_linefeed && ('\n' == last_c)) {
     state->skip_until_linefeed = 0;
   }
   if (is_preprocessor) {
     state->skip_until_linefeed = 1;
+    state->found_parenthesis = 0;
+    state->paren_count = 0;
+  }
+
+  if (state->skip_until_alpha_numeric_character && (' ' != c)) {
+    state->skip_until_alpha_numeric_character = 0;
+  }
+
+  if (is_whitespace_for_no_good_reason) {
+    state->skip_until_alpha_numeric_character = 1;
   }
 
   state->paren_count += is_left_parenthesis;
@@ -269,7 +279,8 @@ static int extract_prototypes(void* list_ptr, file_parse_state_t* state, const c
   skip_character = (multiple_line_feeds ||
                     multiple_whitespaces ||
                     state->skip_until_linefeed ||
-                    linefeed_in_argument_list);
+                    linefeed_in_argument_list ||
+                    state->skip_until_alpha_numeric_character);
 
   if (0 == skip_character) {
     /*
@@ -295,7 +306,7 @@ static int extract_prototypes(void* list_ptr, file_parse_state_t* state, const c
       state->buf[0] = 0;
     }
 
-  if (1 == is_last_character) {
+  if ((1 == is_last_character) && (1 == state->found_parenthesis)) {
     int is_function_implementation = 0;
     if ('{' == c) {
       is_function_implementation = offset - strlen(state->buf);

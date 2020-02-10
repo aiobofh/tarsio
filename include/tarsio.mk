@@ -70,7 +70,7 @@ SRCDIR:=${HOSTSRCDIR}
 INCDIR:=${HOSTINCDIR}
 TSTDIR:=
 COVDIR:=${HOSTTMPDIR}
-TMPCFLAGS=/nologo /Od /Wall /Zi /I. /I${TMPDIR} /I${INCDIR} /I${SRCDIR}
+TMPCFLAGS=/nologo /DVC /Od /Wall /Zi /I. /I${TMPDIR} /I${INCDIR} /I${SRCDIR}
 PPFLAGS=${TMPCFLAGS} /Dmain=__tarsio_replace_main /P $<; cp $(subst ${SRCDIR},,$(subst .c,${CPPEXT},$<)) $@; rm -f $(subst ${SRCDIR},,$(subst .c,${CPPEXT},$^))
 CFLAGS=${TMPCFLAGS} /Fo$(subst ${HOSTTMPDIR},${TMPDIR},$@) $(subst ${HOSTTMPDIR},${TMPDIR},$<)
 CFLAGSPP=${TMPCFLAGS} /Fo$(subst ${HOSTTMPDIR},${TMPDIR},$@) /Tc$(subst ${HOSTTMPDIR},${TMPDIR},$<)
@@ -104,10 +104,11 @@ endif
 endif
 endif
 
-TESTSUITES=$(subst .c,,$(wildcard ${HOSTTSTDIR}*_test.c))
-DATS=$(subst ${HOSTTSTDIR},${HOSTTMPDIR},$(subst _test,_data.h,${TESTSUITES}))
+TESTSUITES=$(subst .c,${EXE},$(wildcard ${HOSTTSTDIR}*_test.c))
+DATS=$(subst ${HOSTTSTDIR},${HOSTTMPDIR},$(subst _test${EXE},_data.h,${TESTSUITES}))
 
 info:
+	echo ${TESTSUITES}
 	echo ${DATS}
 	echo ${CC}
 #
@@ -174,7 +175,7 @@ ${HOSTTMPDIR}%_test.o: ${HOSTTSTDIR}%_test.c ${HOSTTMPDIR}%_data.h
 
 .PHONY: clean
 clean::
-	${Q}${RM} -f *~ ${HOSTTMPDIR}*.sym ${HOSTTMPDIR}*_data.h ${HOSTTMPDIR}*_data.o ${HOSTTMPDIR}*.p ${HOSTTMPDIR}*.pp ${HOSTTMPDIR}*.i ${HOSTTMPDIR}*_proxified* ${HOSTSRCDIR}*_proxified* ${HOSTTMPDIR}*_runner* ${HOSTTMPDIR}*_mocks* ${HOSTTMPDIR}*_test* *_test *.o ${HOSTTMPDIR}file*.asm ${HOSTTMPDIR}file*.o *.i
+	${Q}${RM} -f *~ ${HOSTTMPDIR}*.sym ${HOSTTMPDIR}*_data.h ${HOSTTMPDIR}*_data.o ${HOSTTMPDIR}*.p ${HOSTTMPDIR}*.pp ${HOSTTMPDIR}*.i ${HOSTTMPDIR}*_proxified* ${HOSTSRCDIR}*_proxified* ${HOSTTMPDIR}*_runner* ${HOSTTMPDIR}*_mocks* ${HOSTTMPDIR}*_test* *_test${EXE} *.o ${HOSTTMPDIR}file*.asm ${HOSTTMPDIR}file*.o *.i
 
 .PHONY: check
 check:: ${DATS}

@@ -123,7 +123,7 @@ int file_parse(file_parse_cb_t func, void* list_ptr, const file_t* file,
         !in_function_body &&
         !no_parenthesis_count &&
         no_braces_count &&
-        '\n' == c) {
+        (('\n' == c) || ('\r' == c))) {
       is_inserted_space = 1;
       if ('\n' == c) {
         line_count += 1;
