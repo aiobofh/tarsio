@@ -1,3 +1,19 @@
+/*
+ * Helpers for handling test-cases and test-suites
+ *
+ *              _______          _____ ___        ______
+ *                 |      ||    |         |    | |      |
+ *                 |      ||    |         |    | |      |
+ *                 |   ___||___ |         |___ | |______|
+ *
+ *                   Copyleft AiO Secure Teletronics
+ *
+ * This is a collection of functions to parse test-case (check case) files
+ * a.k.a. suites to automatically generate check-runner progarms with the
+ * testcases executed and evaluated in the top-down order of how their
+ * specified in the cechk-case file.
+ */
+
 #include <stdio.h>
 #include <assert.h>
 #include <string.h>
