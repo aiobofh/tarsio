@@ -11,11 +11,7 @@
  * strclone()
  */
 test(strclone_shall_malloc_enough_memory_for_string_copy) {
-#ifdef VBCC
-  m.strlen.func = strlen;
-#else
   m.STRLEN.func = strlen;
-#endif
   strclone("012345");
   assert_eq(1, m.malloc.call_count);
   assert_eq(7, m.malloc.args.arg0);
@@ -28,15 +24,9 @@ test(srtclone_shall_return_NULL_if_out_of_memory) {
 test(strclone_shall_call_strcpy_correctly) {
   m.malloc.retval = (void*)0x1234;
   strclone((const char*)0x5678);
-#ifdef VBCC
-  assert_eq(1, m.strcpy.call_count);
-  assert_eq((char*)0x1234, m.strcpy.args.arg0);
-  assert_eq((char*)0x5678, m.strcpy.args.arg1);
-#else
   assert_eq(1, m.STRCPY.call_count);
   assert_eq((char*)0x1234, m.STRCPY.args.arg0);
   assert_eq((char*)0x5678, m.STRCPY.args.arg1);
-#endif
 }
 
 test(strclone_shall_free_memory_if_strcpy_failed) {
@@ -48,21 +38,13 @@ test(strclone_shall_free_memory_if_strcpy_failed) {
 
 test(strclone_shall_not_free_memory_on_success) {
   m.malloc.retval = (void*)0x1234;
-#ifdef VBCC
-  m.strcpy.retval = m.malloc.retval;
-#else
   m.STRCPY.retval = m.malloc.retval;
-#endif
   strclone((const char*)0x5678);
   assert_eq(0, m.free.call_count);
 }
 
 test(strclone_shall_return_the_new_string_pointer_on_success) {
   m.malloc.retval = (void*)0x1234;
-#ifdef VBCC
-  m.strcpy.retval = m.malloc.retval;
-#else
   m.STRCPY.retval = m.malloc.retval;
-#endif
   assert_eq((char*)0x1234, strclone((const char*)0x5678));
 }
