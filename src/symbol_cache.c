@@ -1,3 +1,19 @@
+/*
+ * Symbol-cache (binary file) handling
+ *
+ *              _______          _____ ___        ______
+ *                 |      ||    |         |    | |      |
+ *                 |      ||    |         |    | |      |
+ *                 |   ___||___ |         |___ | |______|
+ *
+ *                   Copyleft AiO Secure Teletronics
+ *
+ * Tarsio is able to store parsed information originating from the design
+ * under test into a binary file. It's basically the simplest form of
+ * serialization, to be able to reuse and pass that informatino betweeen the
+ * diffrent Tarsio tools.
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -204,7 +220,7 @@ int reload_symbol_cache(prototype_list_t* list, const char* file) {
   fclose(fd);
 
   debug2("Loaded %s (%lu bytes)", file, len);
- 
+
   transform_structs(list, buf);
 
   goto normal_exit;
@@ -217,26 +233,3 @@ int reload_symbol_cache(prototype_list_t* list, const char* file) {
  normal_exit:
   return retval;
 }
-
-/* static void get_memory_usage(prototype_list_t* list, size_t* listsize, size_t* stringssize) { */
-/*   *listsize = sizeof(*list); */
-/*   *stringssize = 0; */
-/*   prototype_node_t* pn; */
-/*   for (pn = list->first; NULL != pn; pn = pn->next) { */
-/*     symbol_usage_node_t* sn; */
-/*     argument_node_t* an; */
-/*     *listsize += sizeof(*pn); */
-/*     *stringssize += strlen(pn->info.symbol) + 1; */
-/*     *stringssize += strlen(pn->info.datatype.name); */
-/*     *stringssize += strlen(pn->info.raw_prototype.decl) + 1; */
-/*     *stringssize += strlen(pn->info.raw_prototype.args) + 1; */
-/*     for (an = pn->info.argument_list.first; NULL != an; an = an->next) { */
-/*       *listsize += sizeof(*an); */
-/*       *stringssize += strlen(an->info.name) + 1; */
-/*       *stringssize += strlen(an->info.datatype.name) + 1; */
-/*     } */
-/*     for (sn = pn->info.symbol_usage_list.first; NULL != sn; sn = sn->next) { */
-/*       *listsize += sizeof(*sn); */
-/*     } */
-/*   } */
-/* } */
