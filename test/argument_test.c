@@ -2,20 +2,9 @@
 #include "argument_data.h"
 #include "tarsio.h"
 
-#define m tarsio_mock
+#include "helpers.h"
 
-#ifdef SASC
-# define MEMSET __builtin_memset
-# define ASSERT __assert
-#else
-# ifdef VBCC
-#  define MEMSET memset
-#  define ASSERT abort
-# else
-#  define MEMSET memset
-#  define ASSERT __assert_fail
-# endif
-#endif
+#define m tarsio_mock
 
 test(new_shall_malloc_the_correct_size) {
   argument_node_new(NULL, NULL, 0, 0, 0);

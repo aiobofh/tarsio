@@ -1,3 +1,18 @@
+/*
+ * Function argument/parameter list helpers
+ *
+ *              _______          _____ ___        ______
+ *                 |      ||    |         |    | |      |
+ *                 |      ||    |         |    | |      |
+ *                 |   ___||___ |         |___ | |______|
+ *
+ *                   Copyleft AiO Secure Teletronics
+ *
+ * These are helper functions to handle, sort and organize argument lists
+ * for functions. These are used to generate mockup-functions and
+ * function prototypes.
+ */
+
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
@@ -9,7 +24,9 @@
 #include "argument.h"
 #include "datatype.h"
 
-argument_node_t* argument_node_new(char* data_type, char* argument_name, int is_const, int is_variadic, int astrisks) {
+argument_node_t* argument_node_new(char* data_type, char* argument_name,
+                                   int is_const, int is_variadic,
+                                   int astrisks) {
   argument_node_t* node = malloc(sizeof(*node));
   if (NULL == node) {
     error1("Out of memory while allocating argument node '%s'", data_type);
@@ -19,7 +36,8 @@ argument_node_t* argument_node_new(char* data_type, char* argument_name, int is_
 
   node->info.name = (char*)argument_name;
 
-  datatype_init(&node->info.datatype, data_type, 0, 0, is_const, is_variadic, astrisks);
+  datatype_init(&node->info.datatype, data_type, 0, 0,
+                is_const, is_variadic, astrisks);
 
   return node;
 }

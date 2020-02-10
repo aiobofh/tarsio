@@ -1,3 +1,18 @@
+/*
+ * Function argument/parameter list helpers
+ *
+ *              _______          _____ ___        ______
+ *                 |      ||    |         |    | |      |
+ *                 |      ||    |         |    | |      |
+ *                 |   ___||___ |         |___ | |______|
+ *
+ *                   Copyleft AiO Secure Teletronics
+ *
+ * These are helper functions to handle, sort and organize argument lists
+ * for functions. These are used to generate mockup-functions and
+ * function prototypes.
+ */
+
 #ifndef _ARGUMENT_H_
 #define _ARGUMENT_H_
 
