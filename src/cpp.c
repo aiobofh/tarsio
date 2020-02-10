@@ -59,10 +59,7 @@ static void cpp_list_append(cpp_list_t* list, const char* buf) {
   list_append(list, node);
 }
 
-static int extract_cpp_directives(void* list_ptr, file_parse_state_t* state,
-                                  const char c, const size_t line,
-                                  const size_t col, const size_t offset,
-                                  const size_t last_function_start) {
+static int extract_cpp_directives(void* list_ptr, file_parse_state_t* state, const char c, const size_t line, const size_t col, const size_t offset, const size_t last_function_start) {
   /*
    * This is a bit of guess-work. If the code under test and the test-cases
    * are written with some kind of dicipline we'll be fine with this

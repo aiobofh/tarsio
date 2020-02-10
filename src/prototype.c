@@ -73,7 +73,9 @@ static char* extract_symbol(const char* raw) {
 
 static prototype_node_t* prototype_list_find_symbol(const prototype_list_t* list, const char* symbol, const size_t offset) {
   prototype_node_t* node;
+#ifndef VBCC /* sigh... */
   (void)offset; /* Currently not used */
+#endif
   for (node = list->first; NULL != node; node = node->next) {
     if (0 == strcmp(symbol, node->info.symbol)) {
       return node;
