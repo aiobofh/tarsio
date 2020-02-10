@@ -1,3 +1,17 @@
+/*
+ * The Tarsio API
+ *
+ *              _______          _____ ___        ______
+ *                 |      ||    |         |    | |      |
+ *                 |      ||    |         |    | |      |
+ *                 |   ___||___ |         |___ | |______|
+ *
+ *                   Copyleft AiO Secure Teletronics
+ *
+ * API declarations for check-suites. This file should be incldued in the top
+ * of your check source file.
+ */
+
 #ifndef _TARSIO_H_
 #define _TARSIO_H_
 #include <assert.h>

@@ -1,6 +1,21 @@
 #
 # Makefile for the Tarsio C Unit-testing framework
 #
+#               _______          _____ ___        ______
+#                  |      ||    |         |    | |      |
+#                  |      ||    |         |    | |      |
+#                  |   ___||___ |         |___ | |______|
+#
+#                    Copyleft AiO Secure Teletronics
+#
+# This is the make-file to build the binary tools in the Tarsio tool-chain. It
+# might look a bit awful. But if you have an environment where you have wrapper
+# scripts in your path for SAS/C, VBCC and VisualC it will make more sense.
+#
+# TODO: Provide some contrib files with example confiugrations for running
+#       exotic compilers in various emulators from the command line.
+#
+
 MAKEFLAGS += --no-builtin-rules
 
 NODEBUG?=-DNODEBUG

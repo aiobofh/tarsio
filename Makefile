@@ -1,6 +1,16 @@
 #
 # Makefile for Tarsio
 #
+#               _______          _____ ___        ______
+#                  |      ||    |         |    | |      |
+#                  |      ||    |         |    | |      |
+#                  |   ___||___ |         |___ | |______|
+#
+#                    Copyleft AiO Secure Teletronics
+#
+# This is the main mail-file for building distributions and running all the
+# regression checks of the Tarso project
+#
 
 MAKEFLAGS += --no-builtin-rules
 .SUFFIXES:

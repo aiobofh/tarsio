@@ -1,3 +1,19 @@
+#
+# Makefile to for building a complete check-suite using the Tarsio tool-chain
+#
+#               _______          _____ ___        ______
+#                  |      ||    |         |    | |      |
+#                  |      ||    |         |    | |      |
+#                  |   ___||___ |         |___ | |______|
+#
+#                    Copyleft AiO Secure Teletronics
+#
+# This Makefile could be included in any GNU Make system, however, it's quite
+# specific.... So. Use with care.
+#
+# TODO: Provide some contrib files with example confiugrations for running
+#       exotic compilers in various emulators from the command line.
+#
 MAKEFLAGS += --no-builtin-rules
 
 .SUFFIXES:

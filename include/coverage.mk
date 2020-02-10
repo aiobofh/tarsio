@@ -1,3 +1,17 @@
+#
+# Makefile to get code coverage from checks run.
+#
+#               _______          _____ ___        ______
+#                  |      ||    |         |    | |      |
+#                  |      ||    |         |    | |      |
+#                  |   ___||___ |         |___ | |______|
+#
+#                    Copyleft AiO Secure Teletronics
+#
+# This Makefile provide a few targets that makes it possible to know your code
+# and branch coverage.
+#
+
 MAKEFLAGS += --no-builtin-rules
 
 .SUFFIXES:
