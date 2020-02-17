@@ -365,10 +365,10 @@ The simplest check
 ^^^^^^^^^^^^^^^^^^
 
 A unit-check is defined by a macro that looks similar to a function prototype or
-function header. The macro is called ``check()``, or in a module-check it is
-called ``module_check()``, depending on which mocking behaviour is desired::
+function header. The macro is called ``test()``, or in a module-check it is
+called ``module_test()``, depending on which mocking behaviour is desired::
 
- check(this_is_a_readable_check_name) {
+ test(this_is_a_readable_check_name) {
    :
    My check code
    :
@@ -454,7 +454,7 @@ recommended to both reduce check complexity, and run-time.
 1. Write a check that makes sure that the function that is about to be
    implemented is opening the correct file for writing::
 
-     check(write_file_should_open_the_correct_file_for_writing) {
+     test(write_file_should_open_the_correct_file_for_writing) {
        write_file("some_file_path.dat");
        assert_eq(1, tarsio_data.fopen.call_count);
        assert_eq(0, strcmp("some_file_path.dat", tarsio_data.fopen.args.arg0);
@@ -494,7 +494,7 @@ recommended to both reduce check complexity, and run-time.
 5. Write a check that makes it easy to know what is going wrong with the code
    if a file could not be opened for writing::
 
-     check(write_file_shall_return_negative_1_if_fopen_failes) {
+     test(write_file_shall_return_negative_1_if_fopen_failes) {
        assert_eq(-1, write_file("some_file_path.dat"));
      }
 
@@ -509,7 +509,7 @@ recommended to both reduce check complexity, and run-time.
    Now the manipulation of the ``tarsio_data`` storage struct is needed to
    make the call to ``fopen()`` return something known::
 
-     check(write_file_shall_return_0_if_everything_is_ok) {
+     test(write_file_shall_return_0_if_everything_is_ok) {
        tarsio_data.fopen.retval = (FILE*)0x1234;
        assert_eq(0, write_file("some_file_path.dat"));
      }
@@ -573,14 +573,14 @@ recommended to both reduce check complexity, and run-time.
 
    ... And only if it actually was opened::
 
-     check(write_file_shall_close_the_correct_file_if_opened) {
+     test(write_file_shall_close_the_correct_file_if_opened) {
        tarsio_data.fopen.retval = (FILE*)0x1234;
        write_file("some_file_path.dat");
        assert_eq(1, tarsio_data.fclose.call_count);
        assert_eq((FILE*)0x1234, tarsio_data.fclose.args.arg0);
      }
 
-     check(write_file_shall_not_close_a_file_by_accided_if_file_was_not_opened) {
+     test(write_file_shall_not_close_a_file_by_accided_if_file_was_not_opened) {
        write_file("some_file_path.dat");
        assert_eq(0, tarsio_data.fclose.call_count);
      }
@@ -667,14 +667,14 @@ recommended to both reduce check complexity, and run-time.
    are doing white-box checking and know the program flow (and have it verified
    by the checks written)::
 
-     check(write_file_should_open_the_correct_file_for_writing) {
+     test(write_file_should_open_the_correct_file_for_writing) {
        write_file("some_file_path.dat", NULL, 0);
        :
        Same as before
        :
      }
 
-     check(write_file_shall_return_negative_1_if_fopen_failes) {
+     test(write_file_shall_return_negative_1_if_fopen_failes) {
        assert_eq(-1, write_file("some_file_path.dat", NULL, 0));
      }
 
@@ -682,12 +682,12 @@ recommended to both reduce check complexity, and run-time.
    going to be written, if everything is OK. Let's just pass some bogus data
    to the function::
 
-     check(write_file_shall_return_0_if_everything_is_ok) {
+     test(write_file_shall_return_0_if_everything_is_ok) {
        tarsio_data.fopen.retval = (FILE*)0x1234;
        assert_eq(0, write_file("some_file_path.dat", (void*)0x5678, 10));
      }
 
-     check(write_file_shall_close_the_correct_file_if_opened) {
+     test(write_file_shall_close_the_correct_file_if_opened) {
        tarsio_data.fopen.retval = (FILE*)0x1234;
        write_file("some_file_path.dat", (void*)0x5678, 10);
        :
@@ -695,7 +695,7 @@ recommended to both reduce check complexity, and run-time.
        :
      }
 
-     check(write_file_shall_not_close_a_file_by_accided_if_file_was_not_opened) {
+     test(write_file_shall_not_close_a_file_by_accided_if_file_was_not_opened) {
        write_file("some_file_path.dat", NULL, 0);
        assert_eq(0, tarsio_data.fclose.call_count);
      }
@@ -707,7 +707,7 @@ recommended to both reduce check complexity, and run-time.
    to the correct file, by manipulating the retval of ``fopen()`` as before, to
    get a known value that should be passed to ``fwrite``::
 
-     check(write_file_should_write_the_data_to_the_correct_file) {
+     test(write_file_should_write_the_data_to_the_correct_file) {
        tarsio_data.fopen.retval = (FILE*)0x1234;
        write_file("some_file_path.dat", (void*)0x5678, 10);
        assert_eq(1, tarsio_data.fwrite.call_count);
@@ -720,7 +720,7 @@ recommended to both reduce check complexity, and run-time.
    And obviously it can be good to have a check that makes sure that the code
    will not write anything to somewhere that was never opened::
 
-     check(write_file_should_not_write_data_if_fopen_failed) {
+     test(write_file_should_not_write_data_if_fopen_failed) {
        write_file("some_file_path.dat", NULL, 0);
        assert_eq(0, tarsio_data.fwrite.call_count);
      }
@@ -731,7 +731,7 @@ recommended to both reduce check complexity, and run-time.
    if a disk breaks during the write or a network file-system is suddenly
    unavailable during the write. This would make the code a bit more robust::
 
-     check(write_file_should_return_negative_2_if_file_write_fails) {
+     test(write_file_should_return_negative_2_if_file_write_fails) {
        tarsio_data.fopen.retval = (FILE*)0x1234;
        assert_eq(-2, write_file("some_file_path.dat", (void*)0x5678, 10));
      }
@@ -819,7 +819,7 @@ recommended to both reduce check complexity, and run-time.
     First off, a meaningful return code to distinguish a ``fclose()`` failure
     from other failures would probably be nice::
 
-      check(write_file_shall_return_negative_3_if_file_could_not_be_closed) {
+      test(write_file_shall_return_negative_3_if_file_could_not_be_closed) {
         tarsio_data.fopen.retval = (FILE*)0x1234;
         tarsio_data.fclose.retval = EOF;
         assert_eq(-3, write-file("some_file_path.dat", (void*)0x5678, 10));
@@ -960,7 +960,7 @@ recommended to both reduce check complexity, and run-time.
     and or integration checks for different OS:es and platforms, hence they
     could also be written afterwords - depending on your preferences::
 
-      module_check(write_file_should_successfully_write_data_to_disk) {
+      module_test(write_file_should_successfully_write_data_to_disk) {
         const char* data = "0123456789";
         assert_eq(0, write_file("/tmp/foo.dat", data, strlen(data));
         char* result = read_file("/tmp/foo.dat");
@@ -969,20 +969,20 @@ recommended to both reduce check complexity, and run-time.
         unlink("/tmp/foo.dat");
       }
 
-      module_check(write_file_should_fail_if_file_can_not_be_opened) {
+      module_test(write_file_should_fail_if_file_can_not_be_opened) {
         const char* data = "0123456789";
         tarsio_data.fopen.retval = NULL;
         assert_eq(-1, write_file("/tmp/foo.dat", data, strlen(data));
       }
 
-      module_check(write_file_should_fail_if_file_can_not_be_written) {
+      module_test(write_file_should_fail_if_file_can_not_be_written) {
         const char* data = "0123456789";
         tarsio_data.fwrite.retval = 0;
         assert_eq(-2, write_file("/tmp/foo.dat", data, strlen(data));
         unlink("/tmp/foo.dat");
       }
 
-      module_check(write_file_should_fail_if_file_can_not_be_closed) {
+      module_test(write_file_should_fail_if_file_can_not_be_closed) {
         const char* data = "0123456789";
         tarsio_data.fclose.retval = EOF;
         assert_eq(-2, write_file("/tmp/foo.dat", data, strlen(data));
