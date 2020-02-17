@@ -12,6 +12,22 @@
  * a.k.a. suites to automatically generate check-runner progarms with the
  * testcases executed and evaluated in the top-down order of how their
  * specified in the cechk-case file.
+ *
+ *  This file is part of Tarsio.
+ *
+ *  Tarsio is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  Tarsio is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with Tarsio.  If not, see <https://www.gnu.org/licenses/>.
+ *
  */
 
 #include <stdio.h>
@@ -40,7 +56,7 @@ static void testcase_list_append(testcase_list_t* list, testcase_node_t* node) {
   list->last = node;
 }
 
-static testcase_node_t* new_node(const char* name, testcase_type_t type) {
+static testcase_node_t* new_node(char* name, testcase_type_t type) {
   testcase_node_t* node;
 
   if (NULL == (node = malloc(sizeof(*node)))) {
@@ -51,7 +67,7 @@ static testcase_node_t* new_node(const char* name, testcase_type_t type) {
   memset(node, 0, sizeof(*node));
 
   node->type = type;
-  node->name = (char*)name;
+  node->name = name;
 
  testcase_node_malloc_failed:
   return node;
@@ -95,7 +111,7 @@ static int testcase_append(testcase_list_t* list, const char* name, const testca
   return retval;
 }
 
-static char *index_of(const char* buf, char c) {
+static char *index_of(char* buf, char c) {
   while (*buf != c) {
     buf++;
   }

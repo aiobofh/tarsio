@@ -16,6 +16,22 @@
  *
  * Beware, this code is quite complex and also the very heart of Tarsio,
  * so I can not say it enough times: Here be dragons!
+ *
+ *  This file is part of Tarsio.
+ *
+ *  Tarsio is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  Tarsio is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with Tarsio.  If not, see <https://www.gnu.org/licenses/>.
+ *
  */
 
 #ifndef _PROTOTYPE_H_
@@ -35,7 +51,7 @@ struct raw_prototype_s {
 };
 typedef struct raw_prototype_s raw_prototype_t;
 
-#define RAW_PROTOTYPE_EMPTY {0, NULL, NULL, 0}
+#define RAW_PROTOTYPE_EMPTY {0, NULL, NULL, 0, 0, 0, 0, NULL}
 
 struct linkage_definition_s {
   int is_inline;
@@ -57,6 +73,7 @@ struct prototype_s {
   argument_list_t argument_list;
   symbol_usage_list_t symbol_usage_list;
   size_t is_function_implementation;
+  size_t is_function_implementation_line;
 };
 typedef struct prototype_s prototype_t;
 
@@ -78,7 +95,7 @@ typedef struct prototype_node_s prototype_node_t;
 #define PROTOTYPE_NODE_EMPTY {NULL, PROTOTYPE_EMPTY}
 
 struct prototype_list_s {
-  char* filename;
+  const char* filename;
   size_t size;
   size_t cnt;
   size_t first_function_implementation_offset;

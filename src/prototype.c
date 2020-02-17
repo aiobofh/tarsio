@@ -16,6 +16,22 @@
  *
  * Beware, this code is quite complex and also the very heart of Tarsio,
  * so I can not say it enough times: Here be dragons!
+ *
+ *  This file is part of Tarsio.
+ *
+ *  Tarsio is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  Tarsio is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with Tarsio.  If not, see <https://www.gnu.org/licenses/>.
+ *
  */
 
 #include <assert.h>
@@ -33,7 +49,7 @@ static char* extract_symbol(const char* raw) {
   size_t len = 0;
   char* ptr;
   char* p;
-  char* r = (char*)raw;
+  const char* r = raw;
   if (NULL != (ptr = strstr(r, " __cdecl "))) {
     r = ptr;
   }
@@ -147,7 +163,7 @@ static char* washing_machine(const char* raw) {
 static void prototype_list_remove(prototype_list_t* list, prototype_node_t* node);
 
 static prototype_node_t* prototype_node_new(const char* raw,
-                                            const prototype_list_t* list,
+                                            prototype_list_t* list,
                                             const size_t offset,
                                             const size_t line,
                                             const size_t col) {
@@ -222,12 +238,13 @@ static void prototype_list_append(prototype_list_t* list, const char* raw, size_
       list->first_function_implementation_offset = is_function_implementation;
     }
     node->info.is_function_implementation = offset;
+    node->info.is_function_implementation_line = line;
   }
   list->size += (sizeof(node) + node->info.raw_prototype.decl_len + node->info.symbol_len);
   list->cnt++;
 }
 
-static int extract_prototypes(void* list_ptr, file_parse_state_t* state, const char c, const size_t line, const size_t col, const size_t offset, const size_t last_function_start) {
+static int extract_prototypes(void* list_ptr, file_parse_state_t* state, const char c, const size_t line, const size_t col, const size_t offset, const size_t last_function_start, const size_t last_function_line) {
   prototype_list_t* list = (prototype_list_t*)list_ptr;
   const char last_c = state->last_c;
   const int is_preprocessor = (('#' == c) && (('\n' == last_c) || (' ' == last_c)));
@@ -249,6 +266,7 @@ static int extract_prototypes(void* list_ptr, file_parse_state_t* state, const c
   (void)col;
   (void)offset;
   (void)last_function_start;
+  (void)last_function_line;
 #endif
   state->line_feeds_in_declaration += ('\n' == c);
 
@@ -400,7 +418,8 @@ int prototype_list_init(prototype_list_t* list, const file_t* file) {
 static int find_symbol_usage(void* list_ptr, file_parse_state_t* state,
                              const char c, const size_t line,
                              const size_t col, const size_t offset,
-                             const size_t last_function_start) {
+                             const size_t last_function_start,
+                             const size_t last_function_line) {
   prototype_list_t* list = (prototype_list_t*)list_ptr;
   prototype_node_t* node;
 
@@ -408,7 +427,7 @@ static int find_symbol_usage(void* list_ptr, file_parse_state_t* state,
     for (node = list->first; NULL != node; node = node->next) {
       if (0 == strcmp(state->buf, node->info.symbol)) {
         debug1("Possible hit: '%s'", state->buf);
-        symbol_usage_append(&node->info.symbol_usage_list, line, col - strlen(node->info.symbol), offset, last_function_start, (void*)node);
+        symbol_usage_append(&node->info.symbol_usage_list, line, col - strlen(node->info.symbol), offset, last_function_start, last_function_line, (void*)node);
         break;
       }
     }
@@ -526,7 +545,7 @@ static int extract_return_type(prototype_node_t* node) {
   /*
    * Remove compiler specific keywords
    */
-  tmpbuf = malloc(len + 1);
+  tmpbuf = malloc(len + 2);
   tmpbuf[0] = '\0';
   i = 0;
   tmpbuf_i = 0;
@@ -609,19 +628,19 @@ int prototype_extract_return_types(prototype_list_t* list) {
 
 static int extract_arguments(prototype_node_t* node) {
   const char* symbol = node->info.symbol;
-  char* raw = node->info.raw_prototype.decl;
+  const char* raw = node->info.raw_prototype.decl;
   const char* symbol_start = strstr(raw, symbol);
   int paren_count;
-  char* start_args;
+  const char* start_args;
   size_t len;
   int astrisks = 0;
   int dummy_cnt = 0;
-  char* last_start;
-  char* last_space;
+  const char* last_start;
+  const char* last_space;
 
   debug1("Extracting arguments for '%s'", node->info.symbol);
 
-  raw = (char*)symbol_start + strlen(symbol);
+  raw = symbol_start + strlen(symbol);
 
   /*
    * Skip whitespaces between symbol name and first parenthesis.
@@ -648,7 +667,7 @@ static int extract_arguments(prototype_node_t* node) {
     if (((1 == paren_count) && (',' == c)) || (0 == paren_count)) {
       int is_variadic = 0;
       int is_const = 0;
-      char* end = raw;
+      const char* end = raw;
       char* arg_name;
       char* type_name;
       raw += (',' == c);

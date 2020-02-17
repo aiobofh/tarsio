@@ -18,6 +18,22 @@
  * over time it will improve. The idea is to have as few dependencies
  * to other third-party tools as possible, to make Tarsio truly
  * portable and also quick.
+ *
+ *  This file is part of Tarsio.
+ *
+ *  Tarsio is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  Tarsio is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with Tarsio.  If not, see <https://www.gnu.org/licenses/>.
+ *
  */
 
 #ifndef _FILE_H_
@@ -54,12 +70,13 @@ typedef struct file_parse_state_s file_parse_state_t;
 typedef int (*file_parse_cb_t)(void* list_ptr, file_parse_state_t* state,
                                const char c, const size_t line,
                                const size_t col, const size_t offset,
-                               const size_t last_function_start);
+                               const size_t last_function_start,
+                               const size_t last_function_line);
 
 struct file_s {
   char* buf;
   size_t len;
-  char* filename;
+  const char* filename;
 };
 typedef struct file_s file_t;
 

@@ -1,4 +1,31 @@
+#
 # Makefile for Tarsio self-tests
+#
+#               _______          _____ ___        ______
+#                  |      ||    |         |    | |      |
+#                  |      ||    |         |    | |      |
+#                  |   ___||___ |         |___ | |______|
+#
+#                    Copyleft AiO Secure Teletronics
+#
+# This Makefile will compile (and run) the self-tests for Tarsio.
+#
+#  This file is part of Tarsio.
+#
+#  Tarsio is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation, either version 3 of the License, or
+#  (at your option) any later version.
+#
+#  Tarsio is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with Tarsio.  If not, see <https://www.gnu.org/licenses/>.
+#
+
 MAKEFLAGS += --no-builtin-rules
 .SUFFIXES:
 
@@ -53,7 +80,7 @@ check:: $(subst .c,${EXE},$(wildcard *_test.c))
 
 .PHONY: clean
 clean::
-	${Q}${RM} -f *.uaem *.lnk *.info
+	${Q}${RM} -f *.uaem *.lnk *.info *.pdb
 
 .PHONY: clean-all
 clean-all:

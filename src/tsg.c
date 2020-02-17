@@ -8,6 +8,23 @@
  *
  *                   Copyleft AiO Secure Teletronics
  *
+ * This program generates storage structures for check-suites to maniupulate
+ * and sample mock-up function statistics.
+ *
+ *  This file is part of Tarsio.
+ *
+ *  Tarsio is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  Tarsio is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with Tarsio.  If not, see <https://www.gnu.org/licenses/>.
  */
 
 #include <stdio.h>
@@ -97,6 +114,22 @@ static void generate_struct(prototype_list_t* list, cpp_list_t* cpp_list) {
   printf(" * Header file for use as inclusion describing all the mock control\n"
          " * structures and data storeage for mocked version of all used functions\n"
          " * in the design under test.\n"
+         " *\n"
+         " *  This file is part of Tarsio.\n"
+         " *\n"
+         " *  Tarsio is free software: you can redistribute it and/or modify\n"
+         " *  it under the terms of the GNU General Public License as published by\n"
+         " *  the Free Software Foundation, either version 3 of the License, or\n"
+         " *  (at your option) any later version.\n"
+         " *\n"
+         " *  Tarsio is distributed in the hope that it will be useful,\n"
+         " *  but WITHOUT ANY WARRANTY; without even the implied warranty of\n"
+         " *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\n"
+         " *  GNU General Public License for more details.\n"
+         " *\n"
+         " *  You should have received a copy of the GNU General Public License\n"
+         " *  along with Tarsio.  If not, see <https://www.gnu.org/licenses/>.\n"
+         " *\n"
          " */\n"
          "\n");
   printf("#ifndef _TARSIO_DATA_\n"
@@ -205,6 +238,7 @@ int main(int argc, char* argv[])
   file_t test_file = FILE_EMPTY;
   prototype_list_t prototype_list = PROTOTYPE_LIST_EMPTY;
   cpp_list_t cpp_list = CPP_LIST_EMPTY;
+  unsigned char* buf = NULL;
 
   /*
    * Handle arguments passed to the program.
@@ -230,14 +264,16 @@ int main(int argc, char* argv[])
     goto cpp_list_init_failed;
   }
 
-  reload_symbol_cache(&prototype_list, options.cache_filename);
+  buf = reload_symbol_cache(&prototype_list, options.cache_filename);
 
   generate_struct(&prototype_list, &cpp_list);
-
   cpp_list_cleanup(&cpp_list);
  cpp_list_init_failed:
   file_cleanup(&test_file);
  read_preprocessed_file_failed:
  options_init_failed:
+  if (NULL != buf) {
+    free(buf);
+  }
   return retval;
 }

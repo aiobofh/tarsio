@@ -8,6 +8,24 @@
  *
  *                   Copyleft AiO Secure Teletronics
  *
+ * The Tarsio Test-runner Generator will output a C source file that can be
+ * compiled into a runnable executable that will run all checks in a check-
+ * suite in the declared order.
+ *
+ *  This file is part of Tarsio.
+ *
+ *  Tarsio is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  Tarsio is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with Tarsio.  If not, see <https://www.gnu.org/licenses/>.
  */
 
 #include <stdio.h>
@@ -294,7 +312,7 @@ static void generate_tarsio_cleanup(void) {
 static int generate_test_runner(testcase_list_t* list, const char* file) {
   int retval = 0;
   testcase_node_t* node;
-  char* data_file = (char*)file;
+  const char* data_file = file;
   char* ptr;
 
   printf("#include <stdio.h>\n");
@@ -408,6 +426,7 @@ int main(int argc, char* argv[]) {
   }
 
  testcase_list_init_failed:
+  file_cleanup(&test_file);
  generate_test_runner_failed:
   testcase_list_cleanup(&testcase_list);
  read_test_file_failed:

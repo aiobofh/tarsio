@@ -1,3 +1,32 @@
+/*
+ * The Tarsio run-time
+ *
+ *              _______          _____ ___        ______
+ *                 |      ||    |         |    | |      |
+ *                 |      ||    |         |    | |      |
+ *                 |   ___||___ |         |___ | |______|
+ *
+ *                   Copyleft AiO Secure Teletronics
+ *
+ * This is the run-time code that will be used to make a generated check-
+ * runner execute and evaluate tests independently of each other.
+ *
+ *  This file is part of Tarsio.
+ *
+ *  Tarsio is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  Tarsio is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with Tarsio.  If not, see <https://www.gnu.org/licenses/>.
+ *
+ */
 #include <stdlib.h>
 #include <string.h>
 
@@ -35,6 +64,15 @@ typedef struct __tarsio_failure_list_s __tarsio_failure_list_t;
 __tarsio_failure_list_t __tarsio_failure_list;
 __tarsio_options_t __tarsio_options;
 __tarsio_stats_t __tarsio_stats;
+
+static void __tarsio_usage(const char* program_name) {
+  printf("USAGE: %s <options>\n"
+         " -h, --help    Show this help-text\n"
+         " -v, --verbose Verbose output\n"
+         " -x, --xml     Output JUnit compatible XML file\n"
+         " -V, --version Show Tarsio version\n",
+         program_name);
+}
 
 void __tarsio_append_failure(__tarsio_failure_list_t* list, const char* testcase_name, const char* help, const char* file, size_t line) {
   __tarsio_failure_node_t* node = malloc(sizeof(*node));
@@ -78,11 +116,15 @@ void __tarsio_init(void) {
 void __tarsio_handle_arguments(int argc, char* argv[]) {
   int i;
   for (i = 1; i < argc; i++) {
-    if (0 == strcmp(argv[i], "-v")) {
+    if ((0 == strcmp(argv[i], "-v")) || (0 == strcmp(argv[i], "--verbose"))) {
       __tarsio_options.verbose = 1;
     }
-    else if (0 == strcmp(argv[i], "-x")) {
+    else if ((0 == strcmp(argv[i], "-x")) || (0 == strcmp(argv[i], "--xml"))) {
       __tarsio_options.xml_output = 1;
+    }
+    else if ((0 == strcmp(argv[i], "-h")) || (0 == strcmp(argv[i], "--help"))){
+      __tarsio_usage(argv[0]);
+      exit(EXIT_SUCCESS);
     }
   }
 }

@@ -8,6 +8,23 @@
  *
  *                   Copyleft AiO Secure Teletronics
  *
+ * This program generate mock-up functions for all called functions in a
+ * design under test/check.
+ *
+ *  This file is part of Tarsio.
+ *
+ *  Tarsio is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  Tarsio is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with Tarsio.  If not, see <https://www.gnu.org/licenses/>.
  */
 
 #include <stdio.h>
@@ -79,7 +96,7 @@ static int tmg_options_init(tmg_options_t* options, int argc, char* argv[])
  */
 static void generate_proxies(prototype_list_t* list, const char* file) {
   prototype_node_t* node;
-  char* data_file = (char*)file;
+  const char* data_file = file;
   char* ptr;
 
   while (NULL != (ptr = strstr(data_file, ":"))) {

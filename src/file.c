@@ -18,6 +18,22 @@
  * over time it will improve. The idea is to have as few dependencies
  * to other third-party tools as possible, to make Tarsio truly
  * portable and also quick.
+ *
+ *  This file is part of Tarsio.
+ *
+ *  Tarsio is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  Tarsio is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with Tarsio.  If not, see <https://www.gnu.org/licenses/>.
+ *
  */
 
 #include <stdlib.h>
@@ -25,6 +41,7 @@
 #include <assert.h>
 #include <string.h>
 
+#include "error.h"
 #include "debug.h"
 #include "file.h"
 
@@ -58,6 +75,7 @@ int file_parse(file_parse_cb_t func, void* list_ptr, const file_t* file,
   char last_last_c = 0;
   size_t last_linefeed_offset = 0;
   size_t last_function_start = 0;
+  size_t last_function_line = 0;
 
   assert((0 == ('0' == ' ')) && "This code assumes that bool false is 0 for mathematical operations");
   assert((1 == ('0' == '0')) && "This code assumes that bool true is 1 for mathematical operations");
@@ -90,6 +108,7 @@ int file_parse(file_parse_cb_t func, void* list_ptr, const file_t* file,
     const int one_braces_count = (num_braces == 1);
     const int is_entering_function_body = ((is_code_block_start) && (no_parenthesis_count) && (no_braces_count));
     const int is_exiting_function_body = ((is_code_block_end) && (no_parenthesis_count) && (one_braces_count));
+
     int do_parse;
     int is_inserted_space = 0;
 
@@ -112,6 +131,7 @@ int file_parse(file_parse_cb_t func, void* list_ptr, const file_t* file,
     in_comment -= is_comment_end;
 
     if (is_entering_function_body) {
+      last_function_line = line_count;
       last_function_start = last_linefeed_offset;
     }
 
@@ -144,7 +164,7 @@ int file_parse(file_parse_cb_t func, void* list_ptr, const file_t* file,
         /* Skip windows file format line feeds */
       }
       else {
-        func(list_ptr, &state, c, line_count, column_count, i, last_function_start);
+        func(list_ptr, &state, c, line_count, column_count, i, last_function_start, last_function_line);
       }
     }
 
@@ -210,7 +230,7 @@ int file_init(file_t* file, const char* filename) {
 
   file->len = rlen;
   file->buf = buf;
-  file->filename = (char*)filename;
+  file->filename = filename;
 
   goto normal_exit;
 

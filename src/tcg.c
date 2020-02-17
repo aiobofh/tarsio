@@ -15,6 +15,21 @@
  * The idea behind this tool is to make every part of your build as tiny and
  * stand-alone as possible. But also fast.
  *
+ *  This file is part of Tarsio.
+ *
+ *  Tarsio is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  Tarsio is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with Tarsio.  If not, see <https://www.gnu.org/licenses/>.
+ *
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -25,6 +40,7 @@
 
 #include "file.h"
 #include "prototype.h"
+#include "cpp.h"
 #include "symbol_cache.h"
 
 #include "version.h"
@@ -202,7 +218,7 @@ static int prototype_serialize(FILE* fd, prototype_node_t* node)
 /****************************************************************************
  * Output binary symbol cache
  */
-static int generate_symbol_cache(prototype_list_t* list, const char* file)
+static int generate_symbol_cache(prototype_list_t* list, cpp_list_t* cpp_list, const char* file)
 {
   prototype_node_t* n;
   FILE* fd;
@@ -213,6 +229,12 @@ static int generate_symbol_cache(prototype_list_t* list, const char* file)
 
   fwrite("TCH1", 4, 1, fd);
 
+  /* TODO: Add linefeed style */
+
+  /* 8 byte padding */
+  fwrite("    ", 4, 1, fd);
+
+  /* Write prototype list */
   if (1 != fwrite(list, sizeof(*list), 1, fd)) {
     return -2;
   }
@@ -223,17 +245,19 @@ static int generate_symbol_cache(prototype_list_t* list, const char* file)
     }
   }
 
+  /* Write return type names and symbols */
   for (n = list->first; NULL != n; n = n->next) {
     if (0 != return_type_and_symbol_name_serialize(fd, n)) {
       return -4;
     }
   }
 
+  /* Write argument type names and symbols */
   for (n = list->first; NULL != n; n = n->next) {
     argument_node_t* an;
     for (an = n->info.argument_list.first; NULL != an; an = an->next) {
       if (0 != argument_type_and_name_serialize(fd, an)) {
-        return -5;
+        return -6;
       }
     }
   }
@@ -310,7 +334,9 @@ int main(int argc, char* argv[])
   file_t code_file = FILE_EMPTY;
   prototype_list_t prototype_list = PROTOTYPE_LIST_EMPTY;
   prototype_list_t test_prototype_list = PROTOTYPE_LIST_EMPTY;
-
+  cpp_list_t cpp_list = CPP_LIST_EMPTY;
+  unsigned char* buf = NULL;
+  
   /*
    * Handle arguments passed to the program.
    */
@@ -326,6 +352,8 @@ int main(int argc, char* argv[])
     retval = EXIT_FAILURE;
     goto read_preprocessed_file_failed;
   }
+
+  /* TODO: Extract line-feed style */
 
   /*
    * Find all prototypes to declare
@@ -368,7 +396,7 @@ int main(int argc, char* argv[])
     goto prototype_extract_arguments_failed;
   }
 
-  if (0 != generate_symbol_cache(&prototype_list, options.output_filename)) {
+  if (0 != generate_symbol_cache(&prototype_list, &cpp_list, options.output_filename)) {
     retval = EXIT_FAILURE;
     goto generate_symbol_cache_failed;
   }
@@ -377,14 +405,19 @@ int main(int argc, char* argv[])
    * Self-test - Since this list is the foundation of all the other
    * tools.
    */
-  reload_symbol_cache(&test_prototype_list, options.output_filename);
+
+  buf = reload_symbol_cache(&test_prototype_list, options.output_filename);
 
   if (0 != compare_prototype_lists(&prototype_list, &test_prototype_list)) {
     retval = EXIT_FAILURE;
+    error0("Unable to read back prototype list in self-test");
     goto compare_prototype_lists_failed;
   }
 
  compare_prototype_lists_failed:
+  if (NULL != buf) {
+    free(buf);
+  }
  generate_symbol_cache_failed:
  prototype_extract_arguments_failed:
  prototype_extract_return_type_failed:

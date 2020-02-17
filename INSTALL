@@ -1,0 +1,93 @@
+Install from source
+-------------------
+
+To install Tarsio on your system you need a C compiler capable of compiling
+at least ANSI C or ISO C90. Maybe even earlier standards could do the trick.
+
+The Tarsio tools are coded with care for portability - And there are very
+few dependencies. So there should not be need for any 3rd party libraries or
+tools to build the software.
+
+GNU Make and GCC on Linux/Unix/BSD or similar
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Download the latest release from https://www.aio.nu/tarsio.html
+
+The normal way of building and installing Tarsio from the tar-ball::
+
+$ tar xzf tarsio-*.tar.gz
+$ cd tarsio-*
+$ make
+$ sudo make install
+
+If you do not want to install in /usr/ as prefix path just pass the PREFIX
+variable to the ``make install`` command::
+
+$ make install PREFIX=$HOME
+
+This will install a header-file and .mk-file in the <PREFIX>/include/tarsio
+folder, and the binary tools in <PREFIX>/bin.
+
+Smake and SAS/C on AmigaOS
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Download the latest release from https://www.aio.nu/tarsio.html
+
+Unpacking source archive and compile::
+
+> lha x tarsio-#?-src.lha
+> cd tarsio-#?
+> smake
+
+If you want to compile optimizations for a specific CPU you can set the CPU
+environment variable. Example: 68000, 68020, 68030, 68040 or 68060
+
+You can either install using smake or the Commodore Installer or equivalent::
+
+> assign TARSIO: <some path>
+> smake install
+> path ADD TARSIO:C
+
+Note: If you install like this it's recommended to add the assign and path
+      to your S:user-startup or S:startup-sequence.
+
+or::
+
+> installer Install-Tarsio
+
+This will install a header-file and .smk-file in the TARSIO:include/tarsio
+folder, and the binary tools in TARSIO:C
+
+GNU Make and VBCC on AmigaOS
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Download the latest release from https://www.aio.nu/tarsio.html
+
+Unpacking source archive and compile::
+
+> lha x tarsio-#?-src.lha
+> cd tarsio-#?
+> make
+
+If you want to compile optimizations for a specific CPU you can set the CPU
+environment variable. Example: 68000, 68020, 68030, 68040, 68060, PowerUP
+or WarpOS.
+
+There is also an OS flag for compiling for AmigaOS classic or AmigaOS4 or
+MorphOS.
+
+You can either install using smake or the Commodore Installer or equivalent::
+
+> assign TARSIO: <some path>
+> make install
+> path ADD TARSIO:C
+
+Note: If you install like this it's recommended to add the assign and path
+      to your S:user-startup or S:startup-sequence.
+
+or::
+
+> installer Install-Tarsio
+
+This will install a header-file and .smk-file in the TARSIO:include/tarsio
+folder, and the binary tools in TARSIO:C

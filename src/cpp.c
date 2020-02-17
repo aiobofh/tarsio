@@ -12,6 +12,22 @@
  * pre-processor directives in a parsed source-file. Keeping track of
  * #includes and putting them back in the correct order in generated code
  * and such things.
+ *
+ *  This file is part of Tarsio.
+ *
+ *  Tarsio is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  Tarsio is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with Tarsio.  If not, see <https://www.gnu.org/licenses/>.
+ *
  */
 
 #include <assert.h>
@@ -59,7 +75,7 @@ static void cpp_list_append(cpp_list_t* list, const char* buf) {
   list_append(list, node);
 }
 
-static int extract_cpp_directives(void* list_ptr, file_parse_state_t* state, const char c, const size_t line, const size_t col, const size_t offset, const size_t last_function_start) {
+static int extract_cpp_directives(void* list_ptr, file_parse_state_t* state, const char c, const size_t line, const size_t col, const size_t offset, const size_t last_function_start, const size_t last_function_line) {
   /*
    * This is a bit of guess-work. If the code under test and the test-cases
    * are written with some kind of dicipline we'll be fine with this
@@ -72,8 +88,9 @@ static int extract_cpp_directives(void* list_ptr, file_parse_state_t* state, con
   (void)col;
   (void)offset;
   (void)last_function_start;
+  (void)last_function_line;
 #endif
-  if (('#' == c) && (('\n' == state->last_c) || ('\r' == state->last_c))) {
+  if (('#' == c) && (('\n' == state->last_c) || (' ' == state->last_c))) {
     state->idx = 0;
     state->buf[state->idx] = '\0';
   }

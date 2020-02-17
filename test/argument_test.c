@@ -1,3 +1,30 @@
+/*
+ * Check-suite for ../src/argument.c
+ *
+ *              _______          _____ ___        ______
+ *                 |      ||    |         |    | |      |
+ *                 |      ||    |         |    | |      |
+ *                 |   ___||___ |         |___ | |______|
+ *
+ *                   Copyleft AiO Secure Teletronics
+ *
+ *  This file is part of Tarsio.
+ *
+ *  Tarsio is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  Tarsio is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with Tarsio.  If not, see <https://www.gnu.org/licenses/>.
+ *
+ */
+
 #include "argument.h"
 #include "argument_data.h"
 #include "tarsio.h"
@@ -6,6 +33,9 @@
 
 #define m tarsio_mock
 
+/***************************************************************************
+ * argument_node_new()
+ */
 test(new_shall_malloc_the_correct_size) {
   argument_node_new(NULL, NULL, 0, 0, 0);
   assert_eq(1, m.malloc.call_count);
@@ -33,6 +63,9 @@ test(new_shall_clear_the_whole_node) {
   assert_eq(sizeof(node), m.MEMSET.args.arg2);
 }
 
+/***************************************************************************
+ * argument_list_append()
+ */
 test(append_shall_call_list_append) {
   argument_list_append((argument_list_t*)0x1234,
                        (argument_node_t*)0x5678);
@@ -41,6 +74,9 @@ test(append_shall_call_list_append) {
   assert_eq((node_t*)0x5678, m.base_list_append.args.arg1);
 }
 
+/***************************************************************************
+ * argument_cleanup()
+ */
 test(cleanup_shall_cleanup_datatype) {
   argument_t argument;
   argument_cleanup(&argument);
@@ -75,6 +111,9 @@ test(node_cleanup_should_assert_on_NULL_arg) {
   assert_eq(1, m.ASSERT.call_count);
 }
 
+/***************************************************************************
+ * argument_list_cleanup()
+ */
 test(list_cleanup_shall_free_all_nodes) {
   argument_node_t node1 = ARGUMENT_NODE_EMPTY;
   argument_node_t node2 = ARGUMENT_NODE_EMPTY;

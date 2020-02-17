@@ -12,6 +12,22 @@
  * under test into a binary file. It's basically the simplest form of
  * serialization, to be able to reuse and pass that informatino betweeen the
  * diffrent Tarsio tools.
+ *
+ *  This file is part of Tarsio.
+ *
+ *  Tarsio is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  Tarsio is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with Tarsio.  If not, see <https://www.gnu.org/licenses/>.
+ *
  */
 
 #include <stdio.h>
@@ -23,6 +39,7 @@
 
 #include "symbol_cache.h"
 
+#include "cpp.h"
 #include "prototype.h"
 
 /****************************************************************************
@@ -51,6 +68,11 @@ static void transform_structs(prototype_list_t* list, char* buf) {
 
   debug0("Found valid header TCH1 in first 4 bytes of the file");
 
+  buf += 4;
+
+  /* TODO: Grab/skip line-feed format */
+
+  /* 8 byte padding */
   buf += 4;
 
   l = (prototype_list_t*)buf;
@@ -127,9 +149,6 @@ static void transform_structs(prototype_list_t* list, char* buf) {
       /*
       debug4("  %p line: %lu col: %lu offset: %lu", sn, sn->info.line, sn->info.col, sn->info.offset);
       */
-      /*
-      fprintf(stderr, "DEBUG: REREAD %s usage %p line: %lu col: %lu offset: %lu must be extern before %lu\n", pn->info.symbol, sn, sn->info.line, sn->info.col, sn->info.offset, sn->info.last_function_start);
-      */
       buf += sizeof(*sn);
       sn->next = (symbol_usage_node_t*)buf;
       sn->info.prototype_node = pn; /* IS THIS WORKING???? */
@@ -191,15 +210,13 @@ static void transform_structs(prototype_list_t* list, char* buf) {
   }
 }
 
-int reload_symbol_cache(prototype_list_t* list, const char* file) {
-  int retval = 0;
+unsigned char* reload_symbol_cache(prototype_list_t* list, const char* file) {
   FILE* fd;
   size_t len;
-  char* buf;
+  unsigned char* buf = NULL;
 
   if (NULL == (fd = fopen(file, "rb"))) {
     error1("Unable to open '%s' for reading", file);
-    retval = -1;
     goto fopen_failed;
   }
 
@@ -207,13 +224,11 @@ int reload_symbol_cache(prototype_list_t* list, const char* file) {
 
   if (NULL == (buf = malloc(len))) {
     error1("Out of memory while allocating '%s'", file);
-    retval = -1;
     goto malloc_failed;
   }
 
   if (1 != fread(buf, len, 1, fd)) {
     error1("Unable to read '%s'", file);
-    retval = -2;
     goto fread_failed;
   }
 
@@ -221,15 +236,18 @@ int reload_symbol_cache(prototype_list_t* list, const char* file) {
 
   debug2("Loaded %s (%lu bytes)", file, len);
 
-  transform_structs(list, buf);
+  transform_structs(list, (char*)buf);
 
   goto normal_exit;
 
  fread_failed:
-  free(buf);
+  if (NULL != buf) {
+    free(buf);
+  }
  malloc_failed:
   fclose(fd);
  fopen_failed:
+  return NULL;
  normal_exit:
-  return retval;
+  return buf;
 }

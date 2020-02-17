@@ -1,0 +1,2 @@
+2020-02-17 aio Improve line and branch coverage while refactoring
+2020-02-17 aio Remove as much "test" in benefit of "check" throughout the code
