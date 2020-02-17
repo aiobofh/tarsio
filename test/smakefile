@@ -6,7 +6,7 @@
 #                  |      ||    |         |    | |      |
 #                  |   ___||___ |         |___ | |______|
 #
-#                    Copyleft AiO Secure Teletronics
+#               Copyright (C) 2020 AiO Secure Teletronics
 #
 # This Makefile will compile (and run) the self-tests for Tarsio.
 #

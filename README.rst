@@ -5,7 +5,7 @@
                     |      ||    |         |    | |      |
                     |   ___||___ |         |___ | |______|
 
-                      Copyleft AiO Secure Teletronics
+                 Copyright (C) 2020 AiO Secure Teletronics
 
 
 This is Tarsio

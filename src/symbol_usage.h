@@ -6,7 +6,7 @@
  *                 |      ||    |         |    | |      |
  *                 |   ___||___ |         |___ | |______|
  *
- *                   Copyleft AiO Secure Teletronics
+ *              Copyright (C) 2020 AiO Secure Teletronics
  *
  * These are helper functions to handle, sort and organize argument lists
  * for symols that may be used around the design under test. The lists are

@@ -6,7 +6,7 @@
  *                 |      ||    |         |    | |      |
  *                 |   ___||___ |         |___ | |______|
  *
- *                   Copyleft AiO Secure Teletronics
+ *              Copyright (C) 2020 AiO Secure Teletronics
  *
  * These are helper functions to handle, sort and organize the C
  * pre-processor directives in a parsed source-file. Keeping track of

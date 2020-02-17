@@ -6,7 +6,7 @@
 #                  |      ||    |         |    | |      |
 #                  |   ___||___ |         |___ | |______|
 #
-#                    Copyleft AiO Secure Teletronics
+#               Copyright (C) 2020 AiO Secure Teletronics
 #
 # This Makefile provide a few targets that makes it possible to know your code
 # and branch coverage.

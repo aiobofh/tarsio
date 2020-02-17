@@ -6,7 +6,7 @@
  *                 |      ||    |         |    | |      |
  *                 |   ___||___ |         |___ | |______|
  *
- *                   Copyleft AiO Secure Teletronics
+ *              Copyright (C) 2020 AiO Secure Teletronics
  *
  * Function headers are parsed and interpreted to be transformed to other
  * formats and test-suite data storage datatypes. But also to generate

@@ -6,7 +6,7 @@
  *                 |      ||    |         |    | |      |
  *                 |   ___||___ |         |___ | |______|
  *
- *                   Copyleft AiO Secure Teletronics
+ *              Copyright (C) 2020 AiO Secure Teletronics
  *
  * This program generates storage structures for check-suites to maniupulate
  * and sample mock-up function statistics.
@@ -109,7 +109,7 @@ static void generate_struct(prototype_list_t* list, cpp_list_t* cpp_list) {
          " *                 |      ||    |         |    | |      |\n"
          " *                 |   ___||___ |         |___ | |______|\n"
          " *\n"
-         " *                   Copyleft AiO Secure Teletronics\n"
+         " *              Copyright (C) 2020 AiO Secure Teletronics\n"
          " *\n");
   printf(" * Header file for use as inclusion describing all the mock control\n"
          " * structures and data storeage for mocked version of all used functions\n"

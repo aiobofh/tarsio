@@ -6,7 +6,7 @@
  *                 |      ||    |         |    | |      |
  *                 |   ___||___ |         |___ | |______|
  *
- *                   Copyleft AiO Secure Teletronics
+ *              Copyright (C) 2020 AiO Secure Teletronics
  *
  * This program generate mock-up functions for all called functions in a
  * design under test/check.
@@ -117,7 +117,7 @@ static void generate_proxies(prototype_list_t* list, const char* file) {
          " *                 |      ||    |         |    | |      |\n"
          " *                 |   ___||___ |         |___ | |______|\n"
          " *\n"
-         " *                   Copyleft AiO Secure Teletronics\n"
+         " *              Copyright (C) 2020 AiO Secure Teletronics\n"
          " *\n");
   printf(" * This is the proxy function implementations for all used functions\n"
          " * in the design under test. They should be stored into a .c file to\n"
