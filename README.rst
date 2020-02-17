@@ -587,13 +587,14 @@ recommended to both reduce check complexity, and run-time.
 
 10. Compile'n'run
 
-  The this check will not even compile. Since the Tarsio tool-chain did not even
-  find any calls to ``fclose()``. Hence the ``tarsio_data`` struct will not
-  even contain the member ``fclose`` as sample data for the asserts in the check.
+    The this check will not even compile. Since the Tarsio tool-chain did not even
+    find any calls to ``fclose()``. Hence the ``tarsio_data`` struct will not
+    even contain the member ``fclose`` as sample data for the asserts in the
+    check.
 
 11. Implement the code
 
-   The early exit code style::
+    The early exit code style::
 
      int write_file(const char* filename) {
        FILE* fd;
@@ -604,7 +605,7 @@ recommended to both reduce check complexity, and run-time.
        return 0; /* Everything is OK */
      }
 
-   or the if/else style::
+    or the if/else style::
 
      int write_file(const char* filename) {
        int retval = 0;
@@ -619,7 +620,7 @@ recommended to both reduce check complexity, and run-time.
        return retval; /* Everything is OK */
      }
 
-   or even self-documenting goto style::
+    or even self-documenting goto style::
 
      int write_file(const char* filename) {
        int retval = 0;
@@ -637,35 +638,35 @@ recommended to both reduce check complexity, and run-time.
 
 12. Compile'n'run
 
-   Now there is some error-recovery in place, and also good and understandable
-   return values. All checks should still pass.
+    Now there is some error-recovery in place, and also good and understandable
+    return values. All checks should still pass.
 
-   A small tip - For free, to have a good self-documenting code style
-   regardless of your preferred code aesthetics is to actually name the return
-   values to something meaningful, which might be important in the non-goto
-   style versions::
+    A small tip - For free, to have a good self-documenting code style
+    regardless of your preferred code aesthetics is to actually name the return
+    values to something meaningful, which might be important in the non-goto
+    style versions::
 
      typedef enum {
        WRITE_FILE_EVERYTHING_IS_OK = 0,
        WRITE_FILE_FOPEN_FAILED = -1
      } write_file_rt;
 
-   ... and change the return value type from ``int`` to write_file_rt. And if
-   you are clever this can also be used in the check-cases to give them even
-   more self-documenting features. It's up to you the coding master.
+    ... and change the return value type from ``int`` to write_file_rt. And if
+    you are clever this can also be used in the check-cases to give them even
+    more self-documenting features. It's up to you the coding master.
 
-   In this case the check-cases are refactored first, and then the code, with
-   the exact same mind-set as the initial implementation.
+    In this case the check-cases are refactored first, and then the code, with
+    the exact same mind-set as the initial implementation.
 
 13. Write a check that makes sure all data is written do disk.
 
-   Here comes a bit trickier refactoring, along with new implementation. Since
-   there is no data passed to the function yet. More arguments have to be
-   added, and all existing checks need to be refactored to take these in to
-   account. But if things are designed in a good way this should be quite easy
-   and in most cases the new arguments can be disregarded completely, since we
-   are doing white-box checking and know the program flow (and have it verified
-   by the checks written)::
+    Here comes a bit trickier refactoring, along with new implementation. Since
+    there is no data passed to the function yet. More arguments have to be
+    added, and all existing checks need to be refactored to take these in to
+    account. But if things are designed in a good way this should be quite easy
+    and in most cases the new arguments can be disregarded completely, since we
+    are doing white-box checking and know the program flow (and have it verified
+    by the checks written)::
 
      test(write_file_should_open_the_correct_file_for_writing) {
        write_file("some_file_path.dat", NULL, 0);
@@ -678,9 +679,9 @@ recommended to both reduce check complexity, and run-time.
        assert_eq(-1, write_file("some_file_path.dat", NULL, 0));
      }
 
-   This one need to be given some extra thought, since something is probably
-   going to be written, if everything is OK. Let's just pass some bogus data
-   to the function::
+    This one need to be given some extra thought, since something is probably
+    going to be written, if everything is OK. Let's just pass some bogus data
+    to the function::
 
      test(write_file_shall_return_0_if_everything_is_ok) {
        tarsio_data.fopen.retval = (FILE*)0x1234;
@@ -700,12 +701,12 @@ recommended to both reduce check complexity, and run-time.
        assert_eq(0, tarsio_data.fclose.call_count);
      }
 
-   Also - The new checks for actually writing the data passed to ``write_file()``
-   can be written.
+    Also - The new checks for actually writing the data passed to ``write_file()``
+    can be written.
 
-   First a small check, to make sure that ``fwrite`` is writing the correct data
-   to the correct file, by manipulating the retval of ``fopen()`` as before, to
-   get a known value that should be passed to ``fwrite``::
+    First a small check, to make sure that ``fwrite`` is writing the correct data
+    to the correct file, by manipulating the retval of ``fopen()`` as before, to
+    get a known value that should be passed to ``fwrite``::
 
      test(write_file_should_write_the_data_to_the_correct_file) {
        tarsio_data.fopen.retval = (FILE*)0x1234;
@@ -717,44 +718,44 @@ recommended to both reduce check complexity, and run-time.
        assert_eq((FILE*)0x1234, tarsio_data.fwrite.args.arg3);
      }
 
-   And obviously it can be good to have a check that makes sure that the code
-   will not write anything to somewhere that was never opened::
+    And obviously it can be good to have a check that makes sure that the code
+    will not write anything to somewhere that was never opened::
 
      test(write_file_should_not_write_data_if_fopen_failed) {
        write_file("some_file_path.dat", NULL, 0);
        assert_eq(0, tarsio_data.fwrite.call_count);
      }
 
-   It is always a good idea also to take error handling into account for new
-   code added... So let's also write a few check that makes sure that the
-   function return something meaningful if ``fwrite`` should fail - For example
-   if a disk breaks during the write or a network file-system is suddenly
-   unavailable during the write. This would make the code a bit more robust::
+    It is always a good idea also to take error handling into account for new
+    code added... So let's also write a few check that makes sure that the
+    function return something meaningful if ``fwrite`` should fail - For example
+    if a disk breaks during the write or a network file-system is suddenly
+    unavailable during the write. This would make the code a bit more robust::
 
      test(write_file_should_return_negative_2_if_file_write_fails) {
        tarsio_data.fopen.retval = (FILE*)0x1234;
        assert_eq(-2, write_file("some_file_path.dat", (void*)0x5678, 10));
      }
 
-   Again - The Tarsio framework has NULL:ed the retval of fwrite automatically
-   so it will return 0 bytes written.
+    Again - The Tarsio framework has NULL:ed the retval of fwrite automatically
+    so it will return 0 bytes written.
 
-   It is also good to know that the file is closed even if fwrite failed, but
-   this is actually already covered in the generic assumption that if a fopen
-   is successful, the file should also be closed, always.
+    It is also good to know that the file is closed even if fwrite failed, but
+    this is actually already covered in the generic assumption that if a fopen
+    is successful, the file should also be closed, always.
 
 14. Compile'n'run
 
-   As you might have figured out. This won't compile, since the function has
-   not been refactored to take three arguments yet, nor does it call ``fwrite``.
+    As you might have figured out. This won't compile, since the function has
+    not been refactored to take three arguments yet, nor does it call ``fwrite``.
 
 15. Implement the code
 
-   By adding the new arguments to the data and its size, along with writing the
-   data to file in the correct place in your code it would probably look
-   something like this:
+    By adding the new arguments to the data and its size, along with writing the
+    data to file in the correct place in your code it would probably look
+    something like this:
 
-   The early exit code style::
+    The early exit code style::
 
      int write_file(const char* filename, void* data, size_t size) {
        FILE* fd;
@@ -769,7 +770,7 @@ recommended to both reduce check complexity, and run-time.
        return 0; /* Everything is OK */
      }
 
-   or the if/else style::
+    or the if/else style::
 
      int write_file(const char* filename, void* data, size_t size) {
        int retval = 0;
@@ -787,7 +788,7 @@ recommended to both reduce check complexity, and run-time.
        return retval; /* Everything is OK */
      }
 
-   or even goto style::
+    or even goto style::
 
      int write_file(const char* filename, void* data, size_t size) {
        int retval = 0;
@@ -810,8 +811,8 @@ recommended to both reduce check complexity, and run-time.
 
 16. Compile'n'run
 
-  Now the ``write_file`` function is fairly well unit-checked, and the design
-  of the code was fully driven by the checks that was written before the code.
+    Now the ``write_file`` function is fairly well unit-checked, and the design
+    of the code was fully driven by the checks that was written before the code.
 
 17. Given the fact that something *could* fail during write, might also
     indicate that even the ``fclose()`` could fail, let's check this too...
@@ -825,19 +826,19 @@ recommended to both reduce check complexity, and run-time.
         assert_eq(-3, write-file("some_file_path.dat", (void*)0x5678, 10));
       }
 
-   Ok... Now we enter an interesting problem. Some coding styles have multiple
-   calls to the fclose. Depending on branch state and such things. In essence,
-   we can write a check that makes sure that the code can return -3 regardless
-   of which branch we enter, or we just pick a coding style that is most
-   generic and the easiest to check.
+    Ok... Now we enter an interesting problem. Some coding styles have multiple
+    calls to the fclose. Depending on branch state and such things. In essence,
+    we can write a check that makes sure that the code can return -3 regardless
+    of which branch we enter, or we just pick a coding style that is most
+    generic and the easiest to check.
 
-   It's up to you... The check where fclose is called if fopen was successful
-   might not suffice anymore. But if you're clever by refactoring the code you
-   may not have to write this check.
+    It's up to you... The check where fclose is called if fopen was successful
+    might not suffice anymore. But if you're clever by refactoring the code you
+    may not have to write this check.
 
 18. Compile'n'run
 
-   The check should fail. Since the code has not been implemented yet.
+    The check should fail. Since the code has not been implemented yet.
 
 19. Implement the code
 
@@ -860,7 +861,7 @@ recommended to both reduce check complexity, and run-time.
        return 0; /* Everything is OK */
      }
 
-   or the if/else style::
+    or the if/else style::
 
      int write_file(const char* filename, void* data, size_t size) {
        int retval = 0;
@@ -880,7 +881,7 @@ recommended to both reduce check complexity, and run-time.
        return retval; /* Everything is OK */
      }
 
-   or even goto style::
+    or even goto style::
 
      int write_file(const char* filename, void* data, size_t size) {
        int retval = 0;
@@ -944,10 +945,10 @@ recommended to both reduce check complexity, and run-time.
         return RETURN_EVERYTHING_IS_OK;
       }
 
-  Even though the code above is not compatible with older compilers, nor is
-  it consistent in code style. But it shows ONE end-result that is quite
-  compact, while still being easy to read. Also it does comply to all the
-  checks we've written.
+    Even though the code above is not compatible with older compilers, nor is
+    it consistent in code style. But it shows ONE end-result that is quite
+    compact, while still being easy to read. Also it does comply to all the
+    checks we've written.
 
 22. In the best of worlds it should be possible to write some kind of
     acceptance check already from the start. But it will probably not drive the
@@ -989,10 +990,10 @@ recommended to both reduce check complexity, and run-time.
         unlink("/tmp/foo.dat");
       }
 
-   Once these are written you basically have everything needed to do
-   the code, that's why it might be a good idea to wait (for THIS example).
-   For a couple for reasons. These checks promote an up-front planning of the
-   code design - which is not an agile mind-set. Also... They will probably
-   let a few design-pit-falls slip by... And you will probably end-up with
-   code that is slightly different. It may not be bad, nor good. Just
-   different.
+    Once these are written you basically have everything needed to do
+    the code, that's why it might be a good idea to wait (for THIS example).
+    For a couple for reasons. These checks promote an up-front planning of the
+    code design - which is not an agile mind-set. Also... They will probably
+    let a few design-pit-falls slip by... And you will probably end-up with
+    code that is slightly different. It may not be bad, nor good. Just
+    different.
