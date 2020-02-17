@@ -75,7 +75,7 @@ tarsio-${VERSION}.tar.gz: check-all
 	${MAKE} --no-print-directory -C src clean && \
 	${MAKE} --no-print-directory -C test clean && \
 	mkdir -p tarsio-${VERSION} && \
-	cp -r README Makefile src include doc test tarsio-${VERSION}/. && \
+	cp -r README.rst Makefile src include doc test tarsio-${VERSION}/. && \
 	tar -c tarsio-${VERSION} | gzip > $@ && \
 	rm -rf tarsio-${VERSION}
 
@@ -88,7 +88,7 @@ tarsio-${VERSION}-src.lha: check-all
 	${MAKE} --no-print-directory -C test clean && \
 	mkdir -p tarsio-${VERSION} && \
 	mkdir -p tarsio-${VERSION}/src && \
-	cp -r README Makefile src include doc test tarsio-${VERSION}/src/. && \
+	cp -r README.rst Makefile src include doc test tarsio-${VERSION}/src/. && \
 	jlha -cq $@ tarsio-${VERSION} && \
 	rm -rf tarsio-${VERSION}
 
@@ -102,7 +102,7 @@ tarsio-${VERSION}-sasc-68000-bin.lha: check-all
 	mkdir -p tarsio-${VERSION} && \
 	mkdir -p tarsio-${VERSION}/c && \
 	mkdir -p tarsio-${VERSION}/libs && \
-	cp -r README Makefile include doc tarsio-${VERSION}/. && \
+	cp -r README.rst Makefile include doc tarsio-${VERSION}/. && \
 	${MAKE} --no-print-directory -C src SASC=1 && \
 	cp src/tcg src/tsg src/tmg src/tam src/ttg tarsio-${VERSION}/c/. && \
 	jlha -cq $@ tarsio-${VERSION} && \
@@ -118,7 +118,7 @@ tarsio-${VERSION}-sasc-68020-bin.lha: check-all
 	mkdir -p tarsio-${VERSION} && \
 	mkdir -p tarsio-${VERSION}/c && \
 	mkdir -p tarsio-${VERSION}/libs && \
-	cp -r README Makefile include doc tarsio-${VERSION}/. && \
+	cp -r README.rst Makefile include doc tarsio-${VERSION}/. && \
 	${MAKE} --no-print-directory -C src SASC=1 CPU=68020 && \
 	cp src/tcg src/tsg src/tmg src/tam src/ttg tarsio-${VERSION}/c/. && \
 	jlha -cq $@ tarsio-${VERSION} && \
@@ -134,7 +134,7 @@ tarsio-${VERSION}-sasc-68030-bin.lha: check-all
 	mkdir -p tarsio-${VERSION} && \
 	mkdir -p tarsio-${VERSION}/c && \
 	mkdir -p tarsio-${VERSION}/libs && \
-	cp -r README Makefile include doc tarsio-${VERSION}/. && \
+	cp -r README.rst Makefile include doc tarsio-${VERSION}/. && \
 	${MAKE} --no-print-directory -C src SASC=1 CPU=68030 && \
 	cp src/tcg src/tsg src/tmg src/tam src/ttg tarsio-${VERSION}/c/. && \
 	jlha -cq $@ tarsio-${VERSION} && \
@@ -150,7 +150,7 @@ tarsio-${VERSION}-sasc-68040-bin.lha: check-all
 	mkdir -p tarsio-${VERSION} && \
 	mkdir -p tarsio-${VERSION}/c && \
 	mkdir -p tarsio-${VERSION}/libs && \
-	cp -r README Makefile include doc tarsio-${VERSION}/. && \
+	cp -r README.rst Makefile include doc tarsio-${VERSION}/. && \
 	${MAKE} --no-print-directory -C src SASC=1 CPU=68040 && \
 	cp src/tcg src/tsg src/tmg src/tam src/ttg tarsio-${VERSION}/c/. && \
 	jlha -cq $@ tarsio-${VERSION} && \
@@ -166,7 +166,7 @@ tarsio-${VERSION}-sasc-68060-bin.lha: check-all
 	mkdir -p tarsio-${VERSION} && \
 	mkdir -p tarsio-${VERSION}/c && \
 	mkdir -p tarsio-${VERSION}/libs && \
-	cp -r README Makefile include doc tarsio-${VERSION}/. && \
+	cp -r README.rst Makefile include doc tarsio-${VERSION}/. && \
 	${MAKE} --no-print-directory -C src SASC=1 CPU=68060 && \
 	cp src/tcg src/tsg src/tmg src/tam src/ttg tarsio-${VERSION}/c/. && \
 	jlha -cq $@ tarsio-${VERSION} && \
@@ -182,7 +182,7 @@ tarsio-${VERSION}-vbcc-68000-bin.lha: check-all
 	mkdir -p tarsio-${VERSION} && \
 	mkdir -p tarsio-${VERSION}/c && \
 	mkdir -p tarsio-${VERSION}/libs && \
-	cp -r README Makefile include doc tarsio-${VERSION}/. && \
+	cp -r README.rst Makefile include doc tarsio-${VERSION}/. && \
 	${MAKE} --no-print-directory -C src VBCC=1 && \
 	cp src/tcg src/tsg src/tmg src/tam src/ttg tarsio-${VERSION}/c/. && \
 	jlha -cq $@ tarsio-${VERSION} && \
@@ -198,7 +198,7 @@ tarsio-${VERSION}-vbcc-68020-bin.lha: check-all
 	mkdir -p tarsio-${VERSION} && \
 	mkdir -p tarsio-${VERSION}/c && \
 	mkdir -p tarsio-${VERSION}/libs && \
-	cp -r README Makefile include doc tarsio-${VERSION}/. && \
+	cp -r README.rst Makefile include doc tarsio-${VERSION}/. && \
 	${MAKE} --no-print-directory -C src VBCC=1 CPU=68020 && \
 	cp src/tcg src/tsg src/tmg src/tam src/ttg tarsio-${VERSION}/c/. && \
 	jlha -cq $@ tarsio-${VERSION} && \
@@ -214,7 +214,7 @@ tarsio-${VERSION}-vbcc-68030-bin.lha: check-all
 	mkdir -p tarsio-${VERSION} && \
 	mkdir -p tarsio-${VERSION}/c && \
 	mkdir -p tarsio-${VERSION}/libs && \
-	cp -r README Makefile include doc tarsio-${VERSION}/. && \
+	cp -r README.rst Makefile include doc tarsio-${VERSION}/. && \
 	${MAKE} --no-print-directory -C src VBCC=1 CPU=68030 && \
 	cp src/tcg src/tsg src/tmg src/tam src/ttg tarsio-${VERSION}/c/. && \
 	jlha -cq $@ tarsio-${VERSION} && \
@@ -230,7 +230,7 @@ tarsio-${VERSION}-vbcc-68040-bin.lha: check-all
 	mkdir -p tarsio-${VERSION} && \
 	mkdir -p tarsio-${VERSION}/c && \
 	mkdir -p tarsio-${VERSION}/libs && \
-	cp -r README Makefile include doc tarsio-${VERSION}/. && \
+	cp -r README.rst Makefile include doc tarsio-${VERSION}/. && \
 	${MAKE} --no-print-directory -C src VBCC=1 CPU=68040 && \
 	cp src/tcg src/tsg src/tmg src/tam src/ttg tarsio-${VERSION}/c/. && \
 	jlha -cq $@ tarsio-${VERSION} && \
@@ -246,7 +246,7 @@ tarsio-${VERSION}-vbcc-68060-bin.lha: check-all
 	mkdir -p tarsio-${VERSION} && \
 	mkdir -p tarsio-${VERSION}/c && \
 	mkdir -p tarsio-${VERSION}/libs && \
-	cp -r README Makefile include doc tarsio-${VERSION}/. && \
+	cp -r README.rst Makefile include doc tarsio-${VERSION}/. && \
 	${MAKE} --no-print-directory -C src VBCC=1 CPU=68060 && \
 	cp src/tcg src/tsg src/tmg src/tam src/ttg tarsio-${VERSION}/c/. && \
 	jlha -cq $@ tarsio-${VERSION} && \
