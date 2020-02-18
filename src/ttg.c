@@ -271,6 +271,49 @@ static void generate_tarsio_unit_test_execute(void) {
        "}\n");
 }
 
+static void generate_tarsio_module_test_execute(void) {
+  puts("void __tarsio_module_test_execute(__tarsio_data_t* __tarsio_mock_data, int (*func)(void* __tarsio_mock_data, const char* __tarsio_test_name), const char* name, size_t mock_data_size) {\n"
+       "  size_t skip = __tarsio_stats.skip;\n"
+       "  size_t fail = __tarsio_stats.fail;\n"
+       "  size_t error = __tarsio_stats.error;\n"
+       "  size_t i = 0;\n"
+       "  char* ptr = (char*)__tarsio_mock_data;\n"
+       "  while (i < mock_data_size) {\n"
+       "    ptr[i++] = 0;\n"
+       "  }\n"
+       "  TARSIO_DEFAULT_FUNCS\n"
+       "  func(__tarsio_mock_data, name);\n"
+       "  if (1 == __tarsio_options.verbose) {\n"
+       "    if (skip != __tarsio_stats.skip) {\n"
+       "      printf(\"[SKIP] %s\\n\", name);\n"
+       "    }\n"
+       "    else if (error != __tarsio_stats.error) {\n"
+       "      printf(\"[ERROR] %s\\n\", name);\n"
+       "    }\n"
+       "    else if (fail != __tarsio_stats.fail) {\n"
+       "      printf(\"[FAIL] %s\\n\", name);\n"
+       "    }\n"
+       "    else {\n"
+       "      printf(\"[PASS] %s\\n\", name);\n"
+       "    }\n"
+       "  }\n"
+       "  else {\n"
+       "    if (skip != __tarsio_stats.skip) {\n"
+       "      putc('S', stdout);\n"
+       "    }\n"
+       "    else if (error != __tarsio_stats.error) {\n"
+       "      putc('E', stdout);\n"
+       "    }\n"
+       "    else if (fail != __tarsio_stats.fail) {\n"
+       "      putc('F', stdout);\n"
+       "    }\n"
+       "    else {\n"
+       "      putc('.', stdout);\n"
+       "    }\n"
+       "  }\n"
+       "}\n");
+}
+
 static void generate_tarsio_summary(void) {
   puts("int __tarsio_summary(void) {\n"
        "  int retval = 0;\n"
@@ -348,6 +391,7 @@ static int generate_test_runner(testcase_list_t* list, const char* file) {
   generate_tarsio_handle_arguments();
   generate_tarsio_skip();
   generate_tarsio_unit_test_execute();
+  generate_tarsio_module_test_execute();
   generate_tarsio_summary();
   generate_tarsio_cleanup();
 

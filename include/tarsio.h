@@ -57,6 +57,7 @@
  *
  */
 #define test(NAME) void __##NAME(void* __tarsio_mock_data, const char* __tarsio_test_name)
+#define module_test(NAME) void __##NAME(void* __tarsio_mock_data, const char* __tarsio_test_name)
 
 /*
  * Main check assertion macro to evaluate code
