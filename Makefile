@@ -59,7 +59,8 @@ check-all: clean
 check:
 	@${MAKE} --no-print-directory -C test && \
 	${MAKE} --no-print-directory -C test clean && \
-	${MAKE} --no-print-directory -C examples Q=@
+	${MAKE} --no-print-directory -C examples Q=@ && \
+	${MAKE} --no-print-directory -C examples clean Q=@
 
 .PHONY: build
 build:
@@ -290,5 +291,6 @@ install: build
 clean:
 	@$(MAKE) --no-print-directory -C src clean && \
 	$(MAKE) --no-print-directory -C test clean && \
+	$(MAKE) --no-print-directory -C examples clean Q=@ && \
 	$(RM) -rf *~ include/*~ *.uaem tarsio-${VERSION}* tarsio*.lha # && \
 #	git status | grep 'git addd' >/dev/null && (echo "WARNING: There are untracked files, investigate with 'git status'." >&2 && false) || (true)
