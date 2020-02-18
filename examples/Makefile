@@ -26,49 +26,68 @@
 #  along with Tarsio.  If not, see <https://www.gnu.org/licenses/>.
 #
 
+MAKEFLAGS += --no-builtin-rules
+.SUFFIXES:
+
+Q=
 export PATH:=../src:${PATH}
 
+ifdef Q
+	HINT=
+else
+	HINT=; echo; echo "All the files are kept in this folder, take a looksie to get a feel for what Tarsio creates for you"; echo
+endif
+
 all: write_file_check
-	./write_file_check
+	${Q}./write_file_check ${HINT}
 
 # Generate pre-processed C-file for parsing by the Tarsio tools
+.PRECIOUS: %.pp
 %.pp: %.c
-	gcc -O0 -Wall -std=c11 -pedantic -g -I. -I../include -Dmain=__tarsio_replace_main -E -c $^ > $@
+	${Q}gcc -O0 -Wall -std=c11 -pedantic -g -I. -I../include -Dmain=__tarsio_replace_main -E -c $^ > $@
 
 # Generate a Symbol-cache file to be used by the other Tarsio tools
+.PRECIOUS: %.sym
 %.sym: %.pp
-	tcg $^ $@
+	${Q}tcg $^ $@
 
 # Generate a header-file with all the mock storage structs
+.PRECIOUS: %_data.h
 %_data.h: %.sym %_check.c
-	tsg $^ > $@
+	${Q}tsg $^ > $@
 
 # Generate mockup-function for the example project
+.PRECIOUS: %_mocks.c
 %_mocks.c: %.sym %_data.h
-	tmg $^ > $@
+	${Q}tmg $^ > $@
 
 # Modify the pre-processed C source to call mock-up functions
+.PRECIOUS: %_proxified.pp
 %_proxified.pp: %.sym %.pp
-	tam $^ > $@
+	${Q}tam $^ > $@
 
 # Generate the check-runner program
+.PRECIOUS: %_runner.c
 %_runner.c: %_check.c %_data.h
-	ttg $^ > $@
+	${Q}ttg $^ > $@
 
 # Compile the proxified object fil (it's a bit special)
+.PRECIOUS: %_proxified.o
 %_proxified.o: %_proxified.pp
-	gcc -Wall -std=c11 -pedantic -g -I. -I../include -x cpp-output -c -Wunused-function $< -o $@
+	${Q}gcc -Wall -std=c11 -pedantic -g -I. -I../include -x cpp-output -c -Wunused-function $< -o $@
 
 # Generic C-source to object file target
+.PRECIOUS: %.o
 %.o: %.c
-	gcc -O0 -Wall -std=c11 -pedantic -g -I. -I../include -o $@ -c $<
+	${Q}gcc -O0 -Wall -std=c11 -pedantic -g -I. -I../include -o $@ -c $<
 
 # Link all the objects to an executable program with all the tests.
 # Typically; this is where you need to add more dependencies if you
 # want to call original code from checks.
+.PRECIOUS: %_check
 %_check: %_proxified.o %_runner.o %_mocks.o %_check.o
-	gcc -o $@ $^
+	${Q}gcc -o $@ $^
 
 # Cleanup all.
 clean:
-	rm -f *.pp *.sym *_data.h *_mocks.c *_proxified.c *_runner.c *.o *_check *~
+	${Q}rm -f *.pp *.sym *_data.h *_mocks.c *_proxified.c *_runner.c *.o *_check *~
