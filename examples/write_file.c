@@ -30,7 +30,7 @@
 #include "write_file.h"
 
 static int write_file(const char* output_filename, void* data, size_t size) {
-  const FILE* fd = fopen(output_filename, "w+");
+  const FILE* fd = fopen(output_filename, "w");
 
   if (NULL == fd) {
     return WRITE_FILE_FOPEN_FAILED;

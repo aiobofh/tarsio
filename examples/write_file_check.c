@@ -57,9 +57,11 @@ static char* read_file(const char* filename) {
 /***************************************************************************
  * Unit-checks
  */
-test(shall_open_the_correct_file) {
+test(shall_open_the_correct_file_for_writing) {
   write_file("some_file_path.dat", (void*)0x5678, 10);
-  assert_eq(0, strcmp(tarsio_mock.fopen.args.arg0, "some_file_path.dat"));
+  assert_eq(1, tarsio_mock.fopen.call_count);
+  assert_eq(0, strcmp("some_file_path.dat", tarsio_mock.fopen.args.arg0));
+  assert_eq(0, strcmp("w", tarsio_mock.fopen.args.arg1));
 }
 
 test(shall_return_WRITE_FILE_EVERYTHING_IS_OK_if_everything_is_ok) {
@@ -73,6 +75,11 @@ test(shall_close_the_correct_file_if_opened) {
   write_file("some_file_path.dat", (void*)0x5678, 10);
   assert_eq(1, tarsio_mock.fclose.call_count);
   assert_eq((FILE*)0x1234, tarsio_mock.fclose.args.arg0);
+}
+
+test(write_file_should_not_write_data_if_fopen_failed) {
+  write_file("some_file_path.dat", NULL, 0);
+  assert_eq(0, tarsio_mock.fwrite.call_count);
 }
 
 test(shall_not_close_a_file_by_accided_if_file_was_not_opened) {
