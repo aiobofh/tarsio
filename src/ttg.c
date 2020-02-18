@@ -285,7 +285,7 @@ static void generate_tarsio_summary(void) {
        "    if (((NULL != last_test_name) && (0 != strcmp(last_test_name, fnode->testcase_name))) || (NULL == last_test_name)) {\n"
        "      fprintf(stderr, \"%s:\\n\", fnode->testcase_name);\n"
        "    }\n"
-       "    fprintf(stderr, \"  %s:%lu:\\n\", fnode->file, fnode->line);\n"
+       "    fprintf(stderr, \"  %s:%lu:\\n\", fnode->file, (unsigned long int)fnode->line);\n"
        "    fprintf(stderr, \"    %s\\n\", fnode->help);\n"
        "    last_test_name = fnode->testcase_name;\n"
        "  }\n"

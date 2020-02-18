@@ -223,7 +223,7 @@ int file_init(file_t* file, const char* filename) {
     if (feof(fd)) {
       fprintf(stderr, "WARNING: End of file reached before expected\n");
     }
-    fprintf(stderr, "ERROR: Invalid read size while reading '%s' read %lu bytes, expected %lu.\n", filename, rlen, len);
+    fprintf(stderr, "ERROR: Invalid read size while reading '%s' read %lu bytes, expected %lu.\n", filename, (unsigned long int)rlen, (unsigned long int)len);
     retval = -4;
     goto fread_failed;
   }
