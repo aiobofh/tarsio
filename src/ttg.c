@@ -399,7 +399,7 @@ static int generate_test_runner(testcase_list_t* list, const char* file, int no_
   generate_tarsio_handle_arguments();
   generate_tarsio_skip();
   generate_tarsio_unit_test_execute();
-  if (1 == no_module) {
+  if (0 == no_module) {
     generate_tarsio_module_test_execute();
   }
   generate_tarsio_summary();
