@@ -1,0 +1,17 @@
+The Tariso project is licenced under LGPL, this means Open Source. So
+contributions as very welcome! Let's have fun together!
+
+Also, posting issues in Github is extremely helpful.
+
+If you want to make minor changes, make sure all regression tests pass
+and that you are coding with "good taste". Tarsio will never be perfect
+but let's try to strive for it, together. To run regressino tests just
+run the self-checks from the root-folder of the project.
+
+ $ make check
+
+If you plan to make a bigger change, please branch and make pull-requests
+that are easy to understand.
+
+At the time of writing there is no automated regression testing in Github,
+but the plan is to make it so.
