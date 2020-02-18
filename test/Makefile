@@ -94,3 +94,14 @@ include ../include/coverage.mk
 endif
 endif
 endif
+
+# Need to find the original symbols for calling real code, if required. These
+# are kept for documentation purpouse... If ttm is called with --no-module
+# option these symbols won't be a proble,. But on the other hand it will be
+# impossible to write module-tests nor set mocks to call the original function
+# if required.
+argument_test${EXE}: ../src/list.o ../src/datatype.o
+
+cpp_test${EXE}: ../src/str.o ../src/list.o ../src/file.o
+
+testcase_test${EXE}: ../src/str.o

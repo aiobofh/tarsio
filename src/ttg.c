@@ -48,7 +48,7 @@ static char timestamp[] = __DATE__ " " __TIME__;
  */
 static void usage(const char* program_name)
 {
-  printf("USAGE: %s <test-file> <tarsio-pre-processed-source>\n", program_name);
+  printf("USAGE: %s [-n|--no-module] <test-file> <tarsio-pre-processed-source>\n", program_name);
 }
 
 /****************************************************************************
@@ -64,11 +64,14 @@ static void ver(const char* program_name) {
 struct ttg_options_s {
   char* testcases_filename;
   char* header_filename;
+  int no_module;
 };
 typedef struct ttg_options_s ttg_options_t;
 
 static int ttg_options_init(ttg_options_t* options, int argc, char* argv[])
 {
+  options->no_module = 0;
+
   if (argc == 2) {
     if ((0 == strcmp("-v", argv[1])) || (0 == strcmp("--version", argv[1])) || (0 == strcmp("VERSION", argv[1]))) {
       ver(argv[0]);
@@ -81,13 +84,18 @@ static int ttg_options_init(ttg_options_t* options, int argc, char* argv[])
   }
 
   if (argc != 3) {
+    if (argc == 4) {
+      if ((0 == strcmp("-n", argv[1])) || (0 == strcmp("--no-module", argv[1])) || (0 == strcmp("NOMODULE", argv[1]))) {
+        options->no_module = 1;
+      }
+    }
     error1("ERROR: Illegal number (%d) of arguments", argc);
     usage(argv[0]);
     return -1;
   }
 
-  options->testcases_filename = argv[1];
-  options->header_filename = argv[2];
+  options->testcases_filename = argv[argc - 2];
+  options->header_filename = argv[argc - 1];
 
   return 0;
 }
@@ -352,7 +360,7 @@ static void generate_tarsio_cleanup(void) {
        "}\n");
 }
 
-static int generate_test_runner(testcase_list_t* list, const char* file) {
+static int generate_test_runner(testcase_list_t* list, const char* file, int no_module) {
   int retval = 0;
   testcase_node_t* node;
   const char* data_file = file;
@@ -391,7 +399,9 @@ static int generate_test_runner(testcase_list_t* list, const char* file) {
   generate_tarsio_handle_arguments();
   generate_tarsio_skip();
   generate_tarsio_unit_test_execute();
-  generate_tarsio_module_test_execute();
+  if (1 == no_module) {
+    generate_tarsio_module_test_execute();
+  }
   generate_tarsio_summary();
   generate_tarsio_cleanup();
 
@@ -464,7 +474,7 @@ int main(int argc, char* argv[]) {
   /*
    * Generate test-runner
    */
-  if (0 != generate_test_runner(&testcase_list, options.header_filename)) {
+  if (0 != generate_test_runner(&testcase_list, options.header_filename, options.no_module)) {
     retval = EXIT_FAILURE;
     goto generate_test_runner_failed;
   }
