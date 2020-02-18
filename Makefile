@@ -58,7 +58,8 @@ check-all: clean
 .PHONY: check
 check:
 	@${MAKE} --no-print-directory -C test && \
-	${MAKE} --no-print-directory -C test clean
+	${MAKE} --no-print-directory -C test clean && \
+	${MAKE} --no-print-directory -C examples Q=@
 
 .PHONY: build
 build:
