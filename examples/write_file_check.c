@@ -1,3 +1,30 @@
+/*
+ * Check-suite for write_file.c
+ *
+ *              _______          _____ ___        ______
+ *                 |      ||    |         |    | |      |
+ *                 |      ||    |         |    | |      |
+ *                 |   ___||___ |         |___ | |______|
+ *
+ *              Copyright (C) 2020 AiO Secure Teletronics
+ *
+ *  This file is part of Tarsio.
+ *
+ *  Tarsio is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  Tarsio is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with Tarsio.  If not, see <https://www.gnu.org/licenses/>.
+ *
+ */
+
 #include <stdio.h>
 #include <unistd.h>
 #include <tarsio.h>
@@ -5,6 +32,11 @@
 #include "write_file.h"
 #include "write_file_data.h"
 
+/***************************************************************************
+ * Helper functions for the module tests where real files are written to
+ * disc, and these are used to read them back to be validated for correct
+ * contents.
+ */
 static size_t fsize(FILE *fd) {
   size_t file_size;
   (void)fseek(fd, 0L, SEEK_END);
@@ -22,6 +54,9 @@ static char* read_file(const char* filename) {
   return retval;
 }
 
+/***************************************************************************
+ * Unit-checks
+ */
 test(shall_open_the_correct_file) {
   write_file("some_file_path.dat", (void*)0x5678, 10);
   assert_eq(0, strcmp(tarsio_mock.fopen.args.arg0, "some_file_path.dat"));
@@ -70,6 +105,11 @@ test(return_WRITE_FILE_FCLOSE_FAILED_if_file_could_not_be_closed) {
   assert_eq(WRITE_FILE_FCLOSE_FAILED, write_file("some_file_path.dat", (void*)0x5678, 10));
 }
 
+/***************************************************************************
+ * Module-checks
+ *
+ * Beware! These checks does actually write files to /tmp
+ */
 module_test(write_file_should_successfully_write_data_to_disk) {
   char* data = "0123456789";
   assert_eq(0, write_file("/tmp/foo.dat", data, strlen(data)));
