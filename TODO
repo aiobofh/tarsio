@@ -1,2 +1,14 @@
-2020-02-17 aio Improve line and branch coverage while refactoring
-2020-02-17 aio Remove as much "test" in benefit of "check" throughout the code
+* TODO 00 2020-02-17 Improve line and branch coverage in refactoring :tarsio:
+
+  As a software developer I want Tarsio to have better code coverage to ensure
+  quality, and provide good examples on how to write Tarsio-ch
+* TODO 00 2020-02-17 Remove as much "test" in benefit of "check"     :tarsio:
+
+  As the author of Tarsio I want better consistency of the usage of the words
+  testing and checking to be less confusing.
+
+* TODO 00 2020-02-18 Make Travis CI work for developing Tarsio       :tarsio:
+
+  As a maintainer of Tarsio I would like continuous integration when commits
+  are pushed to the repository, to make it easier to find errors and flaws in
+  the code base.
