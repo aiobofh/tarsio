@@ -3,13 +3,13 @@
 #include "write_file.h"
 
 static int write_file(const char* output_filename, void* data, size_t size) {
-  const FILE* fd = fopen(output_filename, "w");
+  const FILE* fd = fopen(output_filename, "w+");
 
   if (NULL == fd) {
     return WRITE_FILE_FOPEN_FAILED;
   }
 
-  const size_t result = fwrite(data, size, 1, (FILE*)fd);
+  const size_t result = fwrite(data, 1, size, (FILE*)fd);
   const int fwrite_ok = (size == result);
 
   if (0 != fclose((FILE*)fd)) {
