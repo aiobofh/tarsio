@@ -292,6 +292,23 @@ all the checks in the correct order::
 
 This was the last step to generate all the code needed to compile the runner.
 
+NOTE: ttg can generate a runner without support for module-checks (checks that
+      are not 100% stubbed, but rather call the original functions but still
+      sample arguments and such things) by passing `-m` as first argument. This
+      can make less "suprising" dependencies to real implementation object files.
+
+Learn and become familiar with the tool-chain outputs
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+A good place to start to understand Tarsio is by plaing around witht the examples
+folder where there are build-systems and sample code. When running `make` there
+all artifacts are created and kept in the same folder for easy browsing.
+
+A little blit more "real" example is to head over to the test-folder, where the
+regression tests for Tarsio itself live. However, the build system for Tarsio is
+rather complex, to support various architectures, compilers and OS:es, so it can
+be a bit daunting at first.
+
 Writing a check
 ---------------
 
