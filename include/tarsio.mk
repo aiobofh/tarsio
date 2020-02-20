@@ -153,7 +153,7 @@ ${HOSTTMPDIR}%${CPPEXT}: ${HOSTSRCDIR}%.c
 ${HOSTTMPDIR}%.sym: ${HOSTTMPDIR}%${CPPEXT}
 	${Q}${TCG}
 
-.NOTPARALELL: ${HOSTTMPDIR}%_data.h
+.NOTPARALLEL: ${HOSTTMPDIR}%_data.h
 .PRECIOUS: ${HOSTTMPDIR}%_data.h
 ${HOSTTMPDIR}%_data.h: ${HOSTTMPDIR}%.sym ${HOSTTSTDIR}%_test.c
 	${Q}${TSG}
@@ -191,7 +191,7 @@ ${HOSTTMPDIR}%_mocks.o: ${HOSTTMPDIR}%_mocks.c
 .PRECIOUS: ${HOSTTMPDIR}%_runner.o
 ${HOSTTMPDIR}%_runner.o: ${HOSTTMPDIR}%_runner.c
 
-.NOTPARALELL: ${HOSTTMPDIR}%_test.o
+.NOTPARALLEL: ${HOSTTMPDIR}%_test.o
 .PRECIOUS: ${HOSTTMPDIR}%_test.o
 ${HOSTTMPDIR}%_test.o: ${HOSTTSTDIR}%_test.c ${HOSTTMPDIR}%_data.h
 	${Q}${CC} ${CFLAGS}; ${TESTO}

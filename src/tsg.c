@@ -230,6 +230,7 @@ static void generate_struct(prototype_list_t* list, cpp_list_t* cpp_list) {
   for (node = list->first; NULL != node; node = node->next) {
     generate_prototype(node, "extern ", "", ";");
   }
+  printf("extern int main(int argc, char* argv[]);\n");
   printf("#endif\n");
 }
 
