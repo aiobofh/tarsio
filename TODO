@@ -1,7 +1,8 @@
 * TODO 00 2020-02-17 Improve line and branch coverage in refactoring :tarsio:
 
   As a software developer I want Tarsio to have better code coverage to ensure
-  quality, and provide good examples on how to write Tarsio-ch
+  quality, and provide good examples on how to write Tarsio-checks
+
 * TODO 00 2020-02-17 Remove as much "test" in benefit of "check"     :tarsio:
 
   As the author of Tarsio I want better consistency of the usage of the words
@@ -12,3 +13,7 @@
   As a maintainer of Tarsio I would like continuous integration when commits
   are pushed to the repository, to make it easier to find errors and flaws in
   the code base.
+* TODO 00 2020-02-19 Fix parsing of LF in function headers           :tarsio:
+
+  As a developer I want the freedom to have linefeeds in the function headers
+  in order to keep my code pretty.
