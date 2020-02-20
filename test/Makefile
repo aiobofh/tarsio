@@ -26,6 +26,8 @@
 #  along with Tarsio.  If not, see <https://www.gnu.org/licenses/>.
 #
 
+TSRCROOT=../src/
+
 MAKEFLAGS += --no-builtin-rules
 .SUFFIXES:
 
@@ -72,7 +74,7 @@ all:
 tools:
 	${Q}${MAKE} --no-print-directory -C ../src/
 
-include ../include/tarsio.mk
+include ../include/tarsio_dist.mk
 
 .PHONY: check
 check:: $(subst .c,${EXE},$(wildcard *_test.c))
@@ -90,7 +92,7 @@ clean-all:
 ifndef SASC
 ifndef VBCC
 ifndef VC
-include ../include/coverage.mk
+include ../include/coverage_dist.mk
 endif
 endif
 endif

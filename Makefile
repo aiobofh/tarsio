@@ -308,7 +308,6 @@ install: build
 	install -s src/ttg ${PREFIX}/bin/ttg && \
 	mkdir -p ${PREFIX}/include/tarsio && \
 	install include/tarsio.mk ${PREFIX}/include/tarsio/tarsio.mk && \
-	install include/coverage.mk ${PREFIX}/include/tarsio/coverage.mk && \
 	install include/tarsio.h ${PREFIX}/include/tarsio/tarsio.h && \
 	install tarsio.pc /usr/share/pkgconfig/tarsio.pc
 
