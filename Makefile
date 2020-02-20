@@ -27,6 +27,8 @@
 #  along with Tarsio.  If not, see <https://www.gnu.org/licenses/>.
 #
 
+PREFIX?=/usr/local
+
 MAKEFLAGS += --no-builtin-rules
 .SUFFIXES:
 
@@ -77,8 +79,16 @@ check:
 	${MAKE} --no-print-directory -C examples Q=@ && \
 	${MAKE} --no-print-directory -C examples clean Q=@
 
+tarsio.pc:
+	@echo "Name: tarsio" > $@; \
+	echo "Version: ${VERSION}" >> $@; \
+	echo "Description: Tarsio - A minimalistic automocking unit-checking/testing framework" >> $@; \
+	echo "prefix=${PREFIX}" >> $@; \
+	echo "includedir=${PREFIX}/include/tarsio" >> $@; \
+	echo "Cflags: -I${PREFIX}/include/tarsio" >> $@
+
 .PHONY: build
-build:
+build: tarsio.pc
 	@${MAKE} --no-print-directory -C src
 
 #	git status | grep 'git addd' >/dev/null && ((echo "WARNING: There are untracked files, investigate with 'git status'." >&2 && false) || (true)) && \
@@ -290,16 +300,20 @@ dist: source-dist bin-dist
 
 .PHONY: install
 install: build
-	mkdir -p $PREFIX/bin && \
-	install -s src/tcg $PREFIX/bin/tcg && \
-	install -s src/tam $PREFIX/bin/tam && \
-	install -s src/tmg $PREFIX/bin/tmg && \
-	install -s src/tsg $PREFIX/bin/tsg && \
-	install -s src/ttg $PREFIX/bin/ttg && \
-	mkdir -p $PREFIX/include/tarsio && \
-	install include/tarsio.mk $PREFIX/include/tarsio/tarsio.mk && \
-	install include/coverage.mk $PREFIX/include/tarsio/coverage.mk && \
-	install include/tarsio.h $PREFIX/include/tarsio/tarsio.h
+	@mkdir -p ${PREFIX}/bin && \
+	install -s src/tcg ${PREFIX}/bin/tcg && \
+	install -s src/tam ${PREFIX}/bin/tam && \
+	install -s src/tmg ${PREFIX}/bin/tmg && \
+	install -s src/tsg ${PREFIX}/bin/tsg && \
+	install -s src/ttg ${PREFIX}/bin/ttg && \
+	mkdir -p ${PREFIX}/include/tarsio && \
+	install include/tarsio.mk ${PREFIX}/include/tarsio/tarsio.mk && \
+	install include/coverage.mk ${PREFIX}/include/tarsio/coverage.mk && \
+	install include/tarsio.h ${PREFIX}/include/tarsio/tarsio.h && \
+	install tarsio.pc /usr/share/pkgconfig/tarsio.pc
+
+uninstall:
+	rm -rf ${PREFIX}/bin/tcg ${PREFIX}/bin/tam ${PREFIX}/bin/tmg ${PREFIX}/bin/tsg ${PREFIX}/bin/ttg ${PREFIX}/include/tarsio /usr/share/pkgconfig/tarsio.pc
 
 .NOTPARALLEL: clean
 .PHONY: clean
@@ -307,5 +321,5 @@ clean:
 	@$(MAKE) --no-print-directory -C src clean && \
 	$(MAKE) --no-print-directory -C test clean && \
 	$(MAKE) --no-print-directory -C examples clean Q=@ && \
-	$(RM) -rf *~ include/*~ *.uaem tarsio-${VERSION}* tarsio*.lha # && \
+	$(RM) -rf *~ include/*~ *.uaem tarsio-${VERSION}* tarsio*.lha tarsio.pc # && \
 #	git status | grep 'git addd' >/dev/null && (echo "WARNING: There are untracked files, investigate with 'git status'." >&2 && false) || (true)
