@@ -423,7 +423,7 @@ static int find_symbol_usage(void* list_ptr, file_parse_state_t* state,
   prototype_list_t* list = (prototype_list_t*)list_ptr;
   prototype_node_t* node;
 
-  if ((('a' > c) || ('z' < c)) && (('0' > c) || ('9' < c)) && ('_' != c)) {
+  if ((('A' > c) || ('Z' < c)) && (('a' > c) || ('z' < c)) && (('0' > c) || ('9' < c)) && ('_' != c)) {
     for (node = list->first; NULL != node; node = node->next) {
       if (0 == strcmp(state->buf, node->info.symbol)) {
         debug1("Possible hit: '%s'", state->buf);
