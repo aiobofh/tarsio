@@ -31,6 +31,13 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Tarsio.  If not, see <https://www.gnu.org/licenses/>.
 
+Community
+^^^^^^^^^
+
+Tarsio source code is available on GitHub https://github.com/aiobofh/tarsio
+
+IRC-channel for discussing Tarsio ircs://irc.aio.nu:6666 #tarsio
+
 Auto-mocking
 ^^^^^^^^^^^^
 
