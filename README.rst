@@ -36,7 +36,7 @@ Community
 
 Tarsio source code is available on GitHub https://github.com/aiobofh/tarsio
 
-IRC-channel for discussing Tarsio ircs://irc.aio.nu:6666 #tarsio
+IRC-channel for discussing Tarsio ircs://irc.aio.nu:6666/tarsio
 
 Auto-mocking
 ^^^^^^^^^^^^
