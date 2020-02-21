@@ -295,16 +295,16 @@ This was the last step to generate all the code needed to compile the runner.
 NOTE: ttg can generate a runner without support for module-checks (checks that
       are not 100% stubbed, but rather call the original functions but still
       sample arguments and such things) by passing `-m` as first argument. This
-      can make less "suprising" dependencies to real implementation object files.
+      can make less "surprising" dependencies to real implementation object files.
 
 Learn and become familiar with the tool-chain outputs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-A good place to start to understand Tarsio is by plaing around witht the examples
+A good place to start to understand Tarsio is by playing around with the examples
 folder where there are build-systems and sample code. When running `make` there
 all artifacts are created and kept in the same folder for easy browsing.
 
-A little blit more "real" example is to head over to the test-folder, where the
+A little bit more "real" example is to head over to the test-folder, where the
 regression tests for Tarsio itself live. However, the build system for Tarsio is
 rather complex, to support various architectures, compilers and OS:es, so it can
 be a bit daunting at first.
@@ -317,16 +317,16 @@ for the code that is the design under check. If Check-Driven Design is a new
 concept - Please take a look in "The idea about Check-Driven Design".
 
 In-between every check-case the storage data structure containing samples from
-functino call counters, argument monitors and function replacements (stubs) are
-resetted (set to zero). The thinking is that this enables every check to be
-written as a state-less check. And ther should not be a need to run checks in any
+function call counters, argument monitors and function replacements (stubs) are
+reset (set to zero). The thinking is that this enables every check to be
+written as a state-less check. And there should not be a need to run checks in any
 specific order. When the state is cleared it also means that every function call
 you have in your code is replaced by a call to a mock-up function (mock).
 
 The Tarsio tool chain supports yet another type of check - They are called
-module-check. These are in essence exatly the same as a unit-check but with the
+module-check. These are in essence exactly the same as a unit-check but with the
 significant difference of clearing the sample storage state, but by default
-setting all functions to be called as originally intended intead of just calling
+setting all functions to be called as originally intended instead of just calling
 the mock-up. To keep things on a basic level for now - Let's say if
 
 
@@ -341,11 +341,11 @@ it might be a convenient way to keep track on what check-suite is checking
 what code file.
 
 Consider the case of having a source code file that is going to contain helper
-funcitons for disk operations. To easily know what code is in the file by just
+functions for disk operations. To easily know what code is in the file by just
 browsing the file tree, lets call the file ``disk_operations.c``. Then there
 should be a matching check-suite called ``disk_operations_check.c`` containing
 the check-cases. Again: This is given that the build systems shipped with
-Tarisio are used.
+Tarsio are used.
 
 
 Recommended directory layout
@@ -440,7 +440,7 @@ Important includes
 
 When writing a new check-suite there are a few ``#include``-statements that are
 mandatory. First of all you should ``#include`` the ``tarsio.h`` API, which
-provide you with the funcitons and macros needed by the Tarsio tool chain.
+provide you with the functions and macros needed by the Tarsio tool chain.
 
 Also... You probably want to include the ``disk_operations_data.h`` to get
 access to all data types and function prototypes used in your design under check.
@@ -457,7 +457,7 @@ So you should probably have a file starting with the following lines::
 
 Some clarification is needed here. Your text-editor or Integrated Development
 Environment may become a bit sad by this inclusion of the generated _data.h
-file. Since it might not always exsist... If your editor has some kind of simple
+file. Since it might not always exist... If your editor has some kind of simple
 syntax validation some keywords used in your code might be marked as unavailable
 or syntax errors. There are ways around this, for example if you generate the
 file at some point (which hopefully will be every minute or so, when you get the
@@ -470,7 +470,7 @@ The simplest check
 
 A unit-check is defined by a macro that looks similar to a function prototype or
 function header. The macro is called ``test()``, or in a module-check it is
-called ``module_test()``, depending on which mocking behaviour is desired::
+called ``module_test()``, depending on which mocking behavior is desired::
 
  test(this_is_a_readable_check_name) {
    :
@@ -480,11 +480,11 @@ called ``module_test()``, depending on which mocking behaviour is desired::
 
 A word of warning regarding check-names. Even though it is a very good idea to
 name the checks to something valuable and understandable; some C compilers might
-have constraints on the length of function names - Usually they are truncaded in
+have constraints on the length of function names - Usually they are truncated in
 this case, without warning, hence it's quite important to be aware of this.
 Mainly since the usual pattern is to prefix the check-case name with the function
 that is checked, and then some meaningful description of the check. Given this
-knowledge, and if your funcitons under check them selves have meaningful long
+knowledge, and if your functions under check them selves have meaningful long
 names... All the checks might potentially end up being named the exact same thing
 due to this truncation.
 
@@ -578,7 +578,7 @@ recommended to both reduce check complexity, and run-time.
      }
 
    The function call to fopen() will automatically be replaced by a call to a
-   generated function by the Tariso tools chain, hence we can measure how many
+   generated function by the Tarsio tools chain, hence we can measure how many
    calls we had to it, and what arguments were passed to it in the generated
    data-storage struct instance ``tarsio_data`` as the check case suggests.
 
@@ -598,12 +598,12 @@ recommended to both reduce check complexity, and run-time.
 5. Write a check that makes it easy to know what is going wrong with the code
    if a file could not be opened for writing::
 
-     test(shall_return_WRITE_FILE_FOPEN_FAILED_if_fopen_failes) {
+     test(shall_return_WRITE_FILE_FOPEN_FAILED_if_fopen_fails) {
        assert_eq(WRITE_FILE_FOPEN_FAILED, write_file("some_file_path.dat"));
      }
 
    Very compact, right... Since the check-suite runner that is generated by the
-   Tarsio tool chain clears the data-storage struct ``tarsio_data`` inbetwee
+   Tarsio tool chain clears the data-storage struct ``tarsio_data`` in-between
    every check-case, it also clears the ``retval`` member. In this case NULL or
    0.
 
@@ -779,7 +779,7 @@ recommended to both reduce check complexity, and run-time.
        :
      }
 
-     test(return_WRITE_FILE_FOPEN_FAILED_if_fopen_failes) {
+     test(return_WRITE_FILE_FOPEN_FAILED_if_fopen_fails) {
        assert_eq(WRITE_FILE_FOPEN_FAILED, write_file("some_file_path.dat", NULL, 0));
      }
 
@@ -801,7 +801,7 @@ recommended to both reduce check complexity, and run-time.
        :
      }
 
-     test(shall_not_close_a_file_by_accided_if_file_was_not_opened) {
+     test(shall_not_close_a_file_by_accident_if_file_was_not_opened) {
        write_file("some_file_path.dat", NULL, 0);
        assert_eq(0, tarsio_mock.fclose.call_count);
      }
