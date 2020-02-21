@@ -348,6 +348,93 @@ the check-cases. Again: This is given that the build systems shipped with
 Tarisio are used.
 
 
+Recommended directory layout
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Since the Tarsio tools and eventually code coverage files will be created it's
+good to keep a separate ``test`` or ``check`` folder where the ``*_check.c``
+suite files are kept. This could be inside a ``src`` folder or parallel with
+the source-folder. It would also be a good idea to have a top-level build
+system that enables the user of a project to easily build the system with all
+regression checks run::
+
+  Makefile
+  src
+    Makefile
+    my_code.c
+    helper.c
+  check
+    Makefile
+    my_code_check.c
+    helper_check.c
+
+The focus for this text is do describe the ``check/Makefile`` structure. A good
+way of making use of Tarsio would be something like this::
+
+  #
+  # My checks for my awesome project
+  #
+
+  #
+  # Speedup GNU Make a bit
+  #
+  MAKEFLAGS += --no-builtin-rules
+  .SUFFIXES:
+
+  #
+  # Default clean builds
+  #
+  CFLAGS=-Wall -pedantic -std=c99 -I.
+
+  #
+  # Configure Tarsio
+  #
+  TTMPROOT=/tmp/
+  TSRCROOT=../src/
+
+  #
+  # Depend on the Tarsio make system
+  #
+  -include $(shell pkg-config --variable=includedir tarsio)/tarsio.mk
+
+This set-up will find the sources in the ``src`` folder, and also store all the
+various temporary/intermediate files that the Tarsio tools create in the
+``/tmp`` folder. This is especially efficient if the ``/tmp`` folder is a RAM-
+disk.
+
+If your code ``my_code.c`` normally is linking to another object file when you
+build the software in the usual way that object file also need to be linked to
+the check-runner program. This is achieved by just extending the dependencies
+to the make-target for the ``my_code_check`` target like so::
+
+  #
+  # Additinal linking information (for module-tests real code is linked)
+  #
+  my_code_check: ${TSRCROOT}helper.o
+
+To run all the checks from inside the ``check`` folder just run::
+
+  $ make
+
+This will output a ``.`` for every check passed. ``F`` for every check failed
+or if you used the ``skip()`` directive an ``S`` will be outputted. There are
+other output modes available too. Read the ``tarsio.mk`` file for more info on
+this.
+
+Now to address top-level... If you want to make sure your product is always
+running all checks before making a deliverable binary just chain a check target
+as dependency to your normal ``all:`` target like so::
+
+  .PHONY: all
+  all: check
+          ${MAKE} --no-print-directory -C src    # Build the src-folder
+
+  .PHONY: check
+  check:
+          ${MAKE} --no-print-directory -C check  # Build and execute checks
+
+... Or something similar.
+
 Important includes
 ^^^^^^^^^^^^^^^^^^
 
