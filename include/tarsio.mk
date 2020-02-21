@@ -99,6 +99,13 @@ SRCDIR=${TSRCROOT}
 check:: $(subst .c,,$(wildcard *_check.c))
 	${Q}for i in $^; do ./$$i -c; done; echo ""
 
+.PHONY: xml
+xml:: $(subst .c,.xml,$(wildcard *_check.c))
+
+.PRECIOUS: ${TBUILDROOT}%.xml
+${TBUILDROOT}%.xml: %
+	${Q}./$< -x > $@
+
 .PHONY: tarsio_info
 tarsio_info:
 	@echo ""; \
@@ -169,4 +176,4 @@ ${TBUILDROOT}%_check: ${TOBJROOT}%_proxified.o ${TOBJROOT}%_runner.o ${TOBJROOT}
 	${Q}${CC} ${LDFLAGS} -o $@ $^
 
 clean::
-	${Q}rm -f ${TTMPROOT}*.pp ${TTMPROOT}*.sym ${TINCROOT}*_data.h ${TTMPROOT}*_mocks.c ${TTMPROOT}*_proxified.c ${TTMPROOT}*_runner.c ${TBOJROOT}*.o ${TBUILDROOT}*_check *~
+	${Q}rm -f ${TTMPROOT}*.pp ${TTMPROOT}*.sym ${TINCROOT}*_data.h ${TTMPROOT}*_mocks.c ${TTMPROOT}*_proxified.c ${TTMPROOT}*_runner.c ${TBOJROOT}*.o ${TBUILDROOT}*_check ${TBUILDROOT}*_check.xml *~

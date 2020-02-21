@@ -106,9 +106,23 @@ static void generate_tarsio_stats(void) {
        "  size_t fail;\n"
        "  size_t error;\n"
        "  size_t skip;\n"
+       "  struct {\n"
+       "    size_t pass;\n"
+       "    size_t fail;\n"
+       "    size_t skip;\n"
+       "  } total;\n"
        "};\n"
        "typedef struct __tarsio_stats_s __tarsio_stats_t;\n"
        "__tarsio_stats_t __tarsio_stats;\n");
+}
+
+static void generate_tarsio_verdict(void) {
+  puts("enum __tarsio_verdict_e {\n"
+       "  PASS = 0,\n"
+       "  FAIL = 1,\n"
+       "  SKIP = 2\n"
+       "};"
+       "typedef enum __tarsio_verdict_e __tarsio_verdict_t;\n");
 }
 
 static void generate_tarsio_options(void) {
@@ -141,6 +155,26 @@ static void generate_tarsio_failure_list(void) {
        "__tarsio_failure_list_t __tarsio_failure_list;\n");
 }
 
+
+static void generate_tarsio_result_node(void) {
+  puts("struct __tarsio_result_node_s {\n"
+       "  struct __tarsio_result_node_s* next;\n"
+       "  char* testcase_name;\n"
+       "  char* help;\n"
+       "  __tarsio_verdict_t verdict;\n"
+       "};\n"
+       "typedef struct __tarsio_result_node_s __tarsio_result_node_t;\n");
+}
+
+static void generate_tarsio_result_list(void) {
+  puts("struct __tarsio_result_list_s {\n"
+       "  __tarsio_result_node_t* first;\n"
+       "  __tarsio_result_node_t* last;\n"
+       "};\n"
+       "typedef struct __tarsio_result_list_s __tarsio_result_list_t;\n"
+       "__tarsio_result_list_t __tarsio_result_list;\n");
+}
+
 static void generate_tarsio_append_failure(void) {
   puts("void __tarsio_append_failure(__tarsio_failure_list_t* list, const char* testcase_name, const char* help, const char* file, size_t line) {\n"
        "  __tarsio_failure_node_t* node = malloc(sizeof(*node));\n"
@@ -154,6 +188,30 @@ static void generate_tarsio_append_failure(void) {
        "  node->help = (char*)help;\n"
        "  node->file = (char*)file;\n"
        "  node->line = line;\n"
+       "  node->next = NULL;\n"
+       "\n"
+       "  if (NULL == list->first) {\n"
+       "    list->first = node;\n"
+       "  }\n"
+       "  if (NULL != list->last) {\n"
+       "    list->last->next = node;\n"
+       "  }\n"
+       "  list->last = node;\n"
+       "}\n");
+}
+
+static void generate_tarsio_append_result(void) {
+  puts("void __tarsio_append_result(__tarsio_result_list_t* list, const char* testcase_name, const char* help, __tarsio_verdict_t verdict) {\n"
+       "  __tarsio_result_node_t* node = malloc(sizeof(*node));\n"
+       "\n"
+       "  if (NULL == node) {\n"
+       "    fprintf(stderr, \"FATAL: Out of memory while allocating verdict information in Tarsio\\n\");\n"
+       "    exit(EXIT_FAILURE);\n"
+       "  }\n"
+       "\n"
+       "  node->testcase_name = (char*)testcase_name;\n"
+       "  node->help = (char*)help;\n"
+       "  node->verdict = verdict;\n"
        "  node->next = NULL;\n"
        "\n"
        "  if (NULL == list->first) {\n"
@@ -180,8 +238,9 @@ static void generate_tarsio_assert_eq(void) {
 
 static void generate_tarsio_init(void) {
   puts("void __tarsio_init(void) {\n"
-       "  __tarsio_stats.success = __tarsio_stats.fail = __tarsio_stats.error = __tarsio_stats.skip = 0;\n"
+       "  __tarsio_stats.success = __tarsio_stats.fail = __tarsio_stats.error = __tarsio_stats.skip = __tarsio_stats.total.pass = __tarsio_stats.total.fail = __tarsio_stats.total.skip = 0;\n"
        "  __tarsio_failure_list.first = __tarsio_failure_list.last = NULL;\n"
+       "  __tarsio_result_list.first = __tarsio_result_list.last = NULL;\n"
        "  __tarsio_options.compact = __tarsio_options.verbose = __tarsio_options.xml_output = 0;\n"
        "}\n");
 }
@@ -250,30 +309,57 @@ static void generate_tarsio_unit_test_execute(void) {
        "  func(__tarsio_mock_data, name);\n"
        "  if (1 == __tarsio_options.verbose) {\n"
        "    if (skip != __tarsio_stats.skip) {\n"
-       "      printf(\"[SKIP] %s\\n\", name);\n"
+       "      if (0 == __tarsio_options.xml_output) {\n"
+       "        printf(\"[SKIP] %s\\n\", name);\n"
+       "      }\n"
+       "      __tarsio_append_result(&__tarsio_result_list, name, \"\", SKIP);\n"
        "    }\n"
        "    else if (error != __tarsio_stats.error) {\n"
-       "      printf(\"[ERROR] %s\\n\", name);\n"
+       "      if (0 == __tarsio_options.xml_output) {\n"
+       "        printf(\"[ERROR] %s\\n\", name);\n"
+       "      }\n"
        "    }\n"
        "    else if (fail != __tarsio_stats.fail) {\n"
-       "      printf(\"[FAIL] %s\\n\", name);\n"
+       "      if (0 == __tarsio_options.xml_output) {\n"
+       "        printf(\"[FAIL] %s\\n\", name);\n"
+       "      }\n"
+       "      __tarsio_stats.total.fail++;\n"
+       "      __tarsio_append_result(&__tarsio_result_list, name, \"\", FAIL);\n"
        "    }\n"
        "    else {\n"
-       "      printf(\"[PASS] %s\\n\", name);\n"
+       "      if (0 == __tarsio_options.xml_output) {\n"
+       "        printf(\"[PASS] %s\\n\", name);\n"
+       "      }\n"
+       "      __tarsio_stats.total.pass++;\n"
+       "      __tarsio_append_result(&__tarsio_result_list, name, \"\", PASS);\n"
        "    }\n"
        "  }\n"
        "  else {\n"
        "    if (skip != __tarsio_stats.skip) {\n"
-       "      putc('S', stdout);\n"
+       "      if (0 == __tarsio_options.xml_output) {\n"
+       "        putc('S', stdout);\n"
+       "      }\n"
+       "      __tarsio_stats.total.skip++;\n"
+       "      __tarsio_append_result(&__tarsio_result_list, name, \"\", SKIP);\n"
        "    }\n"
        "    else if (error != __tarsio_stats.error) {\n"
-       "      putc('E', stdout);\n"
+       "      if (0 == __tarsio_options.xml_output) {\n"
+       "        putc('E', stdout);\n"
+       "      }\n"
        "    }\n"
        "    else if (fail != __tarsio_stats.fail) {\n"
-       "      putc('F', stdout);\n"
+       "      if (0 == __tarsio_options.xml_output) {\n"
+       "        putc('F', stdout);\n"
+       "      }\n"
+       "      __tarsio_stats.total.fail++;\n"
+       "      __tarsio_append_result(&__tarsio_result_list, name, \"\", FAIL);\n"
        "    }\n"
        "    else {\n"
-       "      putc('.', stdout);\n"
+       "      if (0 == __tarsio_options.xml_output) {\n"
+       "        putc('.', stdout);\n"
+       "      }\n"
+       "      __tarsio_stats.total.pass++;\n"
+       "      __tarsio_append_result(&__tarsio_result_list, name, \"\", PASS);\n"
        "    }\n"
        "  }\n"
        "}\n");
@@ -293,38 +379,120 @@ static void generate_tarsio_module_test_execute(void) {
        "  func(__tarsio_mock_data, name);\n"
        "  if (1 == __tarsio_options.verbose) {\n"
        "    if (skip != __tarsio_stats.skip) {\n"
-       "      printf(\"[SKIP] %s\\n\", name);\n"
+       "      if (0 == __tarsio_options.xml_output) {\n"
+       "        printf(\"[SKIP] %s\\n\", name);\n"
+       "      }\n"
+       "      __tarsio_stats.total.skip++;\n"
+       "      __tarsio_append_result(&__tarsio_result_list, name, \"\", SKIP);\n"
        "    }\n"
        "    else if (error != __tarsio_stats.error) {\n"
-       "      printf(\"[ERROR] %s\\n\", name);\n"
+       "      if (0 == __tarsio_options.xml_output) {\n"
+       "        printf(\"[ERROR] %s\\n\", name);\n"
+       "      }\n"
        "    }\n"
        "    else if (fail != __tarsio_stats.fail) {\n"
-       "      printf(\"[FAIL] %s\\n\", name);\n"
+       "      if (0 == __tarsio_options.xml_output) {\n"
+       "        printf(\"[FAIL] %s\\n\", name);\n"
+       "      }\n"
+       "      __tarsio_stats.total.fail++;\n"
+       "      __tarsio_append_result(&__tarsio_result_list, name, \"\", FAIL);\n"
        "    }\n"
        "    else {\n"
        "      printf(\"[PASS] %s\\n\", name);\n"
+       "      __tarsio_stats.total.pass++;\n"
+       "      __tarsio_append_result(&__tarsio_result_list, name, \"\", PASS);\n"
        "    }\n"
        "  }\n"
        "  else {\n"
        "    if (skip != __tarsio_stats.skip) {\n"
-       "      putc('S', stdout);\n"
+       "      if (0 == __tarsio_options.xml_output) {\n"
+       "        putc('S', stdout);\n"
+       "      }\n"
+       "      __tarsio_stats.total.skip++;\n"
+       "      __tarsio_append_result(&__tarsio_result_list, name, \"\", SKIP);\n"
        "    }\n"
        "    else if (error != __tarsio_stats.error) {\n"
        "      putc('E', stdout);\n"
        "    }\n"
        "    else if (fail != __tarsio_stats.fail) {\n"
-       "      putc('F', stdout);\n"
+       "      if (0 == __tarsio_options.xml_output) {\n"
+       "        putc('F', stdout);\n"
+       "      }\n"
+       "      __tarsio_stats.total.fail++;\n"
+       "      __tarsio_append_result(&__tarsio_result_list, name, \"\", FAIL);\n"
        "    }\n"
        "    else {\n"
-       "      putc('.', stdout);\n"
+       "      if (0 == __tarsio_options.xml_output) {\n"
+       "        putc('.', stdout);\n"
+       "      }\n"
+       "      __tarsio_stats.total.pass++;\n"
+       "      __tarsio_append_result(&__tarsio_result_list, name, \"\", PASS);\n"
        "    }\n"
        "  }\n"
        "}\n");
 }
 
+static void gemerate_tarsio_xml_output(void) {
+  puts("int __tarsio_xml_output(const char* file_name, const char* dut) {\n"
+       "\n"
+       "  const time_t current_time = time(NULL);\n"
+       "  char timestamp[40];\n"
+       "  struct tm tm;\n"
+       "  __tarsio_result_node_t* node;\n"
+       "  __tarsio_failure_node_t* fnode;\n"
+       "  const size_t total = __tarsio_stats.total.fail + __tarsio_stats.total.pass + __tarsio_stats.total.skip;\n"
+       "\n"
+       "  localtime_r(&current_time, &tm);\n"
+       "  strftime(timestamp, sizeof(timestamp), \"%Y-%m-%dT%H:%M:%S\", &tm);\n"
+       "\n"
+       "  printf(\"<?xml version \\\"1.0\\\" encoding=\\\"UTF-8\\\"?>\\n\"\n"
+       "         \"<testsuites>\\n\"\n"
+       "         \"  <testsuite name=\\\"%s\\\"\\n\"\n"
+       "         \"             errors=\\\"%d\\\"\\n\"\n"
+       "         \"             tests=\\\"%lu\\\"\\n\"\n"
+       "         \"             failures=\\\"%lu\\\"\\n\"\n"
+       "         \"             skipped=\\\"%lu\\\"\\n\"\n"
+       "         \"             timestamp=\\\"%s\\\">\\n\",\n"
+       "         file_name,\n"
+       "         0,\n"
+       "         total,\n"
+       "         __tarsio_stats.total.fail,\n"
+       "         __tarsio_stats.total.skip,\n"
+       "         timestamp);\n"
+       "\n"
+       "  for (node = __tarsio_result_list.first; NULL != node; node = node->next) {\n"
+       "    printf(\"    <testcase classname=\\\"%s\\\" name=\\\"%s\\\">\\n\", file_name, node->testcase_name);\n"
+       "    switch(node->verdict) {\n"
+       "    case SKIP:\n"
+       "      puts(\"      <skipped/>\");\n"
+       "      break;\n"
+       "    case FAIL:\n"
+       "      puts(\"      <failure message=\\\"test failure\\\">\");"
+       "      for (fnode = __tarsio_failure_list.first; NULL != fnode; fnode = fnode->next) {\n"
+       "        if (0 == strcmp(fnode->testcase_name, node->testcase_name)) {\n"
+       "          fprintf(stderr, \"  %s:%lu:\\n\", fnode->file, (unsigned long int)fnode->line);\n"
+       "          fprintf(stderr, \"    %s\\n\", fnode->help);\n"
+       "        }\n"
+       "      }\n"
+       "      puts(\"      </failure>\");\n"
+       "      break;\n"
+       "    default:\n"
+       "      break;\n"
+       "    }\n"
+       "    puts(\"    </testcase>\");\n"
+       "  }\n"
+       "\n"
+       "  puts(\"  </testsuite>\\n\"\n"
+       "       \"</testsuites>\");\n"
+       "  return 0;\n"
+       "}\n"
+       );
+}
+
 static void generate_tarsio_summary(void) {
   puts("int __tarsio_summary(void) {\n"
        "  int retval = 0;\n"
+       "  int fail_cnt = 0;\n"
        "  __tarsio_failure_node_t* fnode;\n"
        "  char* last_test_name = NULL;\n"
        "  if ((0 == __tarsio_options.compact) ||\n"
@@ -339,8 +507,15 @@ static void generate_tarsio_summary(void) {
        "    fprintf(stderr, \"  %s:%lu:\\n\", fnode->file, (unsigned long int)fnode->line);\n"
        "    fprintf(stderr, \"    %s\\n\", fnode->help);\n"
        "    last_test_name = fnode->testcase_name;\n"
+       "    fail_cnt++;\n"
        "  }\n"
        "\n"
+       "  if (1 == __tarsio_options.verbose) {\n"
+       "    fprintf(stdout, \"%lu success \", (unsigned long int)__tarsio_stats.total.pass);\n"
+       "    fprintf(stdout, \"%lu failures \", (unsigned long int)__tarsio_stats.total.fail);\n"
+       "    fprintf(stdout, \"%lu skipped \", (unsigned long int)__tarsio_stats.total.skip);\n"
+       "    fprintf(stdout, \"\\n\");"
+       "  }\n"
        "  if (NULL != __tarsio_failure_list.first) {\n"
        "    retval = -1;\n"
        "  }\n"
@@ -352,6 +527,12 @@ static void generate_tarsio_summary(void) {
 static void generate_tarsio_cleanup(void) {
   puts("void __tarsio_cleanup(void) {\n"
        "  __tarsio_failure_node_t* fnode = __tarsio_failure_list.first;\n"
+       "  __tarsio_result_node_t* rnode = __tarsio_result_list.first;\n"
+       "  while (NULL != rnode) {\n"
+       "    __tarsio_result_node_t* next_node = rnode->next;\n"
+       "    free(rnode);\n"
+       "    rnode = next_node;\n"
+       "  }\n"
        "  while (NULL != fnode) {\n"
        "    __tarsio_failure_node_t* next_node = fnode->next;\n"
        "    free(fnode);\n"
@@ -367,9 +548,10 @@ static int generate_test_runner(testcase_list_t* list, const char* file, int no_
   char* ptr;
 
   printf("#include <stdio.h>\n");
+  printf("#include <time.h>\n");
   printf("#include <stdlib.h>\n\n");
   printf("#include \"tarsio.h\"\n");
-
+  puts("extern struct tm *localtime_r (const time_t *__restrict __timer, struct tm *__restrict __tp);");
   while (NULL != (ptr = strstr(data_file, ":"))) {
     data_file = ptr + 1;
   }
@@ -390,9 +572,13 @@ static int generate_test_runner(testcase_list_t* list, const char* file, int no_
    * This is actually the stupidest, but given portability the smartest way
    */
   generate_tarsio_stats();
+  generate_tarsio_verdict();
   generate_tarsio_options();
+  generate_tarsio_result_node();
+  generate_tarsio_result_list();
   generate_tarsio_failure_node();
   generate_tarsio_failure_list();
+  generate_tarsio_append_result();
   generate_tarsio_append_failure();
   generate_tarsio_assert_eq();
   generate_tarsio_init();
@@ -402,6 +588,7 @@ static int generate_test_runner(testcase_list_t* list, const char* file, int no_
   if (0 == no_module) {
     generate_tarsio_module_test_execute();
   }
+  gemerate_tarsio_xml_output();
   generate_tarsio_summary();
   generate_tarsio_cleanup();
 
@@ -430,9 +617,14 @@ static int generate_test_runner(testcase_list_t* list, const char* file, int no_
       break;
     }
   }
-  printf("  retval = __tarsio_summary();\n");
-  printf("  __tarsio_cleanup();\n");
-  printf("  return retval;\n"
+  puts("  if (__tarsio_options.xml_output) {\n"
+       "    retval = __tarsio_xml_output(argv[0], \"foobar\");\n"
+       "  }\n"
+       "  else {\n"
+       "    retval = __tarsio_summary();\n"
+       "  }\n"
+       "  __tarsio_cleanup();\n"
+       "  return retval;\n"
          "}\n");
 
   return retval;
