@@ -77,15 +77,17 @@
 #
 Q?=@
 
-MSG="was not found in your PATH, please install Tarsio (https://github.com/aiobofh/tarsio)"
+MSG:="was not found in your PATH, please install Tarsio (https://github.com/aiobofh/tarsio)"
 
-TCG=$(if $(shell PATH=$(PATH) which tcg),$(shell which tcg),$(error "tcg ${MSG}"))
-TSG=$(if $(shell PATH=$(PATH) which tsg),$(shell which tsg),$(error "tsg ${MSG}"))
-TMG=$(if $(shell PATH=$(PATH) which tmg),$(shell which tmg),$(error "tmg ${MSG}"))
-TAM=$(if $(shell PATH=$(PATH) which tam),$(shell which tam),$(error "tam ${MSG}"))
-TTG=$(if $(shell PATH=$(PATH) which ttg),$(shell which ttg),$(error "ttg ${MSG}"))
+TCG:=$(if $(shell PATH=$(PATH) which tcg),$(shell which tcg),$(error "tcg ${MSG}"))
+TSG:=$(if $(shell PATH=$(PATH) which tsg),$(shell which tsg),$(error "tsg ${MSG}"))
+TMG:=$(if $(shell PATH=$(PATH) which tmg),$(shell which tmg),$(error "tmg ${MSG}"))
+TAM:=$(if $(shell PATH=$(PATH) which tam),$(shell which tam),$(error "tam ${MSG}"))
+TTG:=$(if $(shell PATH=$(PATH) which ttg),$(shell which ttg),$(error "ttg ${MSG}"))
 
-TARSIOCFLAGS=$(shell pkg-config --cflags tarsio) -I.
+TARSIOINCDIR:=$(shell pkg-config --variable=includedir tarsio)
+
+TARSIOCFLAGS:=$(shell pkg-config --cflags tarsio) -I.
 
 ifdef TSRCROOT
 	TARSIOCFLAGS+=-I${TSRCROOT}
@@ -175,8 +177,12 @@ ${TOBJROOT}%_runner.o: ${TTMPROOT}%_runner.c
 ${TOBJROOT}%_check.o: ${TTESTROOT}%_check.c ${TINCROOT}%_data.h
 	${Q}${CC} ${CFLAGS} -Dmain=__tarsio_replace_main ${TARSIOCFLAGS} -o $@ -c $<
 
+.PRECIOIS: ${TOBJROOT}tarsio.o
+${TOBJROOT}tarsio.o: ${TARSIOINCDIR}/tarsio.c
+	${Q}${CC} ${CFLAGS} ${TARSIOCFLAGS} ${RUNNERCFLAGS} -o $@ -c $<
+
 .PRECIOUS: ${TBUILDROOT}%_check
-${TBUILDROOT}%_check: ${TOBJROOT}%_proxified.o ${TOBJROOT}%_runner.o ${TOBJROOT}%_mocks.o ${TOBJPROOT}%_check.o
+${TBUILDROOT}%_check: ${TOBJROOT}%_proxified.o ${TOBJROOT}%_runner.o ${TOBJROOT}%_mocks.o ${TOBJPROOT}%_check.o ${TOBJROOT}tarsio.o
 	${Q}${CC} ${LDFLAGS} -o $@ $^
 
 clean::

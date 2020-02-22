@@ -141,7 +141,7 @@ static void generate_struct(prototype_list_t* list, cpp_list_t* cpp_list) {
   printf("\n"
          "#define TARSIO_DEFAULT_FUNCS");
   for (node = list->first; NULL != node; node = node->next) {
-    printf(" \\\n  __tarsio_mock_data->%s.func = %s;", node->info.symbol, node->info.symbol);
+    printf(" \\\n  __tarsio_mock_data.%s.func = %s;", node->info.symbol, node->info.symbol);
   }
   printf("\n");
   printf("\n"

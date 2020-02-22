@@ -81,13 +81,18 @@ all: write_file_check
 %.o: %.c
 	${Q}gcc -O0 -Wall -std=c11 -pedantic -g -I. -I../include -o $@ -c $<
 
+# Re-use a lot of check-runner code between check-suites by just linking an
+# already compiled runtime of the Tarsio API.
+tarsio.o: ../src/tarsio.c
+	${Q}gcc -O0 -Wall -std=c11 -pedantic -g -I. -I../include -o $@ -c $<
+
 # Link all the objects to an executable program with all the tests.
 # Typically; this is where you need to add more dependencies if you
 # want to call original code from checks.
 .PRECIOUS: %_check
-%_check: %_proxified.o %_runner.o %_mocks.o %_check.o
+%_check: %_proxified.o %_runner.o %_mocks.o %_check.o tarsio.o
 	${Q}gcc -o $@ $^
 
 # Cleanup all.
 clean:
-	${Q}rm -f *.pp *.sym *_data.h *_mocks.c *_proxified.c *_runner.c *.o *_check *~
+	${Q}rm -f *.pp *.sym *_data.h *_mocks.c *_proxified.c *_runner.c *.o *_check *~ tarsio.o

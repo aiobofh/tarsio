@@ -91,11 +91,20 @@ typedef struct __tarsio_data_s __tarsio_data_t;
  * the check-runner. A "hidden" API that you as programmer will not have to
  * care too much about.
  */
+struct __tarsio_options_s {
+  int compact;
+  int verbose;
+  int xml_output;
+};
+typedef struct __tarsio_options_s __tarsio_options_t;
+
 void __tarsio_assert_eq(int res, const char* testcase_name, const char* help, const char* file, size_t line);
 void __tarsio_init(void);
 void __tarsio_handle_arguments(int argc, char* argv[]);
 void __tarsio_skip(const char* reason, const char* test_name);
 void __tarsio_unit_test_execute(__tarsio_data_t* __tarsio_mock_data, int (*func)(void* __tarsio_mock_data, const char* __tarsio_test_name), const char* name, size_t mock_data_size);
+void __tarsio_module_test_execute(__tarsio_data_t* __tarsio_mock_data, int (*func)(void* __tarsio_mock_data, const char* __tarsio_test_name), const char* name, size_t mock_data_size);
+int __tarsio_xml_output(const char* file_name, const char* dut);
 int __tarsio_summary(void);
 void __tarsio_cleanup(void);
 

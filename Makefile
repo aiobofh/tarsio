@@ -71,6 +71,10 @@ check-all: clean
 #	$(MAKE) --no-print-directory -C src clean && \
 #	$(MAKE) --no-print-directory -C test clean
 
+check-sasc: clean
+	$(MAKE) --no-print-directory -C src SASC=1 && \
+	$(MAKE) --no-print-directory -C test SASC=1
+
 .NOTPARALLEL: check
 .PHONY: check
 check:
@@ -309,10 +313,11 @@ install: build
 	mkdir -p ${PREFIX}/include/tarsio && \
 	install include/tarsio.mk ${PREFIX}/include/tarsio/tarsio.mk && \
 	install include/tarsio.h ${PREFIX}/include/tarsio/tarsio.h && \
+	install src/tarsio.c ${PREFIX}/include/tarsio/tarsio.c && \
 	install tarsio.pc /usr/share/pkgconfig/tarsio.pc
 
 uninstall:
-	rm -rf ${PREFIX}/bin/tcg ${PREFIX}/bin/tam ${PREFIX}/bin/tmg ${PREFIX}/bin/tsg ${PREFIX}/bin/ttg ${PREFIX}/include/tarsio /usr/share/pkgconfig/tarsio.pc
+	${RM}-rf ${PREFIX}/bin/tcg ${PREFIX}/bin/tam ${PREFIX}/bin/tmg ${PREFIX}/bin/tsg ${PREFIX}/bin/ttg ${PREFIX}/include/tarsio /usr/share/pkgconfig/tarsio.pc
 
 .NOTPARALLEL: clean
 .PHONY: clean
