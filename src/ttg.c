@@ -445,7 +445,7 @@ static void gemerate_tarsio_xml_output(void) {
        "  localtime_r(&current_time, &tm);\n"
        "  strftime(timestamp, sizeof(timestamp), \"%Y-%m-%dT%H:%M:%S\", &tm);\n"
        "\n"
-       "  printf(\"<?xml version \\\"1.0\\\" encoding=\\\"UTF-8\\\"?>\\n\"\n"
+       "  printf(\"<?xml version=\\\"1.0\\\" encoding=\\\"UTF-8\\\"?>\\n\"\n"
        "         \"<testsuites>\\n\"\n"
        "         \"  <testsuite name=\\\"%s\\\"\\n\"\n"
        "         \"             errors=\\\"%d\\\"\\n\"\n"
