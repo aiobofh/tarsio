@@ -13,7 +13,16 @@
   As a maintainer of Tarsio I would like continuous integration when commits
   are pushed to the repository, to make it easier to find errors and flaws in
   the code base.
+
 * TODO 00 2020-02-19 Fix parsing of LF in function headers           :tarsio:
 
   As a developer I want the freedom to have linefeeds in the function headers
   in order to keep my code pretty.
+
+* TODO 00 2020-02-22 Split ttg.c into a more static .c-file and gen  :tarsio:
+
+  As a maintainer I do not want so much statically generated code in ttg.c,
+  since it makes things hard to understand and also fragile. I need a tarsio.c
+  file that is containing all the static functionality for running checks that
+  can be compiled once and for all for each project (rather than cumbersome
+  linking) and reused between check-suites too.
