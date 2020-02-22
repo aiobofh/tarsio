@@ -104,43 +104,45 @@ build system would need to take into account when compiling an executable check
 runner from your C-source and Unit-checks::
 
  .-------------.   .------------.   .---------------.
- |  C-source   |   | C-compiler |   | Pre-processed |
- |             |-->|            |-->|               |
- |'Your design'|   |            |   |   C-source    |
+ |  C-source   |   |   "Any"    |   | Pre-processed |
+ |'Your design'|-->| C-compiler |-->|   C-source    |
+ |   my_code.c |   |            |   |   my_code.pp  |
  '-------------'   '------------'   '---------------'
                                             |
                                             V
- .-------------.                    .----------------.
- | Unit-checks |                    | Tarsio command |
- |             |------------------->|   line tools   |
- |  C-source   |                    |   dark magic   |
- '-------------'                    '----------------'
-                                        | |    | |
-        .-------------------------------' |    | '---------.
-        |                .----------------' .--'           |
-        |                |                  |              |
-        V                V                  V              V
- .-------------.   .------------.   .-------------.  .------------.
- | Mock-ups of |   | Storestruct|   | Check runner|  |  Modified  |
- | all function|   | for every  |   |    code     |  |            |
- | signatures  |   | mock-up    |   |             |  |  C-source  |
- '-------------'   '------------'   '-------------'  '------------'
-        |                |                 |               |
-        |                '-----. .---------'               |
-        '--------------------. | | .-----------------------'
-                             | | | |
-                             V V V V
- .-----------------.     .--------------.
+ .---------------.                  .----------------.
+ |  Unit-checks  |                  | Tarsio command |
+ |   C-source    |----------------->|   line tools   |
+ |my_code_check.c|                  |   dark magic   |
+ '---------------'                  '----------------'
+   |                                    | |    | |
+ .-'    .-------------------------------' |    | '-----------.
+ |      |                .----------------' .--'             |
+ |      |                |                  |                |
+ |      V                V                  V                V
+ | .---------------..--------------..----------------..--------------------.
+ | | Mock-ups of   || Storestruct  ||   Check runner ||      Modified      |
+ | | all function  || for every    ||      code      ||      C-source      |
+ | | signatures    || mock-up      ||                ||                    |
+ | |my_code_mocks.c||my_code_data.h||my_code_runner.c||my_code_proxified.pp|
+ | '---------------''--------------''----------------''--------------------'
+ |      |                |                 |                 |
+ |      |                '-----. .---------'                 |
+ |      '--------------------. | | .-------------------------'
+ |                           | | | |
+ |                           V V V V
+ '---------------------->.--------------.
+ .-----------------.     |    "Any"     |
  | tarsio run-time |---->|  C-compiler  |
  |     library     |     |  and linker  |
- '-----------------'     '--------------'
-                                |
+ |     tarsio.c    |     '--------------'
+ '-----------------'            |
                                 V
-                         .--------------.
-                         |  Executable  |
-                         | program with |
-                         |  check-suite |
-                         '--------------'
+                         .--------------.      .------------.
+                         |  Executable  |      | JUnit      |
+                         | program with |----->| XML report |
+                         |  check-suite |      |            |
+                         '--------------'      '------------'
 
 Tools
 -----
