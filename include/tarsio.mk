@@ -168,7 +168,7 @@ ${TTMPROOT}%.pp: ${TSRCROOT}%.c ${TTMPROOT}.placeholder
 ${TTMPROOT}%.sym: ${TTMPROOT}%.pp ${TTMPROOT}.placeholder
 	${Q}${TCG} $< $@
 
-.NOTPARALLEL: ${TINCROOT}%_data.h
+#.NOTPARALLEL: ${TINCROOT}%_data.h
 .PRECIOUS: ${TINCROOT}%_data.h
 ${TINCROOT}%_data.h: ${TTMPROOT}%.sym ${TTESTROOT}%${TCHECKSUFFIX}.c
 	${Q}${TSG} $^ > $@
@@ -178,7 +178,7 @@ ${TTMPROOT}%_mocks.c: ${TTMPROOT}%.sym ${TINCROOT}%_data.h ${TTMPROOT}.placehold
 	${Q}${TMG} $(filter-out ${TTMPROOT}.placeholder,$^) > $@
 
 .PRECIOUS: ${TTMPROOT}%_proxified.pp
-.NOTPARALLEL: ${TTMPROOT}%_proxified.pp
+#.NOTPARALLEL: ${TTMPROOT}%_proxified.pp
 ${TTMPROOT}%_proxified.pp: ${TTMPROOT}%.sym ${TTMPROOT}%.pp ${TTMPROOT}.placeholder
 	${Q}${TAM} $(filter-out ${TTMPROOT}.placeholder,$^) > $@
 
@@ -198,7 +198,7 @@ ${TOBJROOT}%_mocks.o: ${TTMPROOT}%_mocks.c
 ${TOBJROOT}%_runner.o: ${TTMPROOT}%_runner.c
 	${Q}${CC} ${CFLAGS} ${TARSIOCFLAGS} ${RUNNERCFLAGS} -o $@ -c $<
 
-.NOTPARALLEL: ${TOBJROOT}%${TCHECKSUFFIX}.o
+#.NOTPARALLEL: ${TOBJROOT}%${TCHECKSUFFIX}.o
 .PRECIOUS: ${TOBJROOT}%${TCHECKSUFFIX}.o
 ${TOBJROOT}%${TCHECKSUFFIX}.o: ${TTESTROOT}%${TCHECKSUFFIX}.c ${TINCROOT}%_data.h
 	${Q}${CC} ${CFLAGS} -Dmain=__tarsio_replace_main ${TARSIOCFLAGS} -o $@ -c $<
