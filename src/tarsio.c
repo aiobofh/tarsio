@@ -9,7 +9,7 @@
  *              Copyright (C) 2020 AiO Secure Teletronics
  *
  * This is the run-time code that will be used to make a generated check-
- * runner execute and evaluate tests independently of each other.
+ * runner execute and evaluate checks independently of each other.
  *
  *  This file is part of Tarsio.
  *
@@ -61,7 +61,7 @@ __tarsio_options_t __tarsio_options;
 
 struct __tarsio_result_node_s {
   struct __tarsio_result_node_s* next;
-  char* testcase_name;
+  char* checkcase_name;
   char* help;
   __tarsio_verdict_t verdict;
 };
@@ -76,7 +76,7 @@ __tarsio_result_list_t __tarsio_result_list;
 
 struct __tarsio_failure_node_s {
   struct __tarsio_failure_node_s* next;
-  char* testcase_name;
+  char* checkcase_name;
   char* help;
   char* file;
   size_t line;
@@ -92,7 +92,7 @@ __tarsio_failure_list_t __tarsio_failure_list;
 
 extern void __tarsio_setup_mock_functions(void);
 
-void __tarsio_append_result(__tarsio_result_list_t* list, const char* testcase_name, const char* help, __tarsio_verdict_t verdict) {
+void __tarsio_append_result(__tarsio_result_list_t* list, const char* checkcase_name, const char* help, __tarsio_verdict_t verdict) {
   __tarsio_result_node_t* node = malloc(sizeof(*node));
 
   if (NULL == node) {
@@ -100,7 +100,7 @@ void __tarsio_append_result(__tarsio_result_list_t* list, const char* testcase_n
     exit(EXIT_FAILURE);
   }
 
-  node->testcase_name = (char*)testcase_name;
+  node->checkcase_name = (char*)checkcase_name;
   node->help = (char*)help;
   node->verdict = verdict;
   node->next = NULL;
@@ -114,7 +114,7 @@ void __tarsio_append_result(__tarsio_result_list_t* list, const char* testcase_n
   list->last = node;
 }
 
-void __tarsio_append_failure(__tarsio_failure_list_t* list, const char* testcase_name, const char* help, const char* file, size_t line) {
+void __tarsio_append_failure(__tarsio_failure_list_t* list, const char* checkcase_name, const char* help, const char* file, size_t line) {
   __tarsio_failure_node_t* node = malloc(sizeof(*node));
 
   if (NULL == node) {
@@ -122,7 +122,7 @@ void __tarsio_append_failure(__tarsio_failure_list_t* list, const char* testcase
     exit(EXIT_FAILURE);
   }
 
-  node->testcase_name = (char*)testcase_name;
+  node->checkcase_name = (char*)checkcase_name;
   node->help = (char*)help;
   node->file = (char*)file;
   node->line = line;
@@ -137,10 +137,10 @@ void __tarsio_append_failure(__tarsio_failure_list_t* list, const char* testcase
   list->last = node;
 }
 
-void __tarsio_assert_eq(int res, const char* testcase_name, const char* help, const char* file, size_t line) {
+void __tarsio_assert_eq(int res, const char* checkcase_name, const char* help, const char* file, size_t line) {
   if (res) {
     __tarsio_stats.fail++;
-    __tarsio_append_failure(&__tarsio_failure_list, testcase_name, help, file, line);
+    __tarsio_append_failure(&__tarsio_failure_list, checkcase_name, help, file, line);
   }
   else {
     __tarsio_stats.success++;
@@ -169,7 +169,7 @@ void __tarsio_handle_arguments(int argc, char* argv[]) {
   }
 }
 
-void __tarsio_skip(const char* reason, const char* test_name) {
+void __tarsio_skip(const char* reason, const char* check_name) {
   __tarsio_stats.skip++;
 }
 
@@ -182,7 +182,7 @@ static void __tarsio_clear_mock_data(void* __tarsio_mock_data, size_t mock_data_
 }
 
 void __tarsio_check_execute(__tarsio_data_t* __tarsio_mock_data,
-                            int (*func)(void* __tarsio_mock_data, const char* __tarsio_test_name),
+                            int (*func)(void* __tarsio_mock_data, const char* __tarsio_check_name),
                             const char* name, size_t mock_data_size, int module_check) {
   static char* verdict_str[2][4] = {{".", "F", "S", "E"},
                                     {"[PASS] ", "[FAIL] ", "[SKIP] ", "[ERROR] "}};
@@ -234,11 +234,11 @@ void __tarsio_check_execute(__tarsio_data_t* __tarsio_mock_data,
   __tarsio_append_result(&__tarsio_result_list, name, "", verdict);
 }
 
-void __tarsio_unit_test_execute(__tarsio_data_t* __tarsio_mock_data, int (*func)(void* __tarsio_mock_data, const char* __tarsio_test_name), const char* name, size_t mock_data_size) {
+void __tarsio_unit_check_execute(__tarsio_data_t* __tarsio_mock_data, int (*func)(void* __tarsio_mock_data, const char* __tarsio_check_name), const char* name, size_t mock_data_size) {
   __tarsio_check_execute(__tarsio_mock_data, func, name, mock_data_size, 0);
 }
 
-void __tarsio_module_test_execute(__tarsio_data_t* __tarsio_mock_data, int (*func)(void* __tarsio_mock_data, const char* __tarsio_test_name), const char* name, size_t mock_data_size) {
+void __tarsio_module_check_execute(__tarsio_data_t* __tarsio_mock_data, int (*func)(void* __tarsio_mock_data, const char* __tarsio_check_name), const char* name, size_t mock_data_size) {
   __tarsio_check_execute(__tarsio_mock_data, func, name, mock_data_size, 1);
 }
 
@@ -274,14 +274,14 @@ int __tarsio_xml_output(const char* file_name, const char* dut) {
          timestamp);
 
   for (node = __tarsio_result_list.first; NULL != node; node = node->next) {
-    printf("    <testcase classname=\"%s\" name=\"%s\">\n", file_name, node->testcase_name);
+    printf("    <testcase classname=\"%s\" name=\"%s\">\n", file_name, node->checkcase_name);
     switch(node->verdict) {
     case SKIP:
       puts("      <skipped/>");
       break;
     case FAIL:
       puts("      <failure message=\"test failure\">");      for (fnode = __tarsio_failure_list.first; NULL != fnode; fnode = fnode->next) {
-        if (0 == strcmp(fnode->testcase_name, node->testcase_name)) {
+        if (0 == strcmp(fnode->checkcase_name, node->checkcase_name)) {
           fprintf(stderr, "  %s:%lu:\n", fnode->file, (unsigned long int)fnode->line);
           fprintf(stderr, "    %s\n", fnode->help);
         }
@@ -302,19 +302,19 @@ int __tarsio_xml_output(const char* file_name, const char* dut) {
 int __tarsio_summary(void) {
   int retval = 0;
   __tarsio_failure_node_t* fnode;
-  char* last_test_name = NULL;
+  char* last_check_name = NULL;
   if ((0 == __tarsio_options.compact) ||
       ((1 == __tarsio_options.compact) && (NULL != __tarsio_failure_list.first))) {
     putc('\n', stdout);
   }
 
   for (fnode = __tarsio_failure_list.first; NULL != fnode; fnode = fnode->next) {
-    if (((NULL != last_test_name) && (0 != strcmp(last_test_name, fnode->testcase_name))) || (NULL == last_test_name)) {
-      fprintf(stderr, "%s:\n", fnode->testcase_name);
+    if (((NULL != last_check_name) && (0 != strcmp(last_check_name, fnode->checkcase_name))) || (NULL == last_check_name)) {
+      fprintf(stderr, "%s:\n", fnode->checkcase_name);
     }
     fprintf(stderr, "  %s:%lu:\n", fnode->file, (unsigned long int)fnode->line);
     fprintf(stderr, "    %s\n", fnode->help);
-    last_test_name = fnode->testcase_name;
+    last_check_name = fnode->checkcase_name;
   }
 
   if (1 == __tarsio_options.verbose) {

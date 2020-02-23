@@ -35,7 +35,7 @@
 #include "error.h"
 
 #include "file.h"
-#include "testcase.h"
+#include "checkcase.h"
 
 #include "version.h"
 
@@ -48,7 +48,7 @@ static char timestamp[] = __DATE__ " " __TIME__;
  */
 static void usage(const char* program_name)
 {
-  printf("USAGE: %s [-n|--no-module] <test-file> <tarsio-pre-processed-source>\n", program_name);
+  printf("USAGE: %s [-n|--no-module] <check-file> <tarsio-pre-processed-source>\n", program_name);
 }
 
 /****************************************************************************
@@ -62,7 +62,7 @@ static void ver(const char* program_name) {
  * Option handling
  */
 struct ttg_options_s {
-  char* testcases_filename;
+  char* checkcases_filename;
   char* header_filename;
   int no_module;
 };
@@ -96,15 +96,15 @@ static int ttg_options_init(ttg_options_t* options, int argc, char* argv[])
     }
   }
 
-  options->testcases_filename = argv[argc - 2];
+  options->checkcases_filename = argv[argc - 2];
   options->header_filename = argv[argc - 1];
 
   return 0;
 }
 
-static int generate_test_runner(testcase_list_t* list, const char* file, int no_module) {
+static int generate_check_runner(checkcase_list_t* list, const char* file, int no_module) {
   int retval = 0;
-  testcase_node_t* node;
+  checkcase_node_t* node;
   const char* data_file = file;
   char* ptr;
 
@@ -130,7 +130,7 @@ static int generate_test_runner(testcase_list_t* list, const char* file, int no_
   }
 
   /*
-   * Done with the silly stuff, on with the test-runner.
+   * Done with the silly stuff, on with the check-runner.
    */
   puts("\n"
        "__tarsio_data_t __tarsio_mock_data;");
@@ -150,13 +150,13 @@ static int generate_test_runner(testcase_list_t* list, const char* file, int no_
        "  __tarsio_handle_arguments(argc, argv);");
   for (node = list->first; NULL != node; node = node->next) {
     switch (node->type) {
-    case TESTCASE_IS_UNIT_TEST:
-      printf("  __tarsio_unit_test_execute(&__tarsio_mock_data, __%s, \"%s\", sizeof(__tarsio_mock_data));\n", node->name, node->name);
+    case CHECKCASE_IS_UNIT_CHECK:
+      printf("  __tarsio_unit_check_execute(&__tarsio_mock_data, __%s, \"%s\", sizeof(__tarsio_mock_data));\n", node->name, node->name);
       break;
-    case TESTCASE_IS_MODULE_TEST:
-      printf("  __tarsio_module_test_execute(&__tarsio_mock_data, __%s, \"%s\", sizeof(__tarsio_mock_data));\n", node->name, node->name);
+    case CHECKCASE_IS_MODULE_CHECK:
+      printf("  __tarsio_module_check_execute(&__tarsio_mock_data, __%s, \"%s\", sizeof(__tarsio_mock_data));\n", node->name, node->name);
       break;
-    case TESTCASE_IS_UNKNOWN:
+    case CHECKCASE_IS_UNKNOWN:
       error0("This should never happen :)");
       break;
     }
@@ -176,12 +176,12 @@ static int generate_test_runner(testcase_list_t* list, const char* file, int no_
 
 int main(int argc, char* argv[]) {
   int retval = EXIT_SUCCESS;
-  testcase_list_t testcase_list;
-  file_t test_file;
+  checkcase_list_t checkcase_list;
+  file_t check_file;
   ttg_options_t options;
 
-  memset(&testcase_list, 0, sizeof(testcase_list));
-  memset(&test_file, 0, sizeof(test_file));
+  memset(&checkcase_list, 0, sizeof(checkcase_list));
+  memset(&check_file, 0, sizeof(check_file));
 
   /*
    * Handle arguments passed to the program.
@@ -192,34 +192,34 @@ int main(int argc, char* argv[]) {
   }
 
   /*
-   * Read the test-suite C-file.
+   * Read the check-suite C-file.
    */
-  if (0 != file_init(&test_file, options.testcases_filename)) {
+  if (0 != file_init(&check_file, options.checkcases_filename)) {
     retval = EXIT_FAILURE;
-    goto read_test_file_failed;
+    goto read_check_file_failed;
   }
 
   /*
-   * Extract test-cases
+   * Extract check-cases
    */
-  if (0 != testcase_list_init(&testcase_list, &test_file)) {
+  if (0 != checkcase_list_init(&checkcase_list, &check_file)) {
     retval = EXIT_FAILURE;
-    goto testcase_list_init_failed;
+    goto checkcase_list_init_failed;
   }
 
   /*
-   * Generate test-runner
+   * Generate check-runner
    */
-  if (0 != generate_test_runner(&testcase_list, options.header_filename, options.no_module)) {
+  if (0 != generate_check_runner(&checkcase_list, options.header_filename, options.no_module)) {
     retval = EXIT_FAILURE;
-    goto generate_test_runner_failed;
+    goto generate_check_runner_failed;
   }
 
- testcase_list_init_failed:
-  file_cleanup(&test_file);
- generate_test_runner_failed:
-  testcase_list_cleanup(&testcase_list);
- read_test_file_failed:
-options_init_failed:
+ checkcase_list_init_failed:
+  file_cleanup(&check_file);
+ generate_check_runner_failed:
+  checkcase_list_cleanup(&checkcase_list);
+ read_check_file_failed:
+ options_init_failed:
   return retval;
 }

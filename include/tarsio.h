@@ -51,13 +51,26 @@
  *
  * Example:
  *
- * test(this_is_my_test_name) {
- *   // ... My test-implementation
+ * check(this_is_my_check_name) {
+ *   // ... My check-implementation
  * }
  *
  */
-#define test(NAME) void __##NAME(void* __tarsio_mock_data, const char* __tarsio_test_name)
-#define module_test(NAME) void __##NAME(void* __tarsio_mock_data, const char* __tarsio_test_name)
+#define check(NAME) void __##NAME(void* __tarsio_mock_data, const char* __tarsio_check_name)
+#define module_check(NAME) void __##NAME(void* __tarsio_mock_data, const char* __tarsio_check_name)
+
+/*
+ * Efficient check-function header (Legacy)
+ *
+ * Example:
+ *
+ * test(this_is_my_check_name) {
+ *   // ... My check-implementation
+ * }
+ *
+ */
+#define test(NAME) void __##NAME(void* __tarsio_mock_data, const char* __tarsio_check_name)
+#define module_test(NAME) void __##NAME(void* __tarsio_mock_data, const char* __tarsio_check_name)
 
 /*
  * Main check assertion macro to evaluate code
@@ -71,7 +84,7 @@
  *   assert_eq(tarsio_mock.malloc.args.arg0, 10);
  *
  */
-#define assert_eq(EXP, ACT) __tarsio_assert_eq(((EXP) != (ACT)), __tarsio_test_name, #EXP " != " #ACT, __FILE__, __LINE__)
+#define assert_eq(EXP, ACT) __tarsio_assert_eq(((EXP) != (ACT)), __tarsio_check_name, #EXP " != " #ACT, __FILE__, __LINE__)
 
 /*
  * Define a check as skipped using this macro
@@ -81,7 +94,7 @@
  *   skip("This is skipped because I'm lazy!");
  *
  */
-#define skip(REASON) __tarsio_skip(REASON, __tarsio_test_name); return;
+#define skip(REASON) __tarsio_skip(REASON, __tarsio_check_name); return;
 
 struct __tarsio_data_s;
 typedef struct __tarsio_data_s __tarsio_data_t;
@@ -98,12 +111,12 @@ struct __tarsio_options_s {
 };
 typedef struct __tarsio_options_s __tarsio_options_t;
 
-void __tarsio_assert_eq(int res, const char* testcase_name, const char* help, const char* file, size_t line);
+void __tarsio_assert_eq(int res, const char* checkcase_name, const char* help, const char* file, size_t line);
 void __tarsio_init(void);
 void __tarsio_handle_arguments(int argc, char* argv[]);
-void __tarsio_skip(const char* reason, const char* test_name);
-void __tarsio_unit_test_execute(__tarsio_data_t* __tarsio_mock_data, int (*func)(void* __tarsio_mock_data, const char* __tarsio_test_name), const char* name, size_t mock_data_size);
-void __tarsio_module_test_execute(__tarsio_data_t* __tarsio_mock_data, int (*func)(void* __tarsio_mock_data, const char* __tarsio_test_name), const char* name, size_t mock_data_size);
+void __tarsio_skip(const char* reason, const char* check_name);
+void __tarsio_unit_check_execute(__tarsio_data_t* __tarsio_mock_data, int (*func)(void* __tarsio_mock_data, const char* __tarsio_check_name), const char* name, size_t mock_data_size);
+void __tarsio_module_check_execute(__tarsio_data_t* __tarsio_mock_data, int (*func)(void* __tarsio_mock_data, const char* __tarsio_check_name), const char* name, size_t mock_data_size);
 int __tarsio_xml_output(const char* file_name, const char* dut);
 int __tarsio_summary(void);
 void __tarsio_cleanup(void);

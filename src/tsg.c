@@ -49,7 +49,7 @@ static char timestamp[] = __DATE__ " " __TIME__;
  */
 static void usage(const char* program_name)
 {
-  printf("USAGE: %s <pre-processed-source> <test-suite>\n", program_name);
+  printf("USAGE: %s <pre-processed-source> <check-suite>\n", program_name);
 }
 
 /****************************************************************************
@@ -64,7 +64,7 @@ static void ver(const char* program_name) {
  */
 struct tsg_options_s {
   char* cache_filename;
-  char* test_filename;
+  char* check_filename;
 };
 typedef struct tsg_options_s tsg_options_t;
 
@@ -88,7 +88,7 @@ static int tsg_options_init(tsg_options_t* options, int argc, char* argv[])
   }
 
   options->cache_filename = argv[1];
-  options->test_filename = argv[2];
+  options->check_filename = argv[2];
 
   return 0;
 }
@@ -113,7 +113,7 @@ static void generate_struct(prototype_list_t* list, cpp_list_t* cpp_list) {
          " *\n");
   printf(" * Header file for use as inclusion describing all the mock control\n"
          " * structures and data storeage for mocked version of all used functions\n"
-         " * in the design under test.\n"
+         " * in the design under check.\n"
          " *\n"
          " *  This file is part of Tarsio.\n"
          " *\n"
@@ -242,7 +242,7 @@ int main(int argc, char* argv[])
 {
   int retval = EXIT_SUCCESS;
   tsg_options_t options;
-  file_t test_file = FILE_EMPTY;
+  file_t check_file = FILE_EMPTY;
   prototype_list_t prototype_list = PROTOTYPE_LIST_EMPTY;
   cpp_list_t cpp_list = CPP_LIST_EMPTY;
   unsigned char* buf = NULL;
@@ -256,17 +256,17 @@ int main(int argc, char* argv[])
   }
 
   /*
-   * Read the pre-processed version of the design under test
+   * Read the pre-processed version of the design under check
    */
-  if (0 != file_init(&test_file, options.test_filename)) {
+  if (0 != file_init(&check_file, options.check_filename)) {
     retval = EXIT_FAILURE;
     goto read_preprocessed_file_failed;
   }
 
   /*
-   * Find all pre-processor directives in the test suite.
+   * Find all pre-processor directives in the check suite.
    */
-  if (0 != cpp_list_init(&cpp_list, &test_file)) {
+  if (0 != cpp_list_init(&cpp_list, &check_file)) {
     retval = EXIT_FAILURE;
     goto cpp_list_init_failed;
   }
@@ -276,7 +276,7 @@ int main(int argc, char* argv[])
   generate_struct(&prototype_list, &cpp_list);
   cpp_list_cleanup(&cpp_list);
  cpp_list_init_failed:
-  file_cleanup(&test_file);
+  file_cleanup(&check_file);
  read_preprocessed_file_failed:
  options_init_failed:
   if (NULL != buf) {

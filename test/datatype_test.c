@@ -37,7 +37,7 @@
 /***************************************************************************
  * datatype_init()
  */
-test(datatype_init_shall_set_all_relevant_data) {
+check(datatype_init_shall_set_all_relevant_data) {
   datatype_t dt;
   unsigned char* ref = (unsigned char*)&dt;
   const unsigned char* endptr = ref + sizeof(dt) - 4;
@@ -54,7 +54,7 @@ test(datatype_init_shall_set_all_relevant_data) {
 /***************************************************************************
  * datatype_cleanup()
  */
-test(datatype_cleanup_shall_free_datatype_name) {
+check(datatype_cleanup_shall_free_datatype_name) {
   datatype_t dt;
   dt.name = (char*)1234;
 
@@ -64,7 +64,7 @@ test(datatype_cleanup_shall_free_datatype_name) {
   assert_eq((char*)1234, m.free.args.arg0);
 }
 
-test(datatype_cleanup_shall_not_free_datatype_name_if_null) {
+check(datatype_cleanup_shall_not_free_datatype_name_if_null) {
   datatype_t dt;
   dt.name = NULL;
 

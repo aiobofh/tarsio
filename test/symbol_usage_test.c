@@ -35,23 +35,23 @@
 /***************************************************************************
  * symbol_usage_node_new()
  */
-test(new_shall_malloc_the_correct_size) {
+check(new_shall_malloc_the_correct_size) {
   symbol_usage_node_new(0, 0, 0, 0, 0, NULL);
   assert_eq(1, m.malloc.call_count);
   assert_eq(sizeof(symbol_usage_node_t), m.malloc.args.arg0);
 }
 
-test(new_shall_return_NULL_if_out_of_memory) {
+check(new_shall_return_NULL_if_out_of_memory) {
   assert_eq(NULL, symbol_usage_node_new(0, 0, 0, 0, 0, NULL));
 }
 
-test(new_shall_return_the_new_node_if_ok) {
+check(new_shall_return_the_new_node_if_ok) {
   symbol_usage_node_t node;
   m.malloc.retval = &node;
   assert_eq(&node, symbol_usage_node_new(0, 0, 0, 0, 0, NULL));
 }
 
-test(new_shall_clear_the_whole_node) {
+check(new_shall_clear_the_whole_node) {
   symbol_usage_node_t node;
   m.malloc.retval = &node;
   symbol_usage_node_new(0, 0, 0, 0, 0, NULL);
@@ -61,7 +61,7 @@ test(new_shall_clear_the_whole_node) {
   assert_eq(sizeof(node), m.MEMSET.args.arg2);
 }
 
-test(new_shall_set_the_line_col_and_offset) {
+check(new_shall_set_the_line_col_and_offset) {
   symbol_usage_node_t node;
   m.malloc.retval = &node;
   symbol_usage_node_new(1, 2, 3, 0, 0, NULL);
@@ -73,7 +73,7 @@ test(new_shall_set_the_line_col_and_offset) {
 /***************************************************************************
  * symbol_usage_append()
  */
-test(append_shall_not_append_if_out_of_memory) {
+check(append_shall_not_append_if_out_of_memory) {
   symbol_usage_list_t list = SYMBOL_USAGE_LIST_EMPTY;
   m.symbol_usage_node_new.retval = NULL;
   symbol_usage_append(&list, 0, 0, 0, 0, 0, NULL);
@@ -81,7 +81,7 @@ test(append_shall_not_append_if_out_of_memory) {
   assert_eq(NULL, list.last);
 }
 
-test(append_shall_add_node_to_empty_list) {
+check(append_shall_add_node_to_empty_list) {
   symbol_usage_node_t node;
   symbol_usage_list_t list = SYMBOL_USAGE_LIST_EMPTY;
   m.symbol_usage_node_new.retval = &node;
@@ -90,7 +90,7 @@ test(append_shall_add_node_to_empty_list) {
   assert_eq(&node, list.last);
 }
 
-test(append_shall_add_node_to_end_of_list) {
+check(append_shall_add_node_to_end_of_list) {
   symbol_usage_node_t node1;
   symbol_usage_node_t node2;
   symbol_usage_list_t list = SYMBOL_USAGE_LIST_EMPTY;
@@ -103,7 +103,7 @@ test(append_shall_add_node_to_end_of_list) {
   assert_eq(node1.next, &node2);
 }
 
-test(append_shall_increment_node_count_on_success) {
+check(append_shall_increment_node_count_on_success) {
   symbol_usage_node_t node;
   symbol_usage_list_t list = SYMBOL_USAGE_LIST_EMPTY;
   m.symbol_usage_node_new.retval = &node;
@@ -114,7 +114,7 @@ test(append_shall_increment_node_count_on_success) {
 /***************************************************************************
  * symbol_usage_list_cleanup()
  */
-test(cleanup_shall_free_all_nodes) {
+check(cleanup_shall_free_all_nodes) {
   symbol_usage_node_t node1 = SYMBOL_USAGE_NODE_EMPTY;
   symbol_usage_node_t node2 = SYMBOL_USAGE_NODE_EMPTY;
   symbol_usage_list_t list = SYMBOL_USAGE_LIST_EMPTY;

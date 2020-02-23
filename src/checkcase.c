@@ -1,5 +1,5 @@
 /*
- * Helpers for handling test-cases and test-suites
+ * Helpers for handling check-cases and check-suites
  *
  *              _______          _____ ___        ______
  *                 |      ||    |         |    | |      |
@@ -10,7 +10,7 @@
  *
  * This is a collection of functions to parse test-case (check case) files
  * a.k.a. suites to automatically generate check-runner progarms with the
- * testcases executed and evaluated in the top-down order of how their
+ * check-cases executed and evaluated in the top-down order of how their
  * specified in the cechk-case file.
  *
  *  This file is part of Tarsio.
@@ -40,13 +40,13 @@
 #include "str.h"
 
 #include "file.h"
-#include "testcase.h"
+#include "checkcase.h"
 
 #ifndef MAX_FUNC_NAME_LEN
 #define MAX_FUNC_NAME_LEN 78 /* Some compilers are limited to 32 char */
 #endif
 
-static void testcase_list_append(testcase_list_t* list, testcase_node_t* node) {
+static void checkcase_list_append(checkcase_list_t* list, checkcase_node_t* node) {
   if (NULL == list->first) {
     list->first = node;
   }
@@ -56,12 +56,12 @@ static void testcase_list_append(testcase_list_t* list, testcase_node_t* node) {
   list->last = node;
 }
 
-static testcase_node_t* new_node(char* name, testcase_type_t type) {
-  testcase_node_t* node;
+static checkcase_node_t* new_node(char* name, checkcase_type_t type) {
+  checkcase_node_t* node;
 
   if (NULL == (node = malloc(sizeof(*node)))) {
-    error1("Out of memory while allocating testcase node for '%s'", name);
-    goto testcase_node_malloc_failed;
+    error1("Out of memory while allocating check-case node for '%s'", name);
+    goto checkcase_node_malloc_failed;
   }
 
   memset(node, 0, sizeof(*node));
@@ -69,19 +69,19 @@ static testcase_node_t* new_node(char* name, testcase_type_t type) {
   node->type = type;
   node->name = name;
 
- testcase_node_malloc_failed:
+ checkcase_node_malloc_failed:
   return node;
 }
 
 static void print_len_warning(const char* str) {
-  fprintf(stderr, "WARNING: '%s' is a long test-case name, some compilers may trunkate it - resulting in duplicate symbol names.\n", str);
+  fprintf(stderr, "WARNING: '%s' is a long check-case name, some compilers may trunkate it - resulting in duplicate symbol names.\n", str);
 }
 
 
-static int testcase_append(testcase_list_t* list, const char* name, const testcase_type_t type) {
+static int checkcase_append(checkcase_list_t* list, const char* name, const checkcase_type_t type) {
   int retval = 0;
   char* node_name;
-  testcase_node_t* node;
+  checkcase_node_t* node;
 
   const size_t len = strlen(name);
 
@@ -90,18 +90,18 @@ static int testcase_append(testcase_list_t* list, const char* name, const testca
   }
 
   if (NULL == (node_name = strclone(name))) {
-    error1("Unable to clone testcase name '%s'", name);
+    error1("Unable to clone check-case name '%s'", name);
     retval = -1;
     goto strclone_failed;
   }
 
   if (NULL == (node = new_node(node_name, type))) {
-    error1("Unable to create new testcase node '%s'", name);
+    error1("Unable to create new check-case node '%s'", name);
     retval = -2;
     goto new_node_failed;
   }
 
-  testcase_list_append(list, node);
+  checkcase_list_append(list, node);
 
   goto normal_exit;
 
@@ -118,19 +118,27 @@ static char *index_of(char* buf, char c) {
   return (char*)buf;
 }
 
-static int extract(testcase_list_t* list, char* buf) {
+static int extract(checkcase_list_t* list, char* buf) {
   int retval = 0;
   char* name = NULL;
   char* ptr;
-  testcase_type_t type = TESTCASE_IS_UNKNOWN;
+  checkcase_type_t type = CHECKCASE_IS_UNKNOWN;
 
   if (buf == strstr(buf, "test(")) {
     name = buf + strlen("test(");
-    type = TESTCASE_IS_UNIT_TEST;
+    type = CHECKCASE_IS_UNIT_CHECK;
+  }
+  else if (buf == strstr(buf, "check(")) {
+    name = buf + strlen("check(");
+    type = CHECKCASE_IS_UNIT_CHECK;
   }
   else if (buf == strstr(buf, "module_test(")) {
     name = buf + strlen("module_test(");
-    type = TESTCASE_IS_MODULE_TEST;
+    type = CHECKCASE_IS_MODULE_CHECK;
+  }
+  else if (buf == strstr(buf, "module_check(")) {
+    name = buf + strlen("module_check(");
+    type = CHECKCASE_IS_MODULE_CHECK;
   }
 
   if (NULL == name) {
@@ -139,22 +147,22 @@ static int extract(testcase_list_t* list, char* buf) {
 
 
   if (NULL == (ptr = index_of(name, ')'))) {
-    error1("Could not find testcase name length in '%s'", name);
+    error1("Could not find check-case name length in '%s'", name);
     retval = -1;
     goto index_failed;
   }
 
   *ptr = '\0';
 
-  if (0 != testcase_append(list, name, type)) {
-    error1("Unable to append '%s' to test-case list", name);
+  if (0 != checkcase_append(list, name, type)) {
+    error1("Unable to append '%s' to check-case list", name);
     retval = -2;
-    goto testcase_append_failed;
+    goto checkcase_append_failed;
   }
 
   goto normal_exit;
 
- testcase_append_failed:
+ checkcase_append_failed:
  index_failed:
  normal_exit:
   return retval;
@@ -162,7 +170,7 @@ static int extract(testcase_list_t* list, char* buf) {
 
 int call = 0;
 
-static int parse(testcase_list_t* list, const file_t* file) {
+static int parse(checkcase_list_t* list, const file_t* file) {
   const size_t len = file->len;
 
   int retval = 0;
@@ -182,7 +190,7 @@ static int parse(testcase_list_t* list, const file_t* file) {
    * but we never know if the buffer will be full och crap.
    */
   if (NULL == (buf = malloc(file->len + 1))) {
-    error1("Out of memory while allocating buffert for testcases in '%s'", file->filename);
+    error1("Out of memory while allocating buffert for check-cases in '%s'", file->filename);
     retval = -1;
     goto buf_malloc_failed;
   }
@@ -238,25 +246,25 @@ static int parse(testcase_list_t* list, const file_t* file) {
   return retval;
 }
 
-int testcase_list_init(testcase_list_t* list, const file_t* file) {
+int checkcase_list_init(checkcase_list_t* list, const file_t* file) {
   assert((NULL != list) && "Argument 'list' must not be NULL");
   assert((NULL != file) && "Argument 'file' must not be NULL");
 
   return parse(list, file);
 }
 
-static void testcase_node_cleanup(testcase_node_t* node) {
+static void checkcase_node_cleanup(checkcase_node_t* node) {
   if (NULL != node->name) {
     free(node->name);
   }
   free(node);
 }
 
-void testcase_list_cleanup(testcase_list_t* list) {
-  testcase_node_t* node = list->first;
+void checkcase_list_cleanup(checkcase_list_t* list) {
+  checkcase_node_t* node = list->first;
   while (NULL != node) {
-    testcase_node_t* next_node = node->next;
-    testcase_node_cleanup(node);
+    checkcase_node_t* next_node = node->next;
+    checkcase_node_cleanup(node);
     node = next_node;
   }
 }

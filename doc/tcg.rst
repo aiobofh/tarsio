@@ -43,7 +43,7 @@ storage between different Tarsio tools.
 SEE ALSO
 --------
 
-tsg(1), tmg(1), tam(1), ttg(1), tarsio.mk
+tsg(3), tmg(3), tam(3), ttg(3), tarsio.mk(3)
 
 BUGS
 ----

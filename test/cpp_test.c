@@ -37,16 +37,16 @@
 /***************************************************************************
  * cpp_node_new()
  */
-test(new_shall_allocate_enough_memeory) {
+check(new_shall_allocate_enough_memeory) {
   cpp_node_new(NULL);
   assert_eq(1, m.malloc.call_count);
 }
 
-test(new_shall_return_NULL_if_out_of_memeory) {
+check(new_shall_return_NULL_if_out_of_memeory) {
   assert_eq(NULL, cpp_node_new(NULL));
 }
 
-test(new_shall_set_all_allocated_memory_to_zero) {
+check(new_shall_set_all_allocated_memory_to_zero) {
   cpp_node_t node;
   m.malloc.retval = (void*)&node;
   cpp_node_new(NULL);
@@ -56,7 +56,7 @@ test(new_shall_set_all_allocated_memory_to_zero) {
   assert_eq(sizeof(cpp_node_t), m.MEMSET.args.arg2);
 }
 
-test(new_shall_clone_the_cpp_directive) {
+check(new_shall_clone_the_cpp_directive) {
   cpp_node_t node;
   m.malloc.retval = (void*)&node;
   cpp_node_new((char*)5678);
@@ -64,7 +64,7 @@ test(new_shall_clone_the_cpp_directive) {
   assert_eq((char*)5678, m.strclone.args.arg0);
 }
 
-test(new_shall_free_the_node_if_strclone_fails) {
+check(new_shall_free_the_node_if_strclone_fails) {
   cpp_node_t node;
   m.malloc.retval = (void*)&node;
   m.strclone.retval = NULL;
@@ -73,7 +73,7 @@ test(new_shall_free_the_node_if_strclone_fails) {
   assert_eq((char*)&node, m.free.args.arg0);
 }
 
-test(new_shall_return_NULL_if_strclone_fails) {
+check(new_shall_return_NULL_if_strclone_fails) {
   cpp_node_t node;
   m.malloc.retval = (void*)&node;
   m.strclone.retval = NULL;
@@ -83,18 +83,18 @@ test(new_shall_return_NULL_if_strclone_fails) {
 /***************************************************************************
  * cpp_list_append()
  */
-test(append_should_create_a_new_cpp_node_correctly) {
+check(append_should_create_a_new_cpp_node_correctly) {
   cpp_list_append((cpp_list_t*)0x1234, (const char*)0x5678);
   assert_eq(1, m.cpp_node_new.call_count);
   assert_eq((const char*)0x5678, m.cpp_node_new.args.arg0);
 }
 
-test(append_should_not_append_if_new_cpp_node_failed) {
+check(append_should_not_append_if_new_cpp_node_failed) {
   cpp_list_append((cpp_list_t*)0x1234, (const char*)0x5678);
   assert_eq(0, m.base_list_append.call_count);
 }
 
-test(append_should_append_if_new_cpp_node_was_ok) {
+check(append_should_append_if_new_cpp_node_was_ok) {
   m.cpp_node_new.retval = (cpp_node_t*)0x8765;
   cpp_list_append((cpp_list_t*)0x1234, (const char*)0x5678);
   assert_eq(1, m.base_list_append.call_count);
@@ -105,7 +105,7 @@ test(append_should_append_if_new_cpp_node_was_ok) {
 /***************************************************************************
  * cpp_list_init()
  */
-test(list_init_shall_assert_list_is_not_NULL) {
+check(list_init_shall_assert_list_is_not_NULL) {
   cpp_list_init(NULL, (file_t*)0x1234);
 #ifndef SASC
   assert_eq(1, m.ASSERT.call_count);
@@ -114,7 +114,7 @@ test(list_init_shall_assert_list_is_not_NULL) {
 #endif
 }
 
-test(list_init_shall_assert_file_is_not_NULL) {
+check(list_init_shall_assert_file_is_not_NULL) {
   cpp_list_init((cpp_list_t*)0x1234, NULL);
 #ifndef SASC
   assert_eq(1, m.ASSERT.call_count);
@@ -123,7 +123,7 @@ test(list_init_shall_assert_file_is_not_NULL) {
 #endif
 }
 
-test(list_init_shall_set_up_the_file_parser_callback) {
+check(list_init_shall_set_up_the_file_parser_callback) {
   cpp_list_init((cpp_list_t*)0x1234, (file_t*)0x5678);
   assert_eq(1, m.file_parse.call_count);
   assert_eq((cpp_list_t*)0x1234, m.file_parse.args.arg1);
@@ -133,7 +133,7 @@ test(list_init_shall_set_up_the_file_parser_callback) {
 /***************************************************************************
  * cpp_list_init()
  */
-test(node_cleanup_shall_always_free_node) {
+check(node_cleanup_shall_always_free_node) {
   cpp_node_t node;
   node.info.directive = NULL;
   cpp_node_cleanup(&node);
@@ -141,7 +141,7 @@ test(node_cleanup_shall_always_free_node) {
   assert_eq((void*)&node, m.free.args.arg0);
 }
 
-test(node_cleanup_shall_free_cpp_directive) {
+check(node_cleanup_shall_free_cpp_directive) {
   cpp_node_t node;
   node.info.directive = (char*)0x1234;
   cpp_node_cleanup(&node);
@@ -151,7 +151,7 @@ test(node_cleanup_shall_free_cpp_directive) {
 /***************************************************************************
  * cpp_list_cleanup()
  */
-test(list_cleanup_shall_assert_if_provided_list_is_null) {
+check(list_cleanup_shall_assert_if_provided_list_is_null) {
   cpp_list_cleanup(NULL);
 #ifndef SASC
   assert_eq(1, m.ASSERT.call_count);
@@ -160,7 +160,7 @@ test(list_cleanup_shall_assert_if_provided_list_is_null) {
 #endif
 }
 
-test(list_cleanup_shall_clear_all_nodes) {
+check(list_cleanup_shall_clear_all_nodes) {
   cpp_node_t node1;
   cpp_node_t node2;
   cpp_list_t list;

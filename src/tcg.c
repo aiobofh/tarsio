@@ -333,10 +333,10 @@ int main(int argc, char* argv[])
   tcg_options_t options;
   file_t code_file = FILE_EMPTY;
   prototype_list_t prototype_list = PROTOTYPE_LIST_EMPTY;
-  prototype_list_t test_prototype_list = PROTOTYPE_LIST_EMPTY;
+  prototype_list_t check_prototype_list = PROTOTYPE_LIST_EMPTY;
   cpp_list_t cpp_list = CPP_LIST_EMPTY;
   unsigned char* buf = NULL;
-  
+
   /*
    * Handle arguments passed to the program.
    */
@@ -346,7 +346,7 @@ int main(int argc, char* argv[])
   }
 
   /*
-   * Read the pre-processed version of the design under test
+   * Read the pre-processed version of the design under check
    */
   if (0 != file_init(&code_file, options.code_filename)) {
     retval = EXIT_FAILURE;
@@ -365,7 +365,7 @@ int main(int argc, char* argv[])
 
   /*
    * Find function calls to any of the prototypes within the design under
-   * test to be replaced by calls to the Tarsio proxy functions instead.
+   * check to be replaced by calls to the Tarsio proxy functions instead.
    */
   if (0 != prototype_usage(&prototype_list, &code_file)) {
     retval = EXIT_FAILURE;
@@ -402,15 +402,15 @@ int main(int argc, char* argv[])
   }
 
   /*
-   * Self-test - Since this list is the foundation of all the other
+   * Self-check - Since this list is the foundation of all the other
    * tools.
    */
 
-  buf = reload_symbol_cache(&test_prototype_list, options.output_filename);
+  buf = reload_symbol_cache(&check_prototype_list, options.output_filename);
 
-  if (0 != compare_prototype_lists(&prototype_list, &test_prototype_list)) {
+  if (0 != compare_prototype_lists(&prototype_list, &check_prototype_list)) {
     retval = EXIT_FAILURE;
-    error0("Unable to read back prototype list in self-test");
+    error0("Unable to read back prototype list in self-check");
     goto compare_prototype_lists_failed;
   }
 

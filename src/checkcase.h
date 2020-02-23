@@ -1,5 +1,5 @@
 /*
- * Helpers for handling test-cases and test-suites
+ * Helpers for handling check-cases and check-suites
  *
  *              _______          _____ ___        ______
  *                 |      ||    |         |    | |      |
@@ -10,7 +10,7 @@
  *
  * This is a collection of functions to parse test-case (check case) files
  * a.k.a. suites to automatically generate check-runner progarms with the
- * testcases executed and evaluated in the top-down order of how their
+ * checkcases executed and evaluated in the top-down order of how their
  * specified in the cechk-case file.
  *
  *  This file is part of Tarsio.
@@ -30,38 +30,38 @@
  *
  */
 
-#ifndef _TESTCASE_H_
-#define _TESTCASE_H_
+#ifndef _CHECKCASE_H_
+#define _CHECKCASE_H_
 
 #include "file.h"
 
-enum testcase_type_e {
-  TESTCASE_IS_UNKNOWN,
-  TESTCASE_IS_UNIT_TEST,
-  TESTCASE_IS_MODULE_TEST
+enum checkcase_type_e {
+  CHECKCASE_IS_UNKNOWN,
+  CHECKCASE_IS_UNIT_CHECK,
+  CHECKCASE_IS_MODULE_CHECK
 };
-typedef enum testcase_type_e testcase_type_t;
+typedef enum checkcase_type_e checkcase_type_t;
 
-struct testcase_node_s {
+struct checkcase_node_s {
   char* name;
-  testcase_type_t type;
-  struct testcase_node_s* next;
+  checkcase_type_t type;
+  struct checkcase_node_s* next;
 };
-typedef struct testcase_node_s testcase_node_t;
+typedef struct checkcase_node_s checkcase_node_t;
 
-#define TESTCASE_NODE_EMPTY (testcase_node_t){NULL, TESTCASE_IS_UNKNOWN, NULL}
+#define CHECKCASE_NODE_EMPTY (checkcase_node_t){NULL, CHECKCASE_IS_UNKNOWN, NULL}
 
-struct testcase_list_s {
-  testcase_node_t* first;
-  testcase_node_t* last;
+struct checkcase_list_s {
+  checkcase_node_t* first;
+  checkcase_node_t* last;
 };
-typedef struct testcase_list_s testcase_list_t;
+typedef struct checkcase_list_s checkcase_list_t;
 
-#define TESTCASE_LIST_EMPTY (testcase_list_t){NULL, NULL}
+#define CHECKCASE_LIST_EMPTY (checkcase_list_t){NULL, NULL}
 
-int testcase_extract(testcase_list_t* list, const char* filename);
+int checkcase_extract(checkcase_list_t* list, const char* filename);
 
-int testcase_list_init(testcase_list_t* list, const file_t* file);
-void testcase_list_cleanup(testcase_list_t* list);
+int checkcase_list_init(checkcase_list_t* list, const file_t* file);
+void checkcase_list_cleanup(checkcase_list_t* list);
 
 #endif

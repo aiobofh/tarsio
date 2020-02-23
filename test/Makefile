@@ -28,6 +28,8 @@
 
 TSRCROOT=../src/
 
+TCHECKSUFFIX?=_test
+
 MAKEFLAGS += --no-builtin-rules
 .SUFFIXES:
 
@@ -57,7 +59,7 @@ endif
 endif
 
 export TARSIO_BIN:=../src
-export PATH:=${PATH}:../src
+export PATH:=../src:${PATH}
 export SASC:=${SASC}
 export VBCC:=${VBCC}
 
@@ -77,8 +79,8 @@ tools:
 include ../include/tarsio_dist.mk
 
 .PHONY: check
-check:: $(subst .c,${EXE},$(wildcard *_test.c))
-	${Q}for i in $$(ls -1 *_test); do ${EXECUTOR}$$i $(FAILCOLLECT) ; done; echo
+check:: $(subst .c,${EXE},$(wildcard *${TCHECKSUFFIX}.c))
+	${Q}for i in $$(ls -1 *${TCHECKSUFFIX}); do ${EXECUTOR}$$i $(FAILCOLLECT) ; done; echo
 
 .PHONY: clean
 clean::
@@ -102,8 +104,8 @@ endif
 # option these symbols won't be a proble,. But on the other hand it will be
 # impossible to write module-tests nor set mocks to call the original function
 # if required.
-argument_test${EXE}: ../src/list.o ../src/datatype.o
+argument${TCHECKSUFFIX}${EXE}: ../src/list.o ../src/datatype.o
 
-cpp_test${EXE}: ../src/str.o ../src/list.o ../src/file.o
+cpp${TCHECKSUFFIX}${EXE}: ../src/str.o ../src/list.o ../src/file.o
 
-testcase_test${EXE}: ../src/str.o
+checkcase${TCHECKSUFFIX}${EXE}: ../src/str.o

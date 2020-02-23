@@ -33,6 +33,8 @@ MAKEFLAGS += --no-builtin-rules
 
 .SUFFIXES:
 
+TCHECKSUFFIX?=_test
+
 HOSTTMPDIR:=/tmp/
 HOSTINCDIR:=../include/
 HOSTSRCDIR:=../src/
@@ -139,8 +141,8 @@ endif
 endif
 endif
 
-TESTSUITES=$(subst .c,${EXE},$(wildcard ${HOSTTSTDIR}*_test.c))
-DATS=$(subst ${HOSTTSTDIR},${HOSTTMPDIR},$(subst _test${EXE},_data.h,${TESTSUITES}))
+TESTSUITES=$(subst .c,${EXE},$(wildcard ${HOSTTSTDIR}*${TCHECKSUFFIX}.c))
+DATS=$(subst ${HOSTTSTDIR},${HOSTTMPDIR},$(subst ${TCHECKSUFFIX}${EXE},_data.h,${TESTSUITES}))
 
 info:
 	echo ${TESTSUITES}
@@ -159,7 +161,7 @@ ${HOSTTMPDIR}%.sym: ${HOSTTMPDIR}%${CPPEXT}
 
 .NOTPARALLEL: ${HOSTTMPDIR}%_data.h
 .PRECIOUS: ${HOSTTMPDIR}%_data.h
-${HOSTTMPDIR}%_data.h: ${HOSTTMPDIR}%.sym ${HOSTTSTDIR}%_test.c
+${HOSTTMPDIR}%_data.h: ${HOSTTMPDIR}%.sym ${HOSTTSTDIR}%${TCHECKSUFFIX}.c
 	${Q}${TSG}
 
 .PRECIOUS: ${HOSTTMPDIR}%_mocks.c
@@ -171,7 +173,7 @@ ${HOSTTMPDIR}%_proxified${CPPEXT}: ${HOSTTMPDIR}%.sym ${HOSTTMPDIR}%${CPPEXT}
 	${Q}${TAM}
 
 .PRECIOUS: ${HOSTTMPDIR}%_runner.c
-${HOSTTMPDIR}%_runner.c: ${HOSTTSTDIR}%_test.c ${HOSTTMPDIR}%_data.h
+${HOSTTMPDIR}%_runner.c: ${HOSTTSTDIR}%${TCHECKSUFFIX}.c ${HOSTTMPDIR}%_data.h
 	${Q}${TTG}
 
 #
@@ -195,9 +197,9 @@ ${HOSTTMPDIR}%_mocks.o: ${HOSTTMPDIR}%_mocks.c
 .PRECIOUS: ${HOSTTMPDIR}%_runner.o
 ${HOSTTMPDIR}%_runner.o: ${HOSTTMPDIR}%_runner.c
 
-.NOTPARALLEL: ${HOSTTMPDIR}%_test.o
-.PRECIOUS: ${HOSTTMPDIR}%_test.o
-${HOSTTMPDIR}%_test.o: ${HOSTTSTDIR}%_test.c ${HOSTTMPDIR}%_data.h
+.NOTPARALLEL: ${HOSTTMPDIR}%${TCHECKSUFFIX}.o
+.PRECIOUS: ${HOSTTMPDIR}%${TCHECKSUFFIX}.o
+${HOSTTMPDIR}%${TCHECKSUFFIX}.o: ${HOSTTSTDIR}%${TCHECKSUFFIX}.c ${HOSTTMPDIR}%_data.h
 	${Q}${CC} ${CFLAGS}; ${TESTO}
 
 ${HOSTTMPDIR}tarsio.o: ${HOSTSRCDIR}tarsio.c
@@ -208,12 +210,12 @@ ${HOSTTMPDIR}tarsio.o: ${HOSTSRCDIR}tarsio.c
 #
 # TODO: Make tarsio.o a shared library instead
 #
-%_test${EXE}: ${HOSTTMPDIR}%_test.o ${HOSTSRCDIR}%_proxified.o ${HOSTTMPDIR}%_runner.o ${HOSTTMPDIR}%_mocks.o ${HOSTTMPDIR}tarsio.o
+%${TCHECKSUFFIX}${EXE}: ${HOSTTMPDIR}%${TCHECKSUFFIX}.o ${HOSTSRCDIR}%_proxified.o ${HOSTTMPDIR}%_runner.o ${HOSTTMPDIR}%_mocks.o ${HOSTTMPDIR}tarsio.o
 	${Q}${LD} ${LDFLAGS}
 
 .PHONY: clean
 clean::
-	${Q}${RM} -f *~ ${HOSTTMPDIR}*.sym ${HOSTTMPDIR}*_data.h ${HOSTTMPDIR}*_data.o ${HOSTTMPDIR}*.p ${HOSTTMPDIR}*.pp ${HOSTTMPDIR}*.i ${HOSTTMPDIR}*_proxified* ${HOSTSRCDIR}*_proxified* ${HOSTTMPDIR}*_runner* ${HOSTTMPDIR}*_mocks* ${HOSTTMPDIR}*_test* *_test${EXE} *.o ${HOSTTMPDIR}file*.asm ${HOSTTMPDIR}file*.o *.i ${HOSTTMPDIR}tarsio.o
+	${Q}${RM} -f *~ ${HOSTTMPDIR}*.sym ${HOSTTMPDIR}*_data.h ${HOSTTMPDIR}*_data.o ${HOSTTMPDIR}*.p ${HOSTTMPDIR}*.pp ${HOSTTMPDIR}*.i ${HOSTTMPDIR}*_proxified* ${HOSTSRCDIR}*_proxified* ${HOSTTMPDIR}*_runner* ${HOSTTMPDIR}*_mocks* ${HOSTTMPDIR}*${TCHECKSUFFIX}* *${TCHECKSUFFIX}${EXE} *.o ${HOSTTMPDIR}file*.asm ${HOSTTMPDIR}file*.o *.i ${HOSTTMPDIR}tarsio.o
 
 .PHONY: check
 check:: ${DATS}

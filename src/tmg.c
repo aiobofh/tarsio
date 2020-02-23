@@ -120,10 +120,10 @@ static void generate_proxies(prototype_list_t* list, const char* file) {
          " *              Copyright (C) 2020 AiO Secure Teletronics\n"
          " *\n");
   printf(" * This is the proxy function implementations for all used functions\n"
-         " * in the design under test. They should be stored into a .c file to\n"
+         " * in the design under check. They should be stored into a .c file to\n"
          " * be compiled to an object file and later linked with the object file\n"
-         " * compiled from the modified pre-processed design under test, and the\n"
-         " * generated test-runner code.\n"
+         " * compiled from the modified pre-processed design under check, and the\n"
+         " * generated check-runner code.\n"
          " */\n\n");
 
   printf("#include \"%s\"\n\n", data_file);

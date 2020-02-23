@@ -9,7 +9,7 @@
  *              Copyright (C) 2020 AiO Secure Teletronics
  *
  * Function headers are parsed and interpreted to be transformed to other
- * formats and test-suite data storage datatypes. But also to generate
+ * formats and check-suite data storage datatypes. But also to generate
  * extern declarations in the correct place of the source code to ensure
  * that the program compiles with close to zero incrase of work load for
  * the programmer.

@@ -121,7 +121,7 @@ tmg${EXE}: tmg.o list.o prototype.o symbol_cache.o file.o argument.o symbol_usag
 
 tam${EXE}: tam.o list.o prototype.o symbol_cache.o file.o argument.o symbol_usage.o datatype.o
 
-ttg${EXE}: ttg.o str.o file.o testcase.o
+ttg${EXE}: ttg.o str.o file.o checkcase.o
 
 .PHONY: clean
 clean::
