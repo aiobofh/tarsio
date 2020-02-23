@@ -97,6 +97,8 @@ TSTDIR=${TTESTROOT}
 TMPDIR=${TTMPROOT}
 SRCDIR=${TSRCROOT}
 
+all: check
+
 .PHONY: check
 check:: $(subst .c,,$(wildcard *_check.c))
 	${Q}for i in $^; do ./$$i -c; done; echo ""
