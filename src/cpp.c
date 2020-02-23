@@ -95,7 +95,7 @@ static int extract_cpp_directives(void* list_ptr, file_parse_state_t* state, con
     state->buf[state->idx] = '\0';
   }
 
-  if (('\n' == c) || ('\r' == c)) {
+  if (('\\' != state->last_c) && (('\n' == c) || ('\r' == c))) {
     if ('#' == state->buf[0]) {
       /* BOFH!!! Verify that buf == should be here */
       if (state->buf == strstr(state->buf, "#ifndef _TARSIO_DATA_")) {
