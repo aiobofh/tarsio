@@ -11,7 +11,7 @@
 # of GNU Make. This way of including (and this file istelf) rely on a correct
 # installation of Tarsio where it can be located using pkg-config.
 #
-# Example:
+# Example::
 #
 # -include $(shell pkg-config --variable=includedir tarsio)/tarsio.mk
 #
@@ -31,7 +31,7 @@
 # This is controlled by setting the TOBJROOT variable in the Makefile
 # that includes tarsio.mk
 #
-# Example:
+# Example::
 #
 # TBUILDROOT=../build
 # TOBJROOT=../objs
@@ -48,7 +48,7 @@
 # is controlled by the TSRCROOT variable in the Makefile that includes
 # tarsio.mk
 #
-# Example:
+# Example::
 #
 # TOTESTROOT=../test
 # TSRCROOT=../src
@@ -60,7 +60,7 @@
 # the *_data.h file which contains declarations of things that are essential
 # for the check-suite.
 #
-# Example:
+# Example::
 #
 # TINCROOT=../test
 #
@@ -71,10 +71,27 @@
 # super-fast location, like a RAM-disk. This is controlled by setting the
 # TTMPROOT varialbe in the Makefile that includes tarsio.mk
 #
-# Example:
+# Example::
 #
 # TTMPROOT=/tmp/$USER/my_project
 #
+# If you don't like the default _check.c suffix
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Some people do not like the "check" concept as replacement for "test", hence
+# there is a setting for this as well. This is controlled by setting the
+# TCHECKSUFFIX variable in the Makefile that includes tarsio.mk. Since tarsio.mk
+# tries to keep a 1:1 filename mapping between design and checks this is a bit
+# automagic.
+#
+# Example::
+#
+# TCHECKSUFFIX:=_test
+#
+# This will be inserted into the file name when the build system is looking for
+# files. For example foo.c will be checked with foo_test.c if the variable is set
+# to ``_test``.
+#
+
 Q?=@
 
 MSG:="was not found in your PATH, please install Tarsio (https://github.com/aiobofh/tarsio)"
@@ -97,14 +114,16 @@ TSTDIR=${TTESTROOT}
 TMPDIR=${TTMPROOT}
 SRCDIR=${TSRCROOT}
 
+TCHECKSUFFIX?=_check
+
 all: check
 
 .PHONY: check
-check:: $(subst .c,,$(wildcard *_check.c))
+check:: $(subst .c,,$(wildcard *${TCHECKSUFFIX}.c))
 	${Q}for i in $^; do ./$$i -c; done; echo ""
 
 .PHONY: xml
-xml:: $(subst .c,.xml,$(wildcard *_check.c))
+xml:: $(subst .c,.xml,$(wildcard *${TCHECKSUFFIX}.c))
 
 ${TTMPROOT}.placeholder:
 	${Q}mkdir -p $(dir $@) && touch $@
@@ -121,17 +140,22 @@ tarsio_info:
 	echo ""; \
 	echo " Tarsio C-flags:  ${TARSIOCFLAGS} (-I flags should be in your include path for IDEs for less warnings)"; \
 	echo ""; \
+	echo " TCHECKSUFFIX: ${TCHECKSUFFIX}"; \
+	echo " TSRCROOT: ${TSRCROOT}"; \
+	echo " TTESTROOT: ${TTESTROOT}"; \
+	echo " TTMPROOT: ${TTMPROOT}"; \
+	echo ""; \
 	echo "Sources"; \
 	echo "-------"; \
 	echo ""; \
-	for i in $$(ls -1 ${TSRCROOT}*.c | grep -v '_check.c' | grep -v '_mocks.c' | grep -v '_runner.c'); do \
+	for i in $$(ls -1 ${TSRCROOT}*.c | grep -v ${TCHECKSUFFIX}.c | grep -v '_mocks.c' | grep -v '_runner.c'); do \
 	  echo -n " $$i"; \
 	done; \
 	echo ""; echo ""; \
 	echo "Checks"; \
 	echo "------"; \
 	echo ""; \
-	for i in $$(ls -1 ${TTESTROOT}*_check.c); do \
+	for i in $$(ls -1 ${TTESTROOT}*${TCHECKSUFFIX}.c); do \
 	  echo -n " $$i"; \
 	done; \
 	echo ""; echo ""; \
@@ -146,7 +170,7 @@ ${TTMPROOT}%.sym: ${TTMPROOT}%.pp ${TTMPROOT}.placeholder
 
 .NOTPARALLEL: ${TINCROOT}%_data.h
 .PRECIOUS: ${TINCROOT}%_data.h
-${TINCROOT}%_data.h: ${TTMPROOT}%.sym ${TTESTROOT}%_check.c
+${TINCROOT}%_data.h: ${TTMPROOT}%.sym ${TTESTROOT}%${TCHECKSUFFIX}.c
 	${Q}${TSG} $^ > $@
 
 .PRECIOUS: ${TTMPROOT}%_mocks.c
@@ -159,7 +183,7 @@ ${TTMPROOT}%_proxified.pp: ${TTMPROOT}%.sym ${TTMPROOT}%.pp ${TTMPROOT}.placehol
 	${Q}${TAM} $(filter-out ${TTMPROOT}.placeholder,$^) > $@
 
 .PRECIOUS: ${TTMPROOT}%_runner.c
-${TTMPROOT}%_runner.c: ${TTESTROOT}%_check.c ${TINCROOT}%_data.h ${TTMPROOT}.placeholder
+${TTMPROOT}%_runner.c: ${TTESTROOT}%${TCHECKSUFFIX}.c ${TINCROOT}%_data.h ${TTMPROOT}.placeholder
 	${Q}${TTG} $(filter-out ${TTMPROOT}.placeholder,$^) > $@
 
 .PRECIOUS: ${TOBJROOT}%_proxified.o
@@ -174,18 +198,18 @@ ${TOBJROOT}%_mocks.o: ${TTMPROOT}%_mocks.c
 ${TOBJROOT}%_runner.o: ${TTMPROOT}%_runner.c
 	${Q}${CC} ${CFLAGS} ${TARSIOCFLAGS} ${RUNNERCFLAGS} -o $@ -c $<
 
-.NOTPARALLEL: ${TOBJROOT}%_check.o
-.PRECIOUS: ${TOBJROOT}%_check.o
-${TOBJROOT}%_check.o: ${TTESTROOT}%_check.c ${TINCROOT}%_data.h
+.NOTPARALLEL: ${TOBJROOT}%${TCHECKSUFFIX}.o
+.PRECIOUS: ${TOBJROOT}%${TCHECKSUFFIX}.o
+${TOBJROOT}%${TCHECKSUFFIX}.o: ${TTESTROOT}%${TCHECKSUFFIX}.c ${TINCROOT}%_data.h
 	${Q}${CC} ${CFLAGS} -Dmain=__tarsio_replace_main ${TARSIOCFLAGS} -o $@ -c $<
 
 .PRECIOIS: ${TOBJROOT}tarsio.o
 ${TOBJROOT}tarsio.o: ${TARSIOINCDIR}/tarsio.c
 	${Q}${CC} ${CFLAGS} ${TARSIOCFLAGS} ${RUNNERCFLAGS} -o $@ -c $<
 
-.PRECIOUS: ${TBUILDROOT}%_check
-${TBUILDROOT}%_check: ${TOBJROOT}%_proxified.o ${TOBJROOT}%_runner.o ${TOBJROOT}%_mocks.o ${TOBJPROOT}%_check.o ${TOBJROOT}tarsio.o
+.PRECIOUS: ${TBUILDROOT}%${TCHECKSUFFIX}
+${TBUILDROOT}%${TCHECKSUFFIX}: ${TOBJROOT}%_proxified.o ${TOBJROOT}%_runner.o ${TOBJROOT}%_mocks.o ${TOBJPROOT}%${TCHECKSUFFIX}.o ${TOBJROOT}tarsio.o
 	${Q}${CC} ${LDFLAGS} -o $@ $^
 
 clean::
-	${Q}rm -f ${TTMPROOT}*.pp ${TTMPROOT}*.sym ${TINCROOT}*_data.h ${TTMPROOT}*_mocks.c ${TTMPROOT}*_proxified.c ${TTMPROOT}*_runner.c ${TBOJROOT}*.o ${TBUILDROOT}*_check ${TBUILDROOT}*_check.xml *~
+	${Q}rm -f ${TTMPROOT}*.pp ${TTMPROOT}*.sym ${TINCROOT}*_data.h ${TTMPROOT}*_mocks.c ${TTMPROOT}*_proxified.c ${TTMPROOT}*_runner.c ${TBOJROOT}*.o ${TBUILDROOT}*${TCHECKSUFFIX} ${TBUILDROOT}*${TCHECKSUFFIX}.xml *~

@@ -5,11 +5,15 @@ LINES_COV:=${TTMPROOT}lines.cov
 BRANCHES_COV:=${TTMPROOT}branches.cov
 FILTER=-e ".*_check.c"
 
+ifndef TCHECKSUFFIX
+	$(error TCHECKSUFFIX is not set)
+endif
+
 ${COVERAGE_XML}:
 	${Q}gcovr ${FILTER} ${COVEX} -x > $@
 
 .NOTPARALLEL: ${LINES_COV}
-${LINES_COV}: $(subst .c,,$(wildcard ${TTESTROOT}/*_test.c))
+${LINES_COV}: $(subst .c,,$(wildcard ${TTESTROOT}/*${TCHECKSUFFIX}.c))
 	${Q}gcovr ${FILTER} ${COVEX} | \
 	egrep -v '^File' | \
 	egrep -v '^-' | \
@@ -19,7 +23,7 @@ ${LINES_COV}: $(subst .c,,$(wildcard ${TTESTROOT}/*_test.c))
 	grep -v "\-\-\%" > $@; true
 
 .NOTPARALLEL: ${BRANCHES_COV}
-${BRANCHES_COV}: $(subst .c,,$(wildcard ${TTESTROOT}/*_test.c))
+${BRANCHES_COV}: $(subst .c,,$(wildcard ${TTESTROOT}/*${TCHECKSUFFIX}.c))
 	${Q}gcovr ${FILTER} ${COVEX} -b | \
 	egrep -v '^File' | \
 	egrep -v '^-' | \
