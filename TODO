@@ -3,7 +3,7 @@
   As a software developer I want Tarsio to have better code coverage to ensure
   quality, and provide good examples on how to write Tarsio-checks
 
-* TODO 00 2020-02-17 Remove as much "test" in benefit of "check"     :tarsio:
+* DONE 00 2020-02-17 Remove as much "test" in benefit of "check"     :tarsio:
 
   As the author of Tarsio I want better consistency of the usage of the words
   testing and checking to be less confusing.
@@ -19,7 +19,7 @@
   As a developer I want the freedom to have linefeeds in the function headers
   in order to keep my code pretty.
 
-* TODO 00 2020-02-22 Split ttg.c into a more static .c-file and gen  :tarsio:
+* DONE 00 2020-02-22 Split ttg.c into a more static .c-file and gen  :tarsio:
 
   As a maintainer I do not want so much statically generated code in ttg.c,
   since it makes things hard to understand and also fragile. I need a tarsio.c
