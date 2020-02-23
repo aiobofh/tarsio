@@ -177,6 +177,7 @@ static int generate_check_runner(checkcase_list_t* list, const char* file, int n
 int main(int argc, char* argv[]) {
   int retval = EXIT_SUCCESS;
   checkcase_list_t checkcase_list;
+  checkcase_node_t* node;
   file_t check_file;
   ttg_options_t options;
 
@@ -205,6 +206,26 @@ int main(int argc, char* argv[]) {
   if (0 != checkcase_list_init(&checkcase_list, &check_file)) {
     retval = EXIT_FAILURE;
     goto checkcase_list_init_failed;
+  }
+
+  /*
+   * Do not generate call to TARSIO_DEFAULT_FUNCS if no module checks are
+   * declared. This reduce confusion in linking. Especially when there
+   * are no object files for e.g. some weird embedded software when the
+   * programmer only wants to use Tarsio for host-development. This is
+   * achieved by simply setting the --no-module flag implicitly.
+   */
+  if (0 == options.no_module) {
+    int found_module_checks = 0;
+    for (node = checkcase_list.first; NULL != node; node = node->next) {
+      if (CHECKCASE_IS_MODULE_CHECK == node->type) {
+        found_module_checks = 1;
+        break;
+      }
+    }
+    if (0 == found_module_checks) {
+      options.no_module = 1;
+    }
   }
 
   /*
