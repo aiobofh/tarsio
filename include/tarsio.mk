@@ -96,15 +96,17 @@ Q?=@
 
 MSG:="was not found in your PATH, please install Tarsio (https://github.com/aiobofh/tarsio)"
 
-TCG:=$(if $(shell PATH=$(PATH) which tcg),$(shell which tcg),$(error "tcg ${MSG}"))
-TSG:=$(if $(shell PATH=$(PATH) which tsg),$(shell which tsg),$(error "tsg ${MSG}"))
-TMG:=$(if $(shell PATH=$(PATH) which tmg),$(shell which tmg),$(error "tmg ${MSG}"))
-TAM:=$(if $(shell PATH=$(PATH) which tam),$(shell which tam),$(error "tam ${MSG}"))
-TTG:=$(if $(shell PATH=$(PATH) which ttg),$(shell which ttg),$(error "ttg ${MSG}"))
+TARSIOBINDIR?=$(shell pkg-config --variable=bindir tarsio)
 
-TARSIOINCDIR:=$(shell pkg-config --variable=includedir tarsio)
+TCG:=${TARSIOBINDIR}/tcg
+TSG:=${TARSIOBINDIR}/tsg
+TMG:=${TARSIOBINDIR}/tmg
+TAM:=${TARSIOBINDIR}/tam
+TTG:=${TARSIOBINDIR}/ttg
 
-TARSIOCFLAGS:=$(shell pkg-config --cflags tarsio) -I.
+TARSIOINCDIR?=$(shell pkg-config --variable=includedir tarsio)
+TARSIOSRCDIR?=$(shell pkg-config --variable=srcdir tarsio)
+TARSIOCFLAGS?=$(shell pkg-config --cflags tarsio) -I.
 
 ifdef TSRCROOT
 	TARSIOCFLAGS+=-I${TSRCROOT}
@@ -115,8 +117,6 @@ TMPDIR=${TTMPROOT}
 SRCDIR=${TSRCROOT}
 
 TCHECKSUFFIX?=_check
-
-all: check
 
 .PHONY: check
 check:: $(subst .c,,$(wildcard *${TCHECKSUFFIX}.c))
@@ -139,6 +139,7 @@ tarsio_info:
 	echo "Tarsio version v$(shell pkg-config --modversion tarsio) installed in $(shell pkg-config --variable=prefix tarsio)"; \
 	echo ""; \
 	echo " Tarsio C-flags:  ${TARSIOCFLAGS} (-I flags should be in your include path for IDEs for less warnings)"; \
+	echo " tarsio.c should be found in ${TARSIOSRCDIR}"; \
 	echo ""; \
 	echo " TCHECKSUFFIX: ${TCHECKSUFFIX}"; \
 	echo " TSRCROOT: ${TSRCROOT}"; \
@@ -204,7 +205,7 @@ ${TOBJROOT}%${TCHECKSUFFIX}.o: ${TTESTROOT}%${TCHECKSUFFIX}.c ${TINCROOT}%_data.
 	${Q}${CC} ${CFLAGS} -Dmain=__tarsio_replace_main ${TARSIOCFLAGS} -o $@ -c $<
 
 .PRECIOIS: ${TOBJROOT}tarsio.o
-${TOBJROOT}tarsio.o: ${TARSIOINCDIR}/tarsio.c
+${TOBJROOT}tarsio.o: ${TARSIOSRCDIR}/tarsio.c
 	${Q}${CC} ${CFLAGS} ${TARSIOCFLAGS} ${RUNNERCFLAGS} -o $@ -c $<
 
 .PRECIOUS: ${TBUILDROOT}%${TCHECKSUFFIX}
@@ -212,4 +213,4 @@ ${TBUILDROOT}%${TCHECKSUFFIX}: ${TOBJROOT}%_proxified.o ${TOBJROOT}%_runner.o ${
 	${Q}${CC} ${LDFLAGS} -o $@ $^
 
 clean::
-	${Q}rm -f ${TTMPROOT}*.pp ${TTMPROOT}*.sym ${TINCROOT}*_data.h ${TTMPROOT}*_mocks.c ${TTMPROOT}*_proxified.c ${TTMPROOT}*_runner.c ${TBOJROOT}*.o ${TBUILDROOT}*${TCHECKSUFFIX} ${TBUILDROOT}*${TCHECKSUFFIX}.xml *~
+	${Q}rm -f ${TTMPROOT}*.pp ${TTMPROOT}*.sym ${TINCROOT}*_data.h ${TTMPROOT}*_mocks.c ${TTMPROOT}*_proxified.c ${TTMPROOT}*_runner.c ${TBOJROOT}*.o ${TBUILDROOT}*${TCHECKSUFFIX} ${TBUILDROOT}*${TCHECKSUFFIX}.xml ${TTMPROOT}.placeholder *~

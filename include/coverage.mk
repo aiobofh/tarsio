@@ -3,18 +3,26 @@ LDFLAGS+=-fprofile-arcs -lgcov --coverage
 COVERAGE_XML:=${TTESTROOT}coverage.xml
 LINES_COV:=${TTMPROOT}lines.cov
 BRANCHES_COV:=${TTMPROOT}branches.cov
-FILTER=-e ".*_check.c"
+FILTER=-e ".*${TCHECKSUFFIX}.c"
+
+GCOVR:=$(shell which gcovr)
+
+ifeq (,${GCOVR})
+	GCOVR=$(error Tarsio coverage.mk require gcovr installed)
+endif
 
 ifndef TCHECKSUFFIX
 	$(error TCHECKSUFFIX is not set)
 endif
 
+xml:: ${COVERAGE_XML}
+
 ${COVERAGE_XML}:
-	${Q}gcovr ${FILTER} ${COVEX} -x > $@
+	${Q}${GCOVR} ${FILTER} ${COVEX} -x > $@
 
 .NOTPARALLEL: ${LINES_COV}
 ${LINES_COV}: $(subst .c,,$(wildcard ${TTESTROOT}/*${TCHECKSUFFIX}.c))
-	${Q}gcovr ${FILTER} ${COVEX} | \
+	${Q}${GCOVR} ${FILTER} ${COVEX} | \
 	egrep -v '^File' | \
 	egrep -v '^-' | \
 	egrep -v '^Directory' | \
@@ -24,7 +32,7 @@ ${LINES_COV}: $(subst .c,,$(wildcard ${TTESTROOT}/*${TCHECKSUFFIX}.c))
 
 .NOTPARALLEL: ${BRANCHES_COV}
 ${BRANCHES_COV}: $(subst .c,,$(wildcard ${TTESTROOT}/*${TCHECKSUFFIX}.c))
-	${Q}gcovr ${FILTER} ${COVEX} -b | \
+	${Q}${GCOVR} ${FILTER} ${COVEX} -b | \
 	egrep -v '^File' | \
 	egrep -v '^-' | \
 	egrep -v '^Directory' | \

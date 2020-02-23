@@ -82,6 +82,7 @@ check:
 	${MAKE} --no-print-directory -C test clean && \
 	${MAKE} --no-print-directory -C examples Q=@ && \
 	${MAKE} --no-print-directory -C examples clean Q=@
+	${MAKE} clean Q=@
 
 tarsio.pc:
 	@echo "Name: tarsio" > $@; \
@@ -89,6 +90,8 @@ tarsio.pc:
 	echo "Description: Tarsio - A minimalistic automocking unit-checking/testing framework" >> $@; \
 	echo "prefix=${PREFIX}" >> $@; \
 	echo "includedir=${PREFIX}/include/tarsio" >> $@; \
+	echo "srcdir=${PREFIX}/include/tarsio" >> $@; \
+	echo "bindir=${PREFIX}/bin" >> $@; \
 	echo "Cflags: -I${PREFIX}/include/tarsio" >> $@
 
 .PHONY: build

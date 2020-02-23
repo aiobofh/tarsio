@@ -1,5 +1,5 @@
 #
-# Makefile for Tarsio example project
+# Makefile for Tarsio example projects
 #
 #               _______          _____ ___        ______
 #                  |      ||    |         |    | |      |
@@ -8,7 +8,7 @@
 #
 #               Copyright (C) 2020 AiO Secure Teletronics
 #
-# This Makefile will compile (and run) the example project for Tarsio.
+# This Makefile will compile (and run) the examples projects for Tarsio.
 #
 #  This file is part of Tarsio.
 #
@@ -26,73 +26,71 @@
 #  along with Tarsio.  If not, see <https://www.gnu.org/licenses/>.
 #
 
-MAKEFLAGS += --no-builtin-rules
-.SUFFIXES:
+Q=@
+PREFIX=$(realpath ..)
 
-Q=
-export PATH:=../src:${PATH}
+export Q
+export PKG_CONFIG_PATH=$(realpath .)
+export PATH:=../../src:${PATH}
 
-ifdef Q
-	HINT=
-else
-	HINT=; echo; echo "All the files are kept in this folder, take a looksie to get a feel for what Tarsio creates for you"; echo
-endif
+#
+# Just build the write_file program in the various examples (not very useful)
+#
+all:
+	${Q}${MAKE} --no-print-directory -C 0_making_your_own_build_system_using_tario && \
+	${MAKE} --no-print-directory -C 1_using_the_stock_build_system && \
+	${MAKE} --no-print-directory -C 2_out_of_source_checks && \
+	${MAKE} --no-print-directory -C 3_line_and_branch_coverage
 
-all: write_file_check
-	${Q}./write_file_check ${HINT}
+#
+# Perform the unit-checks in the various examples
+#
+check: tarsio.pc
+	${Q}${MAKE} --no-print-directory -C ../src && \
+	${MAKE} --no-print-directory -C 0_making_your_own_build_system_using_tario check && \
+	${MAKE} --no-print-directory -C 1_using_the_stock_build_system check && \
+	${MAKE} --no-print-directory -C 2_out_of_source_checks check && \
+	${MAKE} --no-print-directory -C 3_line_and_branch_coverage check
 
-# Generate pre-processed C-file for parsing by the Tarsio tools
-.PRECIOUS: %.pp
-%.pp: %.c
-	${Q}gcc -O0 -Wall -std=c11 -pedantic -g -I. -I../include -Dmain=__tarsio_replace_main -E -c $^ > $@
+#
+# Produce JUnit XML output (and Cobertura XML output, if coverage enabled)
+#
+xml: tarsio.pc
+	${MAKE} --no-print-directory -C 1_using_the_stock_build_system xml && \
+	${MAKE} --no-print-directory -C 2_out_of_source_checks xml && \
+	${MAKE} --no-print-directory -C 3_line_and_branch_coverage xml
 
-# Generate a Symbol-cache file to be used by the other Tarsio tools
-.PRECIOUS: %.sym
-%.sym: %.pp
-	${Q}tcg $^ $@
+#
+# Helper target to show information about the Tarsio set-up for the examples
+# using the tarsio.mk file.
+#
+tarsio_info: tarsio.pc
+	${Q}${MAKE} --no-print-directory -C 1_using_the_stock_build_system tarsio_info && \
+	${MAKE} --no-print-directory -C 2_out_of_source_checks tarsio_info && \
+	${MAKE} --no-print-directory -C 3_line_and_branch_coverage tarsio_info
 
-# Generate a header-file with all the mock storage structs
-.PRECIOUS: %_data.h
-%_data.h: %.sym %_check.c
-	${Q}tsg $^ > $@
+#
+# Bogus pkg-config file to make the examples look and feel as real as possible,
+# even without not installing Tarsio onto the system (for just executing the
+# examples from source).
+#
+tarsio.pc:
+	${Q}echo "Name: tarsio" > $@; \
+	echo "Version: ${VERSION}" >> $@; \
+	echo "Description: Tarsio - A minimalistic automocking unit-checking/testing framework" >> $@; \
+	echo "prefix=${PREFIX}" >> $@; \
+	echo "includedir=${PREFIX}/include" >> $@; \
+	echo "srcdir=${PREFIX}/src" >> $@; \
+	echo "bindir=${PREFIX}/src" >> $@; \
+	echo "Cflags: -I${PREFIX}/include" >> $@
 
-# Generate mockup-function for the example project
-.PRECIOUS: %_mocks.c
-%_mocks.c: %.sym %_data.h
-	${Q}tmg $^ > $@
-
-# Modify the pre-processed C source to call mock-up functions
-.PRECIOUS: %_proxified.pp
-%_proxified.pp: %.sym %.pp
-	${Q}tam $^ > $@
-
-# Generate the check-runner program
-.PRECIOUS: %_runner.c
-%_runner.c: %_check.c %_data.h
-	${Q}ttg $^ > $@
-
-# Compile the proxified object fil (it's a bit special)
-.PRECIOUS: %_proxified.o
-%_proxified.o: %_proxified.pp
-	${Q}gcc -Wall -std=c11 -pedantic -g -I. -I../include -x cpp-output -c -Wunused-function $< -o $@
-
-# Generic C-source to object file target
-.PRECIOUS: %.o
-%.o: %.c
-	${Q}gcc -O0 -Wall -std=c11 -pedantic -g -I. -I../include -o $@ -c $<
-
-# Re-use a lot of check-runner code between check-suites by just linking an
-# already compiled runtime of the Tarsio API.
-tarsio.o: ../src/tarsio.c
-	${Q}gcc -O0 -Wall -std=c11 -pedantic -g -I. -I../include -o $@ -c $<
-
-# Link all the objects to an executable program with all the tests.
-# Typically; this is where you need to add more dependencies if you
-# want to call original code from checks.
-.PRECIOUS: %_check
-%_check: %_proxified.o %_runner.o %_mocks.o %_check.o tarsio.o
-	${Q}gcc -o $@ $^
-
-# Cleanup all.
+#
+# Cleanup all folders
+#
 clean:
-	${Q}rm -f *.pp *.sym *_data.h *_mocks.c *_proxified.c *_runner.c *.o *_check *~ tarsio.o
+	${Q}${MAKE} --no-print-directory -C 0_making_your_own_build_system_using_tario clean && \
+	${MAKE} --no-print-directory -C 1_using_the_stock_build_system clean && \
+	${MAKE} --no-print-directory -C 2_out_of_source_checks clean && \
+	${MAKE} --no-print-directory -C 3_line_and_branch_coverage clean && \
+	${RM} tarsio.pc
+

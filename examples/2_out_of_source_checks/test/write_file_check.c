@@ -1,0 +1,1 @@
+../../test/write_file_check.c
