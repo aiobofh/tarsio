@@ -50,7 +50,7 @@ ${COVERAGE_XML}: check
 
 .NOTPARALLEL: ${LINES_COV}
 ${LINES_COV}: $(subst .c,,$(wildcard ${TSTDIR}/*_test.c))
-	${Q}gcovr --object-directory=$(realpath ${SRCDIR}) -r ${SRCDIR} ${FILTER} ${COVEX} | \
+	${Q}gcovr -kpu --object-directory=$(realpath ${SRCDIR}) -r ${SRCDIR} ${FILTER} ${COVEX} | \
 	egrep -v '^File' | \
 	egrep -v '^-' | \
 	egrep -v '^Directory' | \
@@ -60,7 +60,7 @@ ${LINES_COV}: $(subst .c,,$(wildcard ${TSTDIR}/*_test.c))
 
 .NOTPARALLEL: ${BRANCHES_COV}
 ${BRANCHES_COV}: $(subst .c,,$(wildcard ${TSTDIR}/*_test.c))
-	${Q}gcovr --object-directory=$(realpath ${SRCDIR}) -r ${SRCDIR} ${FILTER} ${COVEX} -b | \
+	${Q}gcovr -kpu --object-directory=$(realpath ${SRCDIR}) -r ${SRCDIR} ${FILTER} ${COVEX} -b | \
 	egrep -v '^File' | \
 	egrep -v '^-' | \
 	egrep -v '^Directory' | \
@@ -79,7 +79,7 @@ output_coverage: ${LINES_COV} ${BRANCHES_COV}
 
 .PHONY: clean
 clean::
-	${Q}${RM} -f ${BRANCHES_COV} ${LINES_COV} ${COVERAGE_XML} ${SRCDIR}*.gcda ${SRCDIR}*.gcno
+	${Q}${RM} -f ${BRANCHES_COV} ${LINES_COV} ${COVERAGE_XML} ${SRCDIR}*.gcda ${SRCDIR}*.gcno ${SRCDIR}*.gcov ${HOSTTMPDIR}*.gcda ${HOSTTMPDIR}*.gcno ${HOSTTMPDIR}*.gcov
 
 .PHONY: check
 check::
