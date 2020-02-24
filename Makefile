@@ -81,7 +81,7 @@ check:
 	@${MAKE} --no-print-directory -C test && \
 	${MAKE} --no-print-directory -C test clean && \
 	${MAKE} --no-print-directory -C examples check Q=@ && \
-	${MAKE} --no-print-directory -C examples clean Q=@
+	${MAKE} --no-print-directory -C examples clean Q=@ && \
 	${MAKE} clean Q=@
 
 tarsio.pc:
