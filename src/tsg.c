@@ -49,7 +49,7 @@ static char timestamp[] = __DATE__ " " __TIME__;
  */
 static void usage(const char* program_name)
 {
-  printf("USAGE: %s <pre-processed-source> <check-suite>\n", program_name);
+  printf("USAGE: %s <symbol-cache> <check-suite>\n", program_name);
 }
 
 /****************************************************************************
