@@ -94,8 +94,12 @@ tarsio.pc:
 	echo "bindir=${PREFIX}/bin" >> $@; \
 	echo "Cflags: -I${PREFIX}/include/tarsio" >> $@
 
+.PHONY: man-pages
+man-pages:
+	@${MAKE} --no-print-directory -C doc
+
 .PHONY: build
-build: tarsio.pc
+build: tarsio.pc man-pages
 	@${MAKE} --no-print-directory -C src
 
 #	git status | grep 'git addd' >/dev/null && ((echo "WARNING: There are untracked files, investigate with 'git status'." >&2 && false) || (true)) && \
@@ -318,7 +322,13 @@ install: build
 	install include/coverage.mk ${PREFIX}/include/tarsio/coverage.mk && \
 	install include/tarsio.h ${PREFIX}/include/tarsio/tarsio.h && \
 	install src/tarsio.c ${PREFIX}/include/tarsio/tarsio.c && \
-	install tarsio.pc /usr/share/pkgconfig/tarsio.pc
+	install tarsio.pc /usr/share/pkgconfig/tarsio.pc && \
+	mkdir -p ${PREFIX}/man/man3 && \
+	install doc/tcg.3 ${PREFIX}/man/man3/tcg.3 && \
+	install doc/tam.3 ${PREFIX}/man/man3/tam.3 && \
+	install doc/tmg.3 ${PREFIX}/man/man3/tmg.3 && \
+	install doc/tsg.3 ${PREFIX}/man/man3/tsg.3 && \
+	install doc/ttg.3 ${PREFIX}/man/man3/ttg.3
 
 uninstall:
 	${RM}-rf ${PREFIX}/bin/tcg ${PREFIX}/bin/tam ${PREFIX}/bin/tmg ${PREFIX}/bin/tsg ${PREFIX}/bin/ttg ${PREFIX}/include/tarsio /usr/share/pkgconfig/tarsio.pc
@@ -329,5 +339,6 @@ clean:
 	@$(MAKE) --no-print-directory -C src clean && \
 	$(MAKE) --no-print-directory -C test clean && \
 	$(MAKE) --no-print-directory -C examples clean Q=@ && \
-	$(RM) -rf *~ include/*~ *.uaem tarsio-${VERSION}* tarsio*.lha tarsio.pc # && \
-#	git status | grep 'git addd' >/dev/null && (echo "WARNING: There are untracked files, investigate with 'git status'." >&2 && false) || (true)
+	${MAKE} --no-print-directory -C doc clean && \
+	$(RM) -rf *~ include/*~ *.uaem tarsio-${VERSION}* tarsio*.lha tarsio.pc
+
