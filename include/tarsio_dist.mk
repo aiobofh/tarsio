@@ -35,7 +35,7 @@ MAKEFLAGS += --no-builtin-rules
 
 TCHECKSUFFIX?=_test
 
-HOSTTMPDIR:=/tmp/
+HOSTTMPDIR:=/tmp/${USER}/tarsio/
 HOSTINCDIR:=../include/
 HOSTSRCDIR:=../src/
 HOSTTSTDIR:=../test/
@@ -46,8 +46,9 @@ CPPEXT:=.p
 SRCDIR:=/src/
 INCDIR:=/include/
 TSTDIR:=/test/
-COVDIR=T:
-TMPDIR=T:
+COVDIR=T:${USER}/tarsio/
+TMPDIR=T:${USER}/tarsio/
+PLACEHOLDER=T:${USER}/tarsio/placeholder
 
 TCG=vamos -c ~/.vamosrc ${TARSIO_BIN}/tcg $(subst ${HOSTTMPDIR},${TMPDIR},$^) $(subst ${HOSTTMPDIR},${TMPDIR},$@)
 TSG=vamos -c ~/.vamosrc ${TARSIO_BIN}/tsg $(subst ${HOSTTMPDIR},${TMPDIR},$^) > $@
@@ -56,7 +57,7 @@ TAM=vamos -c ~/.vamosrc ${TARSIO_BIN}/tam $(subst ${HOSTTMPDIR},${TMPDIR},$^) > 
 TTG=vamos -c ~/.vamosrc ${TARSIO_BIN}/ttg $(subst ${HOSTTMPDIR},${TMPDIR},$^) > $@
 
 TMPCFLAGS=define NODEBUG define SASC optimize noicons noversion includedirectory $(TMPDIR) includedirectory $(INCDIR) includedirectory $(SRCDIR)
-PPFLAGS=${TMPCFLAGS} define main=__tarsio_replace_main $(subst ${HOSTSRCDIR},${SRCDIR},$^) preprocessoronly; cp $(subst .c,${CPPEXT},$^) $@; rm -f $(subst .c,${CPPEXT},$^)
+PPFLAGS=${TMPCFLAGS} define main=__tarsio_replace_main $(filter-out ${HOSTTMPDIR}.placeholder,$(subst ${HOSTSRCDIR},${SRCDIR},$^)) preprocessoronly; cp $(filter-out ${HOSTTMPDIR}.placeholder,$(subst .c,${CPPEXT},$^) $@; rm -f $(subst .c,${CPPEXT},$^))
 CFLAGS=${TMPCFLAGS} $(subst ${HOSTTMPDIR},${TMPDIR},$(subst ${HOSTTSTDIR},${TSTDIR},$(subst ${HOSTSRCDIR},${SRCDIR},$^))) IGNORE=105
 CFLAGSPP=${CFLAGS}
 LDFLAGS=noicons noversion batch $(subst ${HOSTTMPDIR},${TMPDIR},$(subst ${HOSTTSTDIR},${TSTDIR},$(subst ${HOSTSRCDIR},${SRCDIR},$^))) link to $(subst ${HOSTTMPDIR},${TMPDIR},$(subst ${HOSTTSTDIR},${TSTDIR},$(subst ${HOSTSRCDIR},${SRCDIR},$@)))
@@ -69,11 +70,11 @@ else
 ifdef VBCC
 EXE:=
 CPPEXT:=.i
-TCG=vamos -c ~/.vamosrc ${TARSIO_BIN}/tcg $(subst ${HOSTTMPDIR},T:,$^) $(subst ${HOSTTMPDIR},T:,$@)
-TSG=vamos -c ~/.vamosrc ${TARSIO_BIN}/tsg $(subst ${HOSTTMPDIR},T:,$^) > $@
-TMG=vamos -c ~/.vamosrc ${TARSIO_BIN}/tmg $(subst ${HOSTTMPDIR},T:,$^) > $@
-TAM=vamos -c ~/.vamosrc ${TARSIO_BIN}/tam $(subst ${HOSTTMPDIR},T:,$^) > $@
-TTG=vamos -c ~/.vamosrc ${TARSIO_BIN}/ttg $(subst ${HOSTTMPDIR},T:,$^) > $@
+TCG=vamos -c ~/.vamosrc ${TARSIO_BIN}/tcg $(subst ${HOSTTMPDIR},T:${USER}/tarsio/,$^) $(subst ${HOSTTMPDIR},T:${USER}/tarsio/,$@)
+TSG=vamos -c ~/.vamosrc ${TARSIO_BIN}/tsg $(subst ${HOSTTMPDIR},T:${USER}/tarsio/,$^) > $@
+TMG=vamos -c ~/.vamosrc ${TARSIO_BIN}/tmg $(subst ${HOSTTMPDIR},T:${USER}/tarsio/,$^) > $@
+TAM=vamos -c ~/.vamosrc ${TARSIO_BIN}/tam $(subst ${HOSTTMPDIR},T:${USER}/tarsio/,$^) > $@
+TTG=vamos -c ~/.vamosrc ${TARSIO_BIN}/ttg $(subst ${HOSTTMPDIR},T:${USER}/tarsio/,$^) > $@
 
 SRCDIR:=${HOSTSRCDIR}
 INCDIR:=${HOSTINCDIR}
@@ -94,7 +95,7 @@ else
 ifdef VC
 EXE:=.exe
 CPPEXT:=.i
-TMPDIR:=T:\\
+TMPDIR:=T:\\${USER}\\tarsio\\
 TCG=wine ${TARSIO_BIN}/tcg.exe $(subst ${HOSTTMPDIR},${TMPDIR},$^) $(subst ${HOSTTMPDIR},${TMPDIR},$@)
 TSG=wine ${TARSIO_BIN}/tsg.exe $(subst ${HOSTTMPDIR},${TMPDIR},$^) > $@
 TMG=wine ${TARSIO_BIN}/tmg.exe $(subst ${HOSTTMPDIR},${TMPDIR},$^) > $@
@@ -148,11 +149,16 @@ info:
 	echo ${TESTSUITES}
 	echo ${DATS}
 	echo ${CC}
+
+.PRECIOUS: ${HOSTTMPDIR}.placeholder
+${HOSTTMPDIR}.placeholder:
+	${Q}mkdir -p $(dir $@) && touch $@
+
 #
 # Produce a pre-processed file for the code to test
 #
 .PRECIOUS: ${HOSTTMPDIR}%${CPPEXT}
-${HOSTTMPDIR}%${CPPEXT}: ${HOSTSRCDIR}%.c
+${HOSTTMPDIR}%${CPPEXT}: ${HOSTSRCDIR}%.c ${HOSTTMPDIR}.placeholder
 	${Q}${CC} ${PPFLAGS}
 
 .PRECIOUS: ${HOSTTMPDIR}%.sym
@@ -215,7 +221,7 @@ ${HOSTTMPDIR}tarsio.o: ${HOSTSRCDIR}tarsio.c
 
 .PHONY: clean
 clean::
-	${Q}${RM} -f *~ ${HOSTTMPDIR}*.sym ${HOSTTMPDIR}*_data.h ${HOSTTMPDIR}*_data.o ${HOSTTMPDIR}*.p ${HOSTTMPDIR}*.pp ${HOSTTMPDIR}*.i ${HOSTTMPDIR}*_proxified* ${HOSTSRCDIR}*_proxified* ${HOSTTMPDIR}*_runner* ${HOSTTMPDIR}*_mocks* ${HOSTTMPDIR}*${TCHECKSUFFIX}* *${TCHECKSUFFIX}${EXE} *.o ${HOSTTMPDIR}file*.asm ${HOSTTMPDIR}file*.o *.i ${HOSTTMPDIR}tarsio.o
+	${Q}${RM} -f *~ ${HOSTTMPDIR}*.sym ${HOSTTMPDIR}*_data.h ${HOSTTMPDIR}*_data.o ${HOSTTMPDIR}*.p ${HOSTTMPDIR}*.pp ${HOSTTMPDIR}*.i ${HOSTTMPDIR}*_proxified* ${HOSTSRCDIR}*_proxified* ${HOSTTMPDIR}*_runner* ${HOSTTMPDIR}*_mocks* ${HOSTTMPDIR}*${TCHECKSUFFIX}* *${TCHECKSUFFIX}${EXE} *.o ${HOSTTMPDIR}file*.asm ${HOSTTMPDIR}file*.o *.i ${HOSTTMPDIR}tarsio.o ${HOSTTMPDIR}.placeholder
 
 .PHONY: check
 check:: ${DATS}
