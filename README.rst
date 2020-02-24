@@ -160,9 +160,7 @@ functions. For best result it should be given a pre-processed C source with all
 the macros expanded and required files included. This is for example done with the
 -E flag for GCC.
 
-See the manual_ page for TCG for more information.
-
- .. _manual: doc/tcg.rst
+See the manual page for TCG for more information.
 
 TSG - Tarsio Struct Generator
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -173,9 +171,7 @@ of the source code you're writing, and the source code file containing your chec
 cases. It will output a header-file to stdout with all the data types required to
 compile your check successfully.
 
-See the manual_ page for TSG for more information.
-
- .. _manual: doc/tsg.rst
+See the manual page for TSG for more information.
 
 TMG - Tarsio Mock Generator
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -189,9 +185,7 @@ a return data type. The mocks can also be monitored for input arguments and also
 call either the real function or hand-written subs or replacements for the
 functions.
 
-See the manual_ page for TMG for more information.
-
- .. _manual: doc/tmg.rst
+See the manual page for TMG for more information.
 
 TAM - Tarsio Auto Mocker
 ^^^^^^^^^^^^^^^^^^^^^^^^
@@ -226,9 +220,7 @@ Removal of static-declared functions, since they're gonna be called from your
 check-cases, and extern declaration of function prototypes just around where they
 are called.
 
-See the manual_ page for TAM for more information.
-
- .. _manual: doc/tam.rst
+See the manual page for TAM for more information.
 
 TTG - Tarsio Test-runner Generator
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -242,9 +234,7 @@ program. This is done to reduce boilerplate code needed to set-up the runner, an
 clears states (that Tarsio know about) between every check-case so that they can
 be run independently of each other.
 
-Set the manual_ page for TTG for more information.
-
- .. _manual: doc/ttg.rst
+Set the manual page for TTG for more information.
 
 Building a suite using the tools
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
