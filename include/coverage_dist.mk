@@ -35,8 +35,8 @@ SUFFIXES :=
 %.w:
 %.v:
 
-CFLAGS+=-fprofile-arcs -ftest-coverage
-LDFLAGS+=-fprofile-arcs -lgcov --coverage
+CFLAGS+=-fprofile-arcs -ftest-coverage -fno-exceptions -fno-inline
+LDFLAGS+=-fprofile-arcs -lgcov -fno-exceptions -fno-inline --coverage
 TMPDIR?=.
 COVEX?=
 COVERAGE_XML:=${TSTDIR}/coverage.xml

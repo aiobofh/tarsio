@@ -26,8 +26,8 @@
 #  along with Tarsio.  If not, see <https://www.gnu.org/licenses/>.
 #
 
-CFLAGS+=-fprofile-arcs -ftest-coverage
-LDFLAGS+=-fprofile-arcs -lgcov --coverage
+CFLAGS+=-fprofile-arcs -ftest-coverage -fno-exceptions -fno-inline
+LDFLAGS+=-fprofile-arcs -lgcov --coverage -fno-exceptions -fno-inline
 COVERAGE_XML:=${TTESTROOT}coverage.xml
 LINES_COV:=${TTMPROOT}lines.cov
 BRANCHES_COV:=${TTMPROOT}branches.cov
