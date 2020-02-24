@@ -1,6 +1,15 @@
 #
 # Generic GNU Make include file for automatic builds of all Tarsio artifacts.
 #
+#               _______          _____ ___        ______
+#                  |      ||    |         |    | |      |
+#                  |      ||    |         |    | |      |
+#                  |   ___||___ |         |___ | |______|
+#
+#               Copyright (C) 2020 AiO Secure Teletronics
+#
+# This Makefile could be included in any GNU Make system.
+#
 # Using this file
 # ---------------
 #
