@@ -169,7 +169,7 @@ ${HOSTTMPDIR}%_mocks.c: ${HOSTTMPDIR}%.sym ${HOSTTMPDIR}%_data.h
 	${Q}${TMG}
 
 .PRECIOUS: ${HOSTTMPDIR}%_proxified${CPPEXT}
-${HOSTTMPDIR}%_proxified${CPPEXT}: ${HOSTTMPDIR}%.sym ${HOSTTMPDIR}%${CPPEXT}
+${HOSTTMPDIR}%_proxified${CPPEXT}: ${HOSTTMPDIR}%.sym ${HOSTTMPDIR}%${CPPEXT} ${HOSTTMPDIR}%_data.h
 	${Q}${TAM}
 
 .PRECIOUS: ${HOSTTMPDIR}%_runner.c

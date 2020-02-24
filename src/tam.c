@@ -53,7 +53,7 @@ static char timestamp[] = __DATE__ " " __TIME__;
  */
 static void usage(const char* program_name)
 {
-  printf("USAGE: %s <cache-file> <pre-processed-source>\n", program_name);
+  printf("USAGE: %s <cache-file> <pre-processed-source> <struct-header>\n", program_name);
 }
 
 /****************************************************************************
@@ -85,7 +85,7 @@ static int tam_options_init(tam_options_t* options, int argc, char* argv[])
     }
   }
 
-  if (argc != 3) {
+  if (argc != 4) {
     error1("ERROR: Illegal number (%d) of arguments", argc);
     usage(argv[0]);
     return -1;

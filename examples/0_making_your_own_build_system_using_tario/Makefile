@@ -81,7 +81,7 @@ write_file: write_file.c
 
 # Modify the pre-processed C source to call mock-up functions
 .PRECIOUS: %_proxified.pp
-%_proxified.pp: %.sym %.pp
+%_proxified.pp: %.sym %.pp %_data.h
 	${Q}tam $^ > $@
 
 # Generate the check-runner program

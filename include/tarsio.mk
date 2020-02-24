@@ -185,11 +185,11 @@ ${TINCROOT}%_data.h: ${TTMPROOT}%.sym ${TTESTROOT}%${TCHECKSUFFIX}.c
 
 .PRECIOUS: ${TTMPROOT}%_mocks.c
 ${TTMPROOT}%_mocks.c: ${TTMPROOT}%.sym ${TINCROOT}%_data.h ${TTMPROOT}.placeholder
-	${Q}${TMG} $(filter-out ${TTMPROOT}.placeholder,$^) > $@
+	${Q}${TMG} $(filter-out _data.h,$(filter-out ${TTMPROOT}.placeholder,$^)) > $@
 
 .PRECIOUS: ${TTMPROOT}%_proxified.pp
 #.NOTPARALLEL: ${TTMPROOT}%_proxified.pp
-${TTMPROOT}%_proxified.pp: ${TTMPROOT}%.sym ${TTMPROOT}%.pp ${TTMPROOT}.placeholder
+${TTMPROOT}%_proxified.pp: ${TTMPROOT}%.sym ${TTMPROOT}%.pp ${TINCROOT}%_data.h ${TTMPROOT}.placeholder
 	${Q}${TAM} $(filter-out ${TTMPROOT}.placeholder,$^) > $@
 
 .PRECIOUS: ${TTMPROOT}%_runner.c
@@ -211,7 +211,7 @@ ${TOBJROOT}%_runner.o: ${TTMPROOT}%_runner.c
 #.NOTPARALLEL: ${TOBJROOT}%${TCHECKSUFFIX}.o
 .PRECIOUS: ${TOBJROOT}%${TCHECKSUFFIX}.o
 ${TOBJROOT}%${TCHECKSUFFIX}.o: ${TTESTROOT}%${TCHECKSUFFIX}.c ${TINCROOT}%_data.h
-	${Q}${CC} ${CFLAGS} -Dmain=__tarsio_replace_main ${TARSIOCFLAGS} -o $@ -c $<
+	${Q}${CC} ${CFLAGS} -Dmain=__tarsio_replace_main ${TARSIOCFLAGS} -o $@ -c $(filter-out ${TINCROOT}%_data.h,$<)
 
 .PRECIOIS: ${TOBJROOT}tarsio.o
 ${TOBJROOT}tarsio.o: ${TARSIOSRCDIR}/tarsio.c
