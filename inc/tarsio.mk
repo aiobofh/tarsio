@@ -18,11 +18,14 @@
 #
 # To include this file in a Makefile of a project use the include directive
 # of GNU Make. This way of including (and this file istelf) rely on a correct
-# installation of Tarsio where it can be located using pkg-config.
+# installation of Tarsio where it can be located using pkg-config, or at the
+# PREFIX were it was installed.
 #
 # Example::
 #
 # -include $(shell pkg-config --variable=includedir tarsio)/tarsio.mk
+#
+# It's perfectly fine to just explicity give the path to tarsio.mk as well.
 #
 # Control it
 # ^^^^^^^^^^
@@ -103,9 +106,23 @@
 
 Q?=@
 
+PKG_CONFIG=$(shell which pkg-config)
+
+ifeq (,${TARSIOHOME})
+	ifeq (,${PKG_CONFIG})
+		PKG_CONFIG=$(error "Unable to locate Tarsio, you need to specify TARSIOHOME")
+	endif
+endif
+
+#TARSIOHOME?=/usr/local
+
 MSG:="was not found in your PATH, please install Tarsio (https://github.com/aiobofh/tarsio)"
 
-TARSIOBINDIR?=$(shell pkg-config --variable=bindir tarsio)
+ifneq (,${PKG_CONFIG})
+	TARSIOBINDIR?=$(shell ${PKG_CONFIG} --variable=bindir tarsio)
+else
+	TARSIOBINDIR?=${TARSIOHOME}/bin
+endif
 
 TCG:=${TARSIOBINDIR}/tcg
 TSG:=${TARSIOBINDIR}/tsg
@@ -113,9 +130,15 @@ TMG:=${TARSIOBINDIR}/tmg
 TAM:=${TARSIOBINDIR}/tam
 TTG:=${TARSIOBINDIR}/ttg
 
-TARSIOINCDIR?=$(shell pkg-config --variable=includedir tarsio)
-TARSIOSRCDIR?=$(shell pkg-config --variable=srcdir tarsio)
-TARSIOCFLAGS?=$(shell pkg-config --cflags tarsio) -I.
+ifeq (,${TARSIOHOME})
+	TARSIOINCDIR?=$(shell ${PKG_CONFIG} --variable=includedir tarsio)
+	TARSIOSRCDIR?=$(shell ${PKG_CONFIG} --variable=srcdir tarsio)
+	TARSIOCFLAGS?=$(shell ${PKG_CONFIG} --cflags tarsio) -I.
+else
+	TARSIOINCDIR?=${TARSIOHOME}/include/tarsio
+	TARSIOSRCDIR?=${TARSIOHOME}/include/tarsio
+	TARSIOCFLAGS?=-I${TARSIOHOME}/include/tarsio
+endif
 
 ifdef TSRCROOT
 	TARSIOCFLAGS+=-I${TSRCROOT}
@@ -185,7 +208,7 @@ ${TINCROOT}%_data.h: ${TTMPROOT}%.sym ${TTESTROOT}%${TCHECKSUFFIX}.c
 
 .PRECIOUS: ${TTMPROOT}%_mocks.c
 ${TTMPROOT}%_mocks.c: ${TTMPROOT}%.sym ${TINCROOT}%_data.h ${TTMPROOT}.placeholder
-	${Q}${TMG} $(filter-out _data.h,$(filter-out ${TTMPROOT}.placeholder,$^)) > $@
+	${Q}${TMG} $(filter-out ${TTMPROOT}.placeholder,$^) > $@
 
 .PRECIOUS: ${TTMPROOT}%_proxified.pp
 #.NOTPARALLEL: ${TTMPROOT}%_proxified.pp

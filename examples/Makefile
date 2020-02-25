@@ -30,7 +30,6 @@ Q=@
 PREFIX=$(realpath ..)
 
 export Q
-export PKG_CONFIG_PATH=$(realpath .)
 export PATH:=../../src:${PATH}
 
 #
@@ -45,9 +44,8 @@ all:
 #
 # Perform the unit-checks in the various examples
 #
-check: tarsio.pc
-	${Q}${MAKE} --no-print-directory -C ../src && \
-	${MAKE} --no-print-directory -C 0_making_your_own_build_system_using_tario check && \
+check: compile_tarsio
+	${Q}${MAKE} --no-print-directory -C 0_making_your_own_build_system_using_tario check && \
 	${MAKE} --no-print-directory -C 1_using_the_stock_build_system check && \
 	${MAKE} --no-print-directory -C 2_out_of_source_checks check && \
 	${MAKE} --no-print-directory -C 3_line_and_branch_coverage check
@@ -55,7 +53,7 @@ check: tarsio.pc
 #
 # Produce JUnit XML output (and Cobertura XML output, if coverage enabled)
 #
-xml: tarsio.pc
+xml: compile_tarsio
 	${MAKE} --no-print-directory -C 1_using_the_stock_build_system xml && \
 	${MAKE} --no-print-directory -C 2_out_of_source_checks xml && \
 	${MAKE} --no-print-directory -C 3_line_and_branch_coverage xml
@@ -64,26 +62,14 @@ xml: tarsio.pc
 # Helper target to show information about the Tarsio set-up for the examples
 # using the tarsio.mk file.
 #
-tarsio_info: tarsio.pc
+tarsio_info:
 	${Q}${MAKE} --no-print-directory -C 1_using_the_stock_build_system tarsio_info && \
 	${MAKE} --no-print-directory -C 2_out_of_source_checks tarsio_info && \
 	${MAKE} --no-print-directory -C 3_line_and_branch_coverage tarsio_info
 
-#
-# Bogus pkg-config file to make the examples look and feel as real as possible,
-# even without not installing Tarsio onto the system (for just executing the
-# examples from source).
-#
-tarsio.pc:
-	${Q}echo "Name: tarsio" > $@; \
-	echo "Version: ${VERSION}" >> $@; \
-	echo "Description: Tarsio - A minimalistic automocking unit-checking/testing framework" >> $@; \
-	echo "prefix=${PREFIX}" >> $@; \
-	echo "includedir=${PREFIX}/include" >> $@; \
-	echo "srcdir=${PREFIX}/src" >> $@; \
-	echo "bindir=${PREFIX}/src" >> $@; \
-	echo "Cflags: -I${PREFIX}/include" >> $@
-
+.PHONY: compile_tarsio
+compile_tarsio:
+	${Q}${MAKE} --no-print-directory -C ..
 #
 # Cleanup all folders
 #
@@ -93,4 +79,3 @@ clean:
 	${MAKE} --no-print-directory -C 2_out_of_source_checks clean && \
 	${MAKE} --no-print-directory -C 3_line_and_branch_coverage clean && \
 	${RM} tarsio.pc
-

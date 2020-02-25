@@ -33,6 +33,16 @@ MAKEFLAGS += --no-builtin-rules
 .SUFFIXES:
 
 #
+# Configure Tarsio. Usually on an installed system pkg-config or TARSIOHOME
+# is enough. But here, since it should be possible to run the examples
+# without installing Tarsio anywhere a more specific configuration is needed
+#
+TARSIOHOME=../../..
+TARSIOINCDIR?=${TARSIOHOME}/inc
+TARSIOSRCDIR?=${TARSIOHOME}/src
+TARSIOCFLAGS?=-I${TARSIOHOME}/inc
+
+#
 # Default clean builds
 #
 CFLAGS=-Wall -pedantic -std=c99 -I.
@@ -46,4 +56,4 @@ TSRCROOT=../src/
 #
 # Depend on the Tarsio make system
 #
-include $(shell pkg-config --variable=includedir tarsio)/tarsio.mk
+include ${TARSIOINCDIR}/tarsio.mk

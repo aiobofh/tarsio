@@ -76,7 +76,7 @@ all:
 tools:
 	${Q}${MAKE} --no-print-directory -C ../src/
 
-include ../include/tarsio_dist.mk
+include ../inc/tarsio_dist.mk
 
 .PHONY: check
 check:: $(subst .c,${EXE},$(wildcard *${TCHECKSUFFIX}.c))
@@ -94,7 +94,7 @@ clean-all:
 ifndef SASC
 ifndef VBCC
 ifndef VC
-include ../include/coverage_dist.mk
+include ../inc/coverage_dist.mk
 endif
 endif
 endif

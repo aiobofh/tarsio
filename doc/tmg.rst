@@ -11,7 +11,7 @@ Tarsio Mock Generator
 SYNOPSIS
 ========
 
-tmg [option] <symbol-cache.sym>
+tmg [option] <symbol-cache.sym> <struct-header.h>
 
 DESCRIPTION
 ===========
@@ -24,7 +24,7 @@ functions for all used functions in the design under test.
 OPTIONS
 =======
 
-tmg only take one input file paths as arguments.
+tmg only take two input file paths as arguments.
 
 The input file should be generated with tcg(3).
 

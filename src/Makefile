@@ -41,7 +41,7 @@ AUTHOR?=unknown
 ifdef SASC
 EXE:=
 CPU:=68000
-INCDIR:=/include/
+INCDIR:=/inc/
 CFLAGS=CPU=${CPU} define NODEBUG define SASC define optimize noicons noversion includedirectory $(INCDIR) $<
 CC:=sc
 LDFLAGS=noicons noversion $^ link to $@
@@ -50,7 +50,7 @@ else
 ifdef VBCC
 EXE:=
 CPU:=68000
-INCDIR:=../include/
+INCDIR:=../inc/
 CFLAGS=${NODEBUG} -DVBCC=1 -O2 -c99 -c $^ -I${INCDIR} -o $@ -cpu=${CPU}
 LDFLAGS=-O2 -c99 $^ -o $@
 CC:=vc
@@ -58,14 +58,14 @@ LD:=${CC}
 else
 ifdef VC
 EXE=.exe
-INCDIR:=../include/
+INCDIR:=../inc/
 CFLAGS=/DNODEBUG /D_CRT_SECURE_NO_DEPRECATE /nologo /c /O1 /W3 /MT /I${INCDIR} /Fo$@ $<
 LDFLAGS=/nologo /out:$@ $^
 CC=cl
 LD:=link
 else
 EXE:=
-INCDIR:=../include/
+INCDIR:=../inc/
 ifdef SANITIZE
         SANITIZER_CFLAGS=-fsanitize=address,leak,undefined -fno-omit-frame-pointer
 	SANITIZER_LDFLAGS=-lasan -fsanitize=address,leak,undefined

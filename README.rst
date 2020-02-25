@@ -236,6 +236,66 @@ be run independently of each other.
 
 Set the manual page for TTG for more information.
 
+Installation
+^^^^^^^^^^^^
+
+The installation of Tarsio is fairly agnostic. There are a few options to
+consider. When cloing you could select a release by specifying a tag as well.
+Read the git manual on how to select a taged version.
+
+1. System-wide installation
+
+   Download the latest Tarsio version (or tag) and build::
+
+     $ git clone https://github.com/aiobofh/tarsio.git
+     $ cd tarsio
+     $ make
+
+   Now there are a few options. To install it onto you system:
+
+   a. Install in the default location (``/usr/local``)::
+
+        $ sudo make install
+
+   b. Or install it in a specific location::
+
+        $ sudo make install PREFIX=/opt/tarsio
+
+   If your system has pkg-config it should be sufficient to find everything
+   you need by just including ``tarsio.mk`` in your GNU Make build system::
+
+     include $(shell pkg-config --variable=includedir tarsio)/tarsio.mk
+
+   If not you should set the environment variable ``TARSIOHOME`` in your build
+   system::
+
+     export TARSIOHOME=/opt/tarsio # for example
+
+2. Project installation::
+
+     $ cd my_project
+     $ git clone https://github.com/aiobofh/tarsio.git
+     $ cd tarsio
+     $ make
+     $ cd ..
+
+   Now you need to set ``TARSIOHOME`` in your own build system to the
+   ``my_project/tarsio`` folder (if that's where you cloned it).
+
+In the future there may be other ways of installing Tarsio. But if you run in to
+troubles, check the different Makefile-examples in the examples folder. There are
+a few more fine-grained configurations that can be used together with
+``TARSIOHOME``. For example:
+
+* ``TARSIOINCDIR`` is the path to where the ``tarsio.h`` and ``tarsio.mk`` files
+  are located
+
+* ``TARSIOSRCDIR`` is the path to where the ``tarsio.c`` file is located
+
+Play around with it and get a feel for it. The provided ``tarsio.mk`` file is just
+a commodity. Use it if you feel like it, otherwise make the buildsystem from
+scratch.
+
 Building a suite using the tools
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 

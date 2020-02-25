@@ -46,7 +46,7 @@ endif
 # But since this example should build and run without having to install Tarsio on
 # the system, let's just traverse the directory tree relative.
 #
-TARSIOINCDIR:=../../include
+TARSIOINCDIR:=../../include/tarsio
 TARSIOC=../../src/tarsio.c
 
 all: write_file
@@ -108,8 +108,8 @@ tarsio.o: ${TARSIOC}
 # Typically; this is where you need to add more dependencies if you
 # want to call original code from checks.
 .PRECIOUS: %_check
-%_check: %_proxified.o %_runner.o %_mocks.o %_check.o tarsio.o
-	${Q}gcc -o $@ $^
+%_check: %_proxified.o %_runner.o %_mocks.o %_check.o tarsio.o %_data.h
+	${Q}gcc -o $@ $(filter-out $(lastword $^),$^)
 
 # Cleanup all.
 clean:

@@ -28,27 +28,45 @@
 #
 
 PREFIX?=/usr/local
+TARSIOHOME?=$(realpath .)
 
 MAKEFLAGS += --no-builtin-rules
 .SUFFIXES:
+
+Q=@
 
 export VERSION_MAJOR:=1
 export VERSION_MINOR:=0
 export VERSION_PATCH:=0
 export AUTHOR:=Joakim Ekblad
 export VERSION:=${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}
-export Q:=@
+export Q
 
-all: build
+PKG_CONFIG=$(shell which pkg-config)
+ifneq (,${PKG_CONFIG})
+	INSTALL_PKG_CONFIG=install tarsio.pc /usr/share/pkgconfig/tarsio.pc
+	REMOVE_PKG_CONFIG=/usr/share/pkgconfig/tarsio.pc
+else
+	INSTALL_PKG_CONFIG=echo "Warning: no pkg-config, skipping installation of tarsio.pc file" >&2
+endif
+
+BINTARGETS=tam tcg tmg tsg ttg
+INCTARGETS=tarsio.mk coverage.mk tarsio.c tarsio.h
+MANTARGETS=$(addsuffix .3,${BINTARGETS})
+
+all: local_install
 
 info:
-	@echo ${VERSION} && \
+	${Q}echo ${VERSION} && \
+	echo ${PKG_CONFIG} && \
+	echo ${INSTALL_PKG_CONFIG} && \
+	echo ${REMOVE_PKG_CONFIG} && \
 	$(MAKE) --no-print-directory -C src info
 
 .NOTPARALLEL: check-all
 .PHONY: check-all
 check-all: clean
-	@echo $@ && \
+	${Q}echo $@ && \
 	echo "----------------------------------------------------------" && \
 	echo "Native:" && \
 	$(MAKE) --no-print-directory -C src && \
@@ -78,14 +96,14 @@ check-sasc: clean
 .NOTPARALLEL: check
 .PHONY: check
 check:
-	@${MAKE} --no-print-directory -C test && \
+	${Q}${MAKE} --no-print-directory -C test && \
 	${MAKE} --no-print-directory -C test clean && \
 	${MAKE} --no-print-directory -C examples check Q=@ && \
 	${MAKE} --no-print-directory -C examples clean Q=@ && \
-	${MAKE} clean Q=@
+	${MAKE} clean Q=${Q}
 
 tarsio.pc:
-	@echo "Name: tarsio" > $@; \
+	${Q}echo "Name: tarsio" > $@; \
 	echo "Version: ${VERSION}" >> $@; \
 	echo "Description: Tarsio - A minimalistic automocking unit-checking/testing framework" >> $@; \
 	echo "prefix=${PREFIX}" >> $@; \
@@ -96,18 +114,74 @@ tarsio.pc:
 
 .PHONY: man-pages
 man-pages:
-	@${MAKE} --no-print-directory -C doc
+	${Q}${MAKE} --no-print-directory -C doc
 
-.PHONY: build
-build: tarsio.pc man-pages
-	@${MAKE} --no-print-directory -C src
+src/tam:
+	${Q}${MAKE} --no-print-directory -C src tam
+
+src/tcg:
+	${Q}${MAKE} --no-print-directory -C src tcg
+
+src/tmg:
+	${Q}${MAKE} --no-print-directory -C src tmg
+
+src/tsg:
+	${Q}${MAKE} --no-print-directory -C src tsg
+
+src/ttg:
+	${Q}${MAKE} --no-print-directory -C src ttg
+
+src/ttm:
+	${Q}${MAKE} --no-print-directory -C src ttm
+
+doc/tam.3:
+	${Q}${MAKE} --no-print-directory -C doc tam.3
+
+doc/tcg.3:
+	${Q}${MAKE} --no-print-directory -C doc tcg.3
+
+doc/tmg.3:
+	${Q}${MAKE} --no-print-directory -C doc tmg.3
+
+doc/tsg.3:
+	${Q}${MAKE} --no-print-directory -C doc tsg.3
+
+doc/ttg.3:
+	${Q}${MAKE} --no-print-directory -C doc ttg.3
+
+doc/ttm.3:
+	${Q}${MAKE} --no-print-directory -C doc ttm.3
+
+bin/.placeholder:
+	${Q}mkdir -p $(dir $@) && touch $@
+
+bin/%: src/% bin/.placeholder
+	${Q}cp $< $@
+
+include/tarsio/.placeholder:
+	${Q}mkdir -p $(dir $@) && touch $@
+
+include/tarsio/%: inc/% include/tarsio/.placeholder
+	${Q}cp $< $@
+
+include/tarsio/tarsio.c: src/tarsio.c include/tarsio/.placeholder
+	${Q}cp $< $@
+
+man/man3/.placeholder:
+	${Q}mkdir -p $(dir $@) && touch $@
+
+man/man3/%.3: doc/%.3 man/man3/.placeholder
+	${Q}cp $< $@
+
+.PHONY: local_intall
+local_install: $(addprefix bin/,${BINTARGETS}) $(addprefix include/tarsio/,${INCTARGETS}) $(addprefix man/man3/,${MANTARGETS}) tarsio.pc
 
 #	git status | grep 'git addd' >/dev/null && ((echo "WARNING: There are untracked files, investigate with 'git status'." >&2 && false) || (true)) && \
 #	git status | grep 'git reset' >/dev/null && ((echo "WARNING: There are uncommitted changes, investigate with 'git status'." >&2 && false) || (true)) && \
 
 .NOTPARALLEL: tarsio-${VERSION}.tar.gz
 tarsio-${VERSION}.tar.gz: check-all
-	@echo "" && \
+	${Q}echo "" && \
 	echo $@ && \
 	echo "----------------------------------------------------------" && \
 	${MAKE} --no-print-directory -C src clean && \
@@ -119,7 +193,7 @@ tarsio-${VERSION}.tar.gz: check-all
 
 .NOTPARALLEL: tarsio-${VERSION}-src.lha
 tarsio-${VERSION}-src.lha: check-all
-	@echo "" && \
+	${Q}echo "" && \
 	echo $@ && \
 	echo "----------------------------------------------------------" && \
 	${MAKE} --no-print-directory -C src clean && \
@@ -132,7 +206,7 @@ tarsio-${VERSION}-src.lha: check-all
 
 .NOTPARALLEL: tarsio-${VERSION}-sasc-68000-bin.lha
 tarsio-${VERSION}-sasc-68000-bin.lha: check-all
-	@echo "" && \
+	${Q}echo "" && \
 	echo $@ && \
 	echo "----------------------------------------------------------" && \
 	${MAKE} --no-print-directory -C src clean && \
@@ -148,7 +222,7 @@ tarsio-${VERSION}-sasc-68000-bin.lha: check-all
 
 .NOTPARALLEL: tarsio-${VERSION}-sasc-68020-bin.lha
 tarsio-${VERSION}-sasc-68020-bin.lha: check-all
-	@echo "" && \
+	${Q}echo "" && \
 	echo $@ && \
 	echo "----------------------------------------------------------" && \
 	${MAKE} --no-print-directory -C src clean && \
@@ -164,7 +238,7 @@ tarsio-${VERSION}-sasc-68020-bin.lha: check-all
 
 .NOTPARALLEL: tarsio-${VERSION}-sasc-68030-bin.lha
 tarsio-${VERSION}-sasc-68030-bin.lha: check-all
-	@echo "" && \
+	${Q}echo "" && \
 	echo $@ && \
 	echo "----------------------------------------------------------" && \
 	${MAKE} --no-print-directory -C src clean && \
@@ -180,7 +254,7 @@ tarsio-${VERSION}-sasc-68030-bin.lha: check-all
 
 .NOTPARALLEL: tarsio-${VERSION}-sasc-68040-bin.lha
 tarsio-${VERSION}-sasc-68040-bin.lha: check-all
-	@echo "" && \
+	${Q}echo "" && \
 	echo $@ && \
 	echo "----------------------------------------------------------" && \
 	${MAKE} --no-print-directory -C src clean && \
@@ -196,7 +270,7 @@ tarsio-${VERSION}-sasc-68040-bin.lha: check-all
 
 .NOTPARALLEL: tarsio-${VERSION}-sasc-68060-bin.lha
 tarsio-${VERSION}-sasc-68060-bin.lha: check-all
-	@echo "" && \
+	${Q}echo "" && \
 	echo $@ && \
 	echo "----------------------------------------------------------" && \
 	${MAKE} --no-print-directory -C src clean && \
@@ -212,7 +286,7 @@ tarsio-${VERSION}-sasc-68060-bin.lha: check-all
 
 .NOTPARALLEL: tarsio-${VERSION}-vbcc-68000-bin.lha
 tarsio-${VERSION}-vbcc-68000-bin.lha: check-all
-	@echo "" && \
+	${Q}echo "" && \
 	echo $@ && \
 	echo "----------------------------------------------------------" && \
 	${MAKE} --no-print-directory -C src clean && \
@@ -228,7 +302,7 @@ tarsio-${VERSION}-vbcc-68000-bin.lha: check-all
 
 .NOTPARALLEL: tarsio-${VERSION}-vbcc-68020-bin.lha
 tarsio-${VERSION}-vbcc-68020-bin.lha: check-all
-	@echo "" && \
+	${Q}echo "" && \
 	echo $@ && \
 	echo "----------------------------------------------------------" && \
 	${MAKE} --no-print-directory -C src clean && \
@@ -244,7 +318,7 @@ tarsio-${VERSION}-vbcc-68020-bin.lha: check-all
 
 .NOTPARALLEL: tarsio-${VERSION}-vbcc-68030-bin.lha
 tarsio-${VERSION}-vbcc-68030-bin.lha: check-all
-	@echo "" && \
+	${Q}echo "" && \
 	echo $@ && \
 	echo "----------------------------------------------------------" && \
 	${MAKE} --no-print-directory -C src clean && \
@@ -260,7 +334,7 @@ tarsio-${VERSION}-vbcc-68030-bin.lha: check-all
 
 .NOTPARALLEL: tarsio-${VERSION}-vbcc-68040-bin.lha
 tarsio-${VERSION}-vbcc-68040-bin.lha: check-all
-	@echo "" && \
+	${Q}echo "" && \
 	echo $@ && \
 	echo "----------------------------------------------------------" && \
 	${MAKE} --no-print-directory -C src clean && \
@@ -276,7 +350,7 @@ tarsio-${VERSION}-vbcc-68040-bin.lha: check-all
 
 .NOTPARALLEL: tarsio-${VERSION}-vbcc-68060-bin.lha
 tarsio-${VERSION}-vbcc-68060-bin.lha: check-all
-	@echo "" && \
+	${Q}echo "" && \
 	echo $@ && \
 	echo "----------------------------------------------------------" && \
 	${MAKE} --no-print-directory -C src clean && \
@@ -292,7 +366,7 @@ tarsio-${VERSION}-vbcc-68060-bin.lha: check-all
 
 .NOTPARALLEL: source-dist
 source-dist: tarsio-${VERSION}.tar.gz tarsio-${VERSION}-src.lha
-	@echo "" && \
+	${Q}echo "" && \
 	echo $@ && \
 	echo "----------------------------------------------------------" && \
 	echo "Verifying tar.gz distribution:" && \
@@ -310,35 +384,34 @@ bin-dist: tarsio-${VERSION}-sasc-68000-bin.lha tarsio-${VERSION}-sasc-68020-bin.
 dist: source-dist bin-dist
 
 .PHONY: install
-install: build
-	@mkdir -p ${PREFIX}/bin && \
-	install -s src/tcg ${PREFIX}/bin/tcg && \
-	install -s src/tam ${PREFIX}/bin/tam && \
-	install -s src/tmg ${PREFIX}/bin/tmg && \
-	install -s src/tsg ${PREFIX}/bin/tsg && \
-	install -s src/ttg ${PREFIX}/bin/ttg && \
+install:
+	${Q}mkdir -p ${PREFIX}/bin && \
+	install -s bin/tcg ${PREFIX}/bin/tcg && \
+	install -s bin/tam ${PREFIX}/bin/tam && \
+	install -s bin/tmg ${PREFIX}/bin/tmg && \
+	install -s bin/tsg ${PREFIX}/bin/tsg && \
+	install -s bin/ttg ${PREFIX}/bin/ttg && \
 	mkdir -p ${PREFIX}/include/tarsio && \
-	install include/tarsio.mk ${PREFIX}/include/tarsio/tarsio.mk && \
-	install include/coverage.mk ${PREFIX}/include/tarsio/coverage.mk && \
-	install include/tarsio.h ${PREFIX}/include/tarsio/tarsio.h && \
-	install src/tarsio.c ${PREFIX}/include/tarsio/tarsio.c && \
-	install tarsio.pc /usr/share/pkgconfig/tarsio.pc && \
+	install include/tarsio/tarsio.mk ${PREFIX}/include/tarsio/tarsio.mk && \
+	install include/tarsio/coverage.mk ${PREFIX}/include/tarsio/coverage.mk && \
+	install include/tarsio/tarsio.h ${PREFIX}/include/tarsio/tarsio.h && \
+	install include/tarsio/tarsio.c ${PREFIX}/include/tarsio/tarsio.c && \
+	${INSTALL_PKG_CONFIG} && \
 	mkdir -p ${PREFIX}/man/man3 && \
-	install doc/tcg.3 ${PREFIX}/man/man3/tcg.3 && \
-	install doc/tam.3 ${PREFIX}/man/man3/tam.3 && \
-	install doc/tmg.3 ${PREFIX}/man/man3/tmg.3 && \
-	install doc/tsg.3 ${PREFIX}/man/man3/tsg.3 && \
-	install doc/ttg.3 ${PREFIX}/man/man3/ttg.3
+	if [ -f man/man3/tcg.3 ]; then install man/man3/tcg.3 ${PREFIX}/man/man3/tcg.3; fi && \
+	if [ -f man/man3/tam.3 ]; then install man/man3/tam.3 ${PREFIX}/man/man3/tam.3; fi && \
+	if [ -f man/man3/tmg.3 ]; then install man/man3/tmg.3 ${PREFIX}/man/man3/tmg.3; fi && \
+	if [ -f man/man3/tsg.3 ]; then install man/man3/tsg.3 ${PREFIX}/man/man3/tsg.3; fi && \
+	if [ -f man/man3/ttg.3 ]; then install man/man3/ttg.3 ${PREFIX}/man/man3/ttg.3; fi
 
 uninstall:
-	${RM}-rf ${PREFIX}/bin/tcg ${PREFIX}/bin/tam ${PREFIX}/bin/tmg ${PREFIX}/bin/tsg ${PREFIX}/bin/ttg ${PREFIX}/include/tarsio /usr/share/pkgconfig/tarsio.pc
+	${Q}${RM} -rf ${PREFIX}/bin/tcg ${PREFIX}/bin/tam ${PREFIX}/bin/tmg ${PREFIX}/bin/tsg ${PREFIX}/bin/ttg ${PREFIX}/include/tarsio ${REMOVE_PKG_CONFIG} ${PREFIX}/man/man3/tcg.3 ${PREFIX}/man/man3/tam.3 ${PREFIX}/man/man3/tmg.3 ${PREFIX}/man/man3/tsg.3 ${PREFIX}/man/man3/ttg.3
 
 .NOTPARALLEL: clean
 .PHONY: clean
 clean:
-	@$(MAKE) --no-print-directory -C src clean && \
+	${Q}$(MAKE) --no-print-directory -C src clean && \
 	$(MAKE) --no-print-directory -C test clean && \
 	$(MAKE) --no-print-directory -C examples clean Q=@ && \
 	${MAKE} --no-print-directory -C doc clean && \
-	$(RM) -rf *~ include/*~ *.uaem tarsio-${VERSION}* tarsio*.lha tarsio.pc
-
+	$(RM) -rf *~ bin include man inc/*~ *.uaem tarsio-${VERSION}* tarsio*.lha tarsio.pc

@@ -42,5 +42,3 @@ clean:
 	${Q}${MAKE} --no-print-directory -C test clean && \
 	${MAKE} --no-print-directory -C src clean && \
 	${RM} *~
-
-

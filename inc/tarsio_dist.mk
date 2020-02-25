@@ -36,7 +36,7 @@ MAKEFLAGS += --no-builtin-rules
 TCHECKSUFFIX?=_test
 
 HOSTTMPDIR:=/tmp/${USER}/tarsio/
-HOSTINCDIR:=../include/
+HOSTINCDIR:=../inc/
 HOSTSRCDIR:=../src/
 HOSTTSTDIR:=../test/
 
@@ -44,7 +44,7 @@ ifdef SASC
 EXE:=
 CPPEXT:=.p
 SRCDIR:=/src/
-INCDIR:=/include/
+INCDIR:=/inc/
 TSTDIR:=/test/
 COVDIR=T:${USER}/tarsio/
 TMPDIR=T:${USER}/tarsio/

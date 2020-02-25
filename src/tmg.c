@@ -47,7 +47,7 @@ static char timestamp[] = __DATE__ " " __TIME__;
  */
 static void usage(const char* program_name)
 {
-  printf("USAGE: %s <cache-file>\n", program_name);
+  printf("USAGE: %s <cache-file> <struct-header>\n", program_name);
 }
 
 /****************************************************************************
