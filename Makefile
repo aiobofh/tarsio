@@ -52,7 +52,11 @@ endif
 
 BINTARGETS=tam tcg tmg tsg ttg
 INCTARGETS=tarsio.mk coverage.mk tarsio.c tarsio.h
-MANTARGETS=$(addsuffix .3,${BINTARGETS})
+RST2MAN=$(shell which rst2man)
+
+ifneq (,${RST2MAN})
+	MANTARGETS=$(addsuffix .3,${BINTARGETS})
+endif
 
 all: local_install
 
