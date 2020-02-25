@@ -135,9 +135,6 @@ src/tsg:
 src/ttg:
 	${Q}${MAKE} --no-print-directory -C src ttg
 
-src/ttm:
-	${Q}${MAKE} --no-print-directory -C src ttm
-
 doc/tam.3:
 	${Q}${MAKE} --no-print-directory -C doc tam.3
 
@@ -152,9 +149,6 @@ doc/tsg.3:
 
 doc/ttg.3:
 	${Q}${MAKE} --no-print-directory -C doc ttg.3
-
-doc/ttm.3:
-	${Q}${MAKE} --no-print-directory -C doc ttm.3
 
 bin/.placeholder:
 	${Q}mkdir -p $(dir $@) && touch $@
