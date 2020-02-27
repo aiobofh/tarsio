@@ -93,8 +93,8 @@ static void transform_structs(prototype_list_t* list, char* buf) {
 
     argument_list_t* al;
     symbol_usage_list_t* sl;
-    argument_node_t* an = NULL;
-    symbol_usage_node_t* sn = NULL;
+    argument_node_t* an;
+    symbol_usage_node_t* sn;
 
     pn = (prototype_node_t*)buf;
 
@@ -213,7 +213,7 @@ static void transform_structs(prototype_list_t* list, char* buf) {
 unsigned char* reload_symbol_cache(prototype_list_t* list, const char* file) {
   FILE* fd;
   size_t len;
-  unsigned char* buf = NULL;
+  unsigned char* buf;
 
   if (NULL == (fd = fopen(file, "rb"))) {
     error1("Unable to open '%s' for reading", file);

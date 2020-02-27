@@ -335,7 +335,7 @@ int main(int argc, char* argv[])
   prototype_list_t prototype_list = PROTOTYPE_LIST_EMPTY;
   prototype_list_t check_prototype_list = PROTOTYPE_LIST_EMPTY;
   cpp_list_t cpp_list = CPP_LIST_EMPTY;
-  unsigned char* buf = NULL;
+  unsigned char* buf;
 
   /*
    * Handle arguments passed to the program.

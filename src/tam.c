@@ -430,7 +430,7 @@ static void generate_proxified(prototype_list_t* list, file_t* file) {
    */
   replace_list_t slist;
   replace_node_t* node;
-  size_t offset = 0;
+  size_t offset;
   slist.first = slist.last = NULL;
 
   if (0 != sort_usage(&slist, list)) {
@@ -492,7 +492,7 @@ int main(int argc, char* argv[])
   tam_options_t options;
   file_t source_file = FILE_EMPTY;
   prototype_list_t prototype_list = PROTOTYPE_LIST_EMPTY;
-  unsigned char* buf = NULL;
+  unsigned char* buf;
 
   /*
    * Handle arguments passed to the program.

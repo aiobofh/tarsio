@@ -495,7 +495,7 @@ static int extract_return_type(prototype_node_t* node) {
   size_t len;
   char* buf;
   char* tmpbuf;
-  size_t tmpbuf_i = 0;
+  size_t tmpbuf_i;
   size_t i;
   size_t asterisks = 0;
 
