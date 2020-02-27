@@ -1,5 +1,5 @@
 #
-# SMakefile for the Tarsio C Unit-testing framework
+# SMakefile for the Tarsio C Unit-checking framework
 #
 #               _______          _____ ___        ______
 #                  |      ||    |         |    | |      |
@@ -28,8 +28,8 @@
 #
 
 TMPDIR=T:
-INCDIR=/include/
-CFLAGS=define NODEBUG define SASC optimize noicons noversion includedirectory $(TMPDIR) includedirectory $(INCDIR)
+INCDIR=../inc/
+CFLAGS=CPU $(CPU) define NODEBUG define SASC optimize optimizetime optglobal optimizerdepth=100 optimizerpeephole optloop OPTSCHED optimizerinlocal optimizerrecurdepth=100 noicons noversion includedirectory $(TMPDIR) includedirectory $(INCDIR)
 LDFLAGS=noicons noversion
 
 all: tcg tsg tmg tam ttg
@@ -58,8 +58,8 @@ datatype.o: datatype.c
 symbol_cache.o: symbol_cache.c
 	@$(CC) $(CFLAGS) symbol_cache.c
 
-testcase.o: testcase.c
-	@$(CC) $(CFLAGS) testcase.c
+checkcase.o: checkcase.c
+	@$(CC) $(CFLAGS) checkcase.c
 
 cpp.o: cpp.c
 	@$(CC) $(CFLAGS) cpp.c
@@ -80,19 +80,19 @@ ttg.o: ttg.c
 	@$(CC) $(CFLAGS) ttg.c
 
 tcg: tcg.o prototype.o list.o file.o argument.o symbol_usage.o datatype.o symbol_cache.o
-	@$(CC) $(CFLAGS) tcg.o prototype.o list.o file.o argument.o symbol_usage.o datatype.o symbol_cache.o link to tcg
+	@$(CC) $(LDCFLAGS) tcg.o prototype.o list.o file.o argument.o symbol_usage.o datatype.o symbol_cache.o link to tcg
 
 tsg: tsg.o prototype.o str.o list.o cpp.o symbol_cache.o file.o argument.o symbol_usage.o datatype.o
-	@$(CC) $(CFLAGS) tsg.o prototype.o str.o list.o cpp.o symbol_cache.o file.o argument.o symbol_usage.o datatype.o link to tsg
+	@$(CC) $(LDCFLAGS) tsg.o prototype.o str.o list.o cpp.o symbol_cache.o file.o argument.o symbol_usage.o datatype.o link to tsg
 
 tmg: tmg.o prototype.o list.o symbol_cache.o file.o argument.o symbol_usage.o datatype.o
-	@$(CC) $(CFLAGS) tmg.o prototype.o list.o symbol_cache.o file.o argument.o symbol_usage.o datatype.o link to tmg
+	@$(CC) $(LDCFLAGS) tmg.o prototype.o list.o symbol_cache.o file.o argument.o symbol_usage.o datatype.o link to tmg
 
 tam: tam.o prototype.o list.o symbol_cache.o file.o argument.o symbol_usage.o datatype.o
-	@$(CC) $(CFLAGS) tam.o prototype.o list.o symbol_cache.o file.o argument.o symbol_usage.o datatype.o link to tam
+	@$(CC) $(LDFLAGS) tam.o prototype.o list.o symbol_cache.o file.o argument.o symbol_usage.o datatype.o link to tam
 
-ttg: ttg.o str.o file.o testcase.o
-	@$(CC) $(CFLAGS) ttg.o str.o file.o testcase.o link to ttg
+ttg: ttg.o str.o file.o checkcase.o
+	@$(CC) $(LDFLAGS) ttg.o str.o file.o checkcase.o link to ttg
 
 clean:
-	@delete quiet tcg tcg.o tcg.lnk tsg tsg.o tsg.lnk tmg tmg.o tmg.lnk tam tam.o tam.lnk ttg ttg.o ttg.lnk cpp.o tarsio.o testcase.o testcase.p.info prototype.o file.o list.o str.o argument.o symbol_usage.o datatype.o symbol_cache.o
+	@delete quiet tcg tcg.o tcg.lnk tsg tsg.o tsg.lnk tmg tmg.o tmg.lnk tam tam.o tam.lnk ttg ttg.o ttg.lnk cpp.o tarsio.o checkcase.o checkcase.p.info prototype.o file.o list.o str.o argument.o symbol_usage.o datatype.o symbol_cache.o

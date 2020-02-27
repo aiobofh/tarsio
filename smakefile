@@ -1,0 +1,41 @@
+#
+# SMakefile to for building a and installing Tarsio using SAS/C
+#
+#               _______          _____ ___        ______
+#                  |      ||    |         |    | |      |
+#                  |      ||    |         |    | |      |
+#                  |   ___||___ |         |___ | |______|
+#
+#               Copyright (C) 2020 AiO Secure Teletronics
+#
+# This is the make-file to build the binary tools in the Tarsio tool-chain using
+# SAS/C.
+#
+#  This file is part of Tarsio.
+#
+#  Tarsio is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation, either version 3 of the License, or
+#  (at your option) any later version.
+#
+#  Tarsio is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with Tarsio.  If not, see <https://www.gnu.org/licenses/>.
+#
+# NOTE: This does not fully work yet. If you want to try out the tools and checks
+#       go to the src folder and run smake, then go to the test-folder and run
+#       smake.
+#
+
+all: build
+	@smake -s -f src/smakefile
+	@smake -s -f test/smakefile
+
+install:
+	@copy from src/tcg src/tsg src/tmg src/tam src/ttg to C:
+	@mkdir INCLUDE:tarsio
+	@copy from src/tarsio.c inc/tarsio.h inc/tarsio.smk to INCLUDE:tarsio/tarsio.c

@@ -40,7 +40,7 @@ AUTHOR?=unknown
 
 ifdef SASC
 EXE:=
-CPU:=68000
+CPU?=68000
 INCDIR:=/inc/
 CFLAGS=CPU=${CPU} define NODEBUG define SASC define optimize noicons noversion includedirectory $(INCDIR) $<
 CC:=sc
@@ -49,7 +49,7 @@ LD:=${CC}
 else
 ifdef VBCC
 EXE:=
-CPU:=68000
+CPU?=68000
 INCDIR:=../inc/
 CFLAGS=${NODEBUG} -DVBCC=1 -O2 -c99 -c $^ -I${INCDIR} -o $@ -cpu=${CPU}
 LDFLAGS=-O2 -c99 $^ -o $@

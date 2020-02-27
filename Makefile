@@ -75,6 +75,8 @@ check-all: clean
 	echo "Native:" && \
 	$(MAKE) --no-print-directory -C src && \
 	$(MAKE) --no-print-directory -C test && \
+	${MAKE} --no-print-directory -C examples check && \
+	${MAKE} --no-print-directory -C examples clean && \
 	$(MAKE) --no-print-directory -C src clean && \
 	$(MAKE) --no-print-directory -C test clean && \
 	echo "SAS/C using Vamos:" && \
@@ -102,8 +104,6 @@ check-sasc: clean
 check:
 	${Q}${MAKE} --no-print-directory -C test && \
 	${MAKE} --no-print-directory -C test clean && \
-	${MAKE} --no-print-directory -C examples check Q=@ && \
-	${MAKE} --no-print-directory -C examples clean Q=@ && \
 	${MAKE} clean Q=${Q}
 
 tarsio.pc:
@@ -185,7 +185,7 @@ tarsio-${VERSION}.tar.gz: check-all
 	${MAKE} --no-print-directory -C src clean && \
 	${MAKE} --no-print-directory -C test clean && \
 	mkdir -p tarsio-${VERSION} && \
-	cp -r README.rst Makefile src include doc test tarsio-${VERSION}/. && \
+	cp -r README.rst Makefile src inc doc test examples tarsio-${VERSION}/. && \
 	tar -c tarsio-${VERSION} | gzip > $@ && \
 	rm -rf tarsio-${VERSION}
 
@@ -198,7 +198,9 @@ tarsio-${VERSION}-src.lha: check-all
 	${MAKE} --no-print-directory -C test clean && \
 	mkdir -p tarsio-${VERSION} && \
 	mkdir -p tarsio-${VERSION}/src && \
-	cp -r README.rst Makefile src include doc test tarsio-${VERSION}/src/. && \
+	cp -r README.rst smakefile src inc doc test examples tarsio-${VERSION}/src/. && \
+	echo "#define VERSION \"${VERSION}\"" > tarsio-${VERSION}/src/src/version.h && \
+	echo "#define AUTHOR \"${AUTHOR}\"" >> tarsio-${VERSION}/src/src/version.h && \
 	jlha -cq $@ tarsio-${VERSION} && \
 	rm -rf tarsio-${VERSION}
 
@@ -212,24 +214,10 @@ tarsio-${VERSION}-sasc-68000-bin.lha: check-all
 	mkdir -p tarsio-${VERSION} && \
 	mkdir -p tarsio-${VERSION}/c && \
 	mkdir -p tarsio-${VERSION}/libs && \
-	cp -r README.rst Makefile include doc tarsio-${VERSION}/. && \
-	${MAKE} --no-print-directory -C src SASC=1 && \
-	cp src/tcg src/tsg src/tmg src/tam src/ttg tarsio-${VERSION}/c/. && \
-	jlha -cq $@ tarsio-${VERSION} && \
-	rm -rf tarsio-${VERSION}
-
-.NOTPARALLEL: tarsio-${VERSION}-sasc-68020-bin.lha
-tarsio-${VERSION}-sasc-68020-bin.lha: check-all
-	${Q}echo "" && \
-	echo $@ && \
-	echo "----------------------------------------------------------" && \
-	${MAKE} --no-print-directory -C src clean && \
-	${MAKE} --no-print-directory -C test clean && \
-	mkdir -p tarsio-${VERSION} && \
-	mkdir -p tarsio-${VERSION}/c && \
-	mkdir -p tarsio-${VERSION}/libs && \
-	cp -r README.rst Makefile include doc tarsio-${VERSION}/. && \
-	${MAKE} --no-print-directory -C src SASC=1 CPU=68020 && \
+	mkdir -p tarsio-${VERSION}/include && \
+	cp -r README.rst Makefile doc tarsio-${VERSION}/. && \
+	cp inc/tarsio.smk inc/tarsio.h src/tarsio.c tarsio-${VERSION}/include/. && \
+	${MAKE} --no-print-directory -C src SASC=1 CPU=68000 && \
 	cp src/tcg src/tsg src/tmg src/tam src/ttg tarsio-${VERSION}/c/. && \
 	jlha -cq $@ tarsio-${VERSION} && \
 	rm -rf tarsio-${VERSION}
@@ -244,8 +232,28 @@ tarsio-${VERSION}-sasc-68030-bin.lha: check-all
 	mkdir -p tarsio-${VERSION} && \
 	mkdir -p tarsio-${VERSION}/c && \
 	mkdir -p tarsio-${VERSION}/libs && \
-	cp -r README.rst Makefile include doc tarsio-${VERSION}/. && \
+	mkdir -p tarsio-${VERSION}/include && \
+	cp -r README.rst Makefile doc tarsio-${VERSION}/. && \
+	cp inc/tarsio.smk inc/tarsio.h src/tarsio.c tarsio-${VERSION}/include/. && \
 	${MAKE} --no-print-directory -C src SASC=1 CPU=68030 && \
+	cp src/tcg src/tsg src/tmg src/tam src/ttg tarsio-${VERSION}/c/. && \
+	jlha -cq $@ tarsio-${VERSION} && \
+	rm -rf tarsio-${VERSION}
+
+.NOTPARALLEL: tarsio-${VERSION}-sasc-68020-bin.lha
+tarsio-${VERSION}-sasc-68020-bin.lha: check-all
+	${Q}echo "" && \
+	echo $@ && \
+	echo "----------------------------------------------------------" && \
+	${MAKE} --no-print-directory -C src clean && \
+	${MAKE} --no-print-directory -C test clean && \
+	mkdir -p tarsio-${VERSION} && \
+	mkdir -p tarsio-${VERSION}/c && \
+	mkdir -p tarsio-${VERSION}/libs && \
+	mkdir -p tarsio-${VERSION}/include && \
+	cp -r README.rst Makefile doc tarsio-${VERSION}/. && \
+	cp inc/tarsio.smk inc/tarsio.h src/tarsio.c tarsio-${VERSION}/include/. && \
+	${MAKE} --no-print-directory -C src SASC=1 CPU=68020 && \
 	cp src/tcg src/tsg src/tmg src/tam src/ttg tarsio-${VERSION}/c/. && \
 	jlha -cq $@ tarsio-${VERSION} && \
 	rm -rf tarsio-${VERSION}
@@ -260,7 +268,9 @@ tarsio-${VERSION}-sasc-68040-bin.lha: check-all
 	mkdir -p tarsio-${VERSION} && \
 	mkdir -p tarsio-${VERSION}/c && \
 	mkdir -p tarsio-${VERSION}/libs && \
-	cp -r README.rst Makefile include doc tarsio-${VERSION}/. && \
+	mkdir -p tarsio-${VERSION}/include && \
+	cp -r README.rst Makefile doc tarsio-${VERSION}/. && \
+	cp inc/tarsio.smk inc/tarsio.h src/tarsio.c tarsio-${VERSION}/include/. && \
 	${MAKE} --no-print-directory -C src SASC=1 CPU=68040 && \
 	cp src/tcg src/tsg src/tmg src/tam src/ttg tarsio-${VERSION}/c/. && \
 	jlha -cq $@ tarsio-${VERSION} && \
@@ -276,7 +286,9 @@ tarsio-${VERSION}-sasc-68060-bin.lha: check-all
 	mkdir -p tarsio-${VERSION} && \
 	mkdir -p tarsio-${VERSION}/c && \
 	mkdir -p tarsio-${VERSION}/libs && \
-	cp -r README.rst Makefile include doc tarsio-${VERSION}/. && \
+	mkdir -p tarsio-${VERSION}/include && \
+	cp -r README.rst Makefile doc tarsio-${VERSION}/. && \
+	cp inc/tarsio.smk inc/tarsio.h src/tarsio.c tarsio-${VERSION}/include/. && \
 	${MAKE} --no-print-directory -C src SASC=1 CPU=68060 && \
 	cp src/tcg src/tsg src/tmg src/tam src/ttg tarsio-${VERSION}/c/. && \
 	jlha -cq $@ tarsio-${VERSION} && \
@@ -292,7 +304,9 @@ tarsio-${VERSION}-vbcc-68000-bin.lha: check-all
 	mkdir -p tarsio-${VERSION} && \
 	mkdir -p tarsio-${VERSION}/c && \
 	mkdir -p tarsio-${VERSION}/libs && \
-	cp -r README.rst Makefile include doc tarsio-${VERSION}/. && \
+	mkdir -p tarsio-${VERSION}/include && \
+	cp -r README.rst Makefile doc tarsio-${VERSION}/. && \
+	cp inc/tarsio.smk inc/tarsio.h src/tarsio.c tarsio-${VERSION}/include/. && \
 	${MAKE} --no-print-directory -C src VBCC=1 && \
 	cp src/tcg src/tsg src/tmg src/tam src/ttg tarsio-${VERSION}/c/. && \
 	jlha -cq $@ tarsio-${VERSION} && \
@@ -308,7 +322,9 @@ tarsio-${VERSION}-vbcc-68020-bin.lha: check-all
 	mkdir -p tarsio-${VERSION} && \
 	mkdir -p tarsio-${VERSION}/c && \
 	mkdir -p tarsio-${VERSION}/libs && \
-	cp -r README.rst Makefile include doc tarsio-${VERSION}/. && \
+	mkdir -p tarsio-${VERSION}/include && \
+	cp -r README.rst Makefile inc doc tarsio-${VERSION}/. && \
+	cp inc/tarsio.smk inc/tarsio.h src/tarsio.c tarsio-${VERSION}/include/. && \
 	${MAKE} --no-print-directory -C src VBCC=1 CPU=68020 && \
 	cp src/tcg src/tsg src/tmg src/tam src/ttg tarsio-${VERSION}/c/. && \
 	jlha -cq $@ tarsio-${VERSION} && \
@@ -324,7 +340,9 @@ tarsio-${VERSION}-vbcc-68030-bin.lha: check-all
 	mkdir -p tarsio-${VERSION} && \
 	mkdir -p tarsio-${VERSION}/c && \
 	mkdir -p tarsio-${VERSION}/libs && \
-	cp -r README.rst Makefile include doc tarsio-${VERSION}/. && \
+	mkdir -p tarsio-${VERSION}/include && \
+	cp -r README.rst Makefile inc doc tarsio-${VERSION}/. && \
+	cp inc/tarsio.smk inc/tarsio.h src/tarsio.c tarsio-${VERSION}/include/. && \
 	${MAKE} --no-print-directory -C src VBCC=1 CPU=68030 && \
 	cp src/tcg src/tsg src/tmg src/tam src/ttg tarsio-${VERSION}/c/. && \
 	jlha -cq $@ tarsio-${VERSION} && \
@@ -340,7 +358,9 @@ tarsio-${VERSION}-vbcc-68040-bin.lha: check-all
 	mkdir -p tarsio-${VERSION} && \
 	mkdir -p tarsio-${VERSION}/c && \
 	mkdir -p tarsio-${VERSION}/libs && \
-	cp -r README.rst Makefile include doc tarsio-${VERSION}/. && \
+	mkdir -p tarsio-${VERSION}/include && \
+	cp -r README.rst Makefile inc doc tarsio-${VERSION}/. && \
+	cp inc/tarsio.smk inc/tarsio.h src/tarsio.c tarsio-${VERSION}/include/. && \
 	${MAKE} --no-print-directory -C src VBCC=1 CPU=68040 && \
 	cp src/tcg src/tsg src/tmg src/tam src/ttg tarsio-${VERSION}/c/. && \
 	jlha -cq $@ tarsio-${VERSION} && \
@@ -356,7 +376,9 @@ tarsio-${VERSION}-vbcc-68060-bin.lha: check-all
 	mkdir -p tarsio-${VERSION} && \
 	mkdir -p tarsio-${VERSION}/c && \
 	mkdir -p tarsio-${VERSION}/libs && \
-	cp -r README.rst Makefile include doc tarsio-${VERSION}/. && \
+	mkdir -p tarsio-${VERSION}/include && \
+	cp -r README.rst Makefile inc doc tarsio-${VERSION}/. && \
+	cp inc/tarsio.smk inc/tarsio.h src/tarsio.c tarsio-${VERSION}/include/. && \
 	${MAKE} --no-print-directory -C src VBCC=1 CPU=68060 && \
 	cp src/tcg src/tsg src/tmg src/tam src/ttg tarsio-${VERSION}/c/. && \
 	jlha -cq $@ tarsio-${VERSION} && \
@@ -368,11 +390,17 @@ source-dist: tarsio-${VERSION}.tar.gz tarsio-${VERSION}-src.lha
 	echo $@ && \
 	echo "----------------------------------------------------------" && \
 	echo "Verifying tar.gz distribution:" && \
-	tar xzf tarsio-${VERSION}.tar.gz && ${MAKE} --no-print-directory -C tarsio-${VERSION}/src check && rm -rf tarsio-${VERSION} && \
+	tar xzf tarsio-${VERSION}.tar.gz && \
+	${MAKE} --no-print-directory -C tarsio-${VERSION}/src check && \
+	rm -rf tarsio-${VERSION} && \
 	echo "Verifying lha distribution with SASC:" && \
-	jlha -xq tarsio-${VERSION}-src.lha && ${MAKE} --no-print-directory -C tarsio-${VERSION}/src check SASC=1 && rm -rf tarsio-${VERSION} && \
+	jlha -xq tarsio-${VERSION}-src.lha && \
+	${MAKE} --no-print-directory -C tarsio-${VERSION}/src check SASC=1 && \
+	rm -rf tarsio-${VERSION} && \
 	echo "Verifying lha distribution with VBCC:" && \
-	jlha -xq tarsio-${VERSION}-src.lha && ${MAKE} --no-print-directory -C tarsio-${VERSION}/src check VBCC=1 && rm -rf tarsio-${VERSiON}
+	jlha -xq tarsio-${VERSION}-src.lha && \
+	${MAKE} --no-print-directory -C tarsio-${VERSION}/src check VBCC=1 && \
+	rm -rf tarsio-${VERSiON}
 
 .NOTPARALLEL: bin-dist
 bin-dist: tarsio-${VERSION}-sasc-68000-bin.lha tarsio-${VERSION}-sasc-68020-bin.lha tarsio-${VERSION}-sasc-68030-bin.lha tarsio-${VERSION}-sasc-68040-bin.lha tarsio-${VERSION}-sasc-68060-bin.lha tarsio-${VERSION}-vbcc-68000-bin.lha tarsio-${VERSION}-vbcc-68020-bin.lha tarsio-${VERSION}-vbcc-68030-bin.lha tarsio-${VERSION}-vbcc-68040-bin.lha tarsio-${VERSION}-vbcc-68060-bin.lha
