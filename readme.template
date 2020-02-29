@@ -1,0 +1,9 @@
+Short:        Portable automocking unit-testing/-checking framework for C
+Uploader:     tarsio.aminet@aio.nu (Joakim Ekblad)
+Author:       tarsio.aminet@aio.nu (Joakim Ekblad)
+Type:         dev/c
+Version:      @VERSION@
+Architecture: @ARCH@
+Distribution: Aminet
+Kurz:         Portable automocking unit-testing/-checking framework for C
+
