@@ -184,8 +184,9 @@ tarsio-${VERSION}.tar.gz: check-all
 	echo "----------------------------------------------------------" && \
 	${MAKE} --no-print-directory -C src clean && \
 	${MAKE} --no-print-directory -C test clean && \
-	mkdir -p tarsio-${VERSION} && \
-	cp -r README.rst Makefile src inc doc test examples tarsio-${VERSION}/. && \
+	mkdir -p /tmp/tarsio-${VERSION} && \
+	cp -r * /tmp/tarsio-${VERSION}/. && \
+	mv /tmp/tarsio-${VERSION} .
 	tar -c tarsio-${VERSION} | gzip > $@ && \
 	rm -rf tarsio-${VERSION}
 
@@ -196,11 +197,11 @@ tarsio-${VERSION}-src.lha: check-all
 	echo "----------------------------------------------------------" && \
 	${MAKE} --no-print-directory -C src clean && \
 	${MAKE} --no-print-directory -C test clean && \
-	mkdir -p tarsio-${VERSION} && \
-	mkdir -p tarsio-${VERSION}/src && \
-	cp -r README.rst smakefile src inc doc test examples tarsio-${VERSION}/src/. && \
-	echo "#define VERSION \"${VERSION}\"" > tarsio-${VERSION}/src/src/version.h && \
-	echo "#define AUTHOR \"${AUTHOR}\"" >> tarsio-${VERSION}/src/src/version.h && \
+	mkdir -p /tmp/tarsio-${VERSION} && \
+	cp -r -H * /tmp/tarsio-${VERSION}/. && \
+	echo "#define VERSION \"${VERSION}\"" > /tmp/tarsio-${VERSION}/src/version.h && \
+	echo "#define AUTHOR \"${AUTHOR}\"" >> /tmp/tarsio-${VERSION}/src/version.h && \
+	mv /tmp/tarsio-${VERSION} .
 	jlha -cq $@ tarsio-${VERSION} && \
 	rm -rf tarsio-${VERSION}
 
