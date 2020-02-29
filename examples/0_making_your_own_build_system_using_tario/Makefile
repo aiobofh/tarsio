@@ -53,7 +53,7 @@ all: write_file
 	${Q}echo "Built the write_file program, if you intended to run the" && \
 	echo "checks just type 'make check' instead."
 
-check: write_file_check
+check: write_file_data.h write_file_check
 	${Q}./write_file_check ${HINT}
 
 write_file: write_file.c
