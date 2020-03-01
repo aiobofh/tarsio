@@ -406,7 +406,10 @@ static void copy_previous_line_directive(const char* buf, size_t offset) {
       end_offset = offset;
       break;
     case '#':
+      /*
       if (((buf[offset + 1] == ' ') && ((buf[offset + 2] >= '0') && (buf[offset + 2] <= '9'))) || (0 == strncmp("#line ", &buf[offset], 6))) {
+      */
+      if (((buf[offset + 1] == ' ') && ((buf[offset + 2] >= '0') && (buf[offset + 2] <= '9')))) {
         char filename[1000];
         char fmt[1000];
         size_t last_line_directive_line = 0;

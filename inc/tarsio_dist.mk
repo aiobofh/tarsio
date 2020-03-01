@@ -106,16 +106,41 @@ SRCDIR:=${HOSTSRCDIR}
 INCDIR:=${HOSTINCDIR}
 TSTDIR:=
 COVDIR:=${HOSTTMPDIR}
-TMPCFLAGS=/nologo /DVC /Od /Wall /Zi /I. /I${TMPDIR} /I${INCDIR} /I${SRCDIR}
-PPFLAGS=${TMPCFLAGS} /Dmain=__tarsio_replace_main /P $<; cp $(subst ${SRCDIR},,$(subst .c,${CPPEXT},$<)) $@; rm -f $(subst ${SRCDIR},,$(subst .c,${CPPEXT},$^))
+#TMPCFLAGS=/D_CRT_SECURE_NO_DEPRECATE /nologo /DVC /Od /Wall /Zi /I. /I${TMPDIR} /I${INCDIR} /I${SRCDIR}
+TMPCFLAGS=/D_CRT_SECURE_NO_DEPRECATE /nologo /DVC /c /O1 /W3 /MT /I. /I${TMPDIR} /I${INCDIR} /I${SRCDIR}
+#PPFLAGS=${TMPCFLAGS} /Dmain=__tarsio_replace_main /P $<; cp $(subst ${SRCDIR},,$(subst .c,${CPPEXT},$<)) $@; rm -f $(subst ${SRCDIR},,$(subst .c,${CPPEXT},$^))
+PPFLAGS=${TMPCFLAGS} /Dmain=__tarsio_replace_main /P $<; perl -pe 's/\r\n|\n|\r/\n/g' $(subst ${SRCDIR},,$(subst .c,${CPPEXT},$<)) > $@; rm -f $(subst ${SRCDIR},,$(subst .c,${CPPEXT},$^))
 CFLAGS=${TMPCFLAGS} /Fo$(subst ${HOSTTMPDIR},${TMPDIR},$@) $(subst ${HOSTTMPDIR},${TMPDIR},$<)
 CFLAGSPP=${TMPCFLAGS} /Fo$(subst ${HOSTTMPDIR},${TMPDIR},$@) /Tc$(subst ${HOSTTMPDIR},${TMPDIR},$<)
-LDFLAGS=/nologo /out:$@ $^
+LDFLAGS=/nologo /out:$@ $(subst ${HOSTTMPDIR},${TMPDIR},$^)
 TESTO:=
 TARSIOO:=
 PROXIFIEDO:=
 CC:=cl
 LD:=link
+else
+ifdef CLANG
+CPPEXT:=.pp
+TCG=tcg $^ $@
+TSG=tsg $^ > $@
+TMG=tmg $^ > $@
+TAM=tam $^ > $@
+TTG=ttg $^ > $@
+
+SRCDIR:=${HOSTSRCDIR}
+INCDIR:=${HOSTINCDIR}
+TSTDIR:=
+COVDIR:=${HOSTTMPDIR}
+TMPDIR:=${HOSTTMPDIR}
+TMPCFLAGS=-O0 -Wall -std=c11 -pedantic -g -I. -I${TMPDIR} -I${INCDIR} -I${SRCDIR}
+PPFLAGS=${TMPCFLAGS} -Dmain=__tarsio_replace_main -E -c $< > $@
+CFLAGS=${TMPCFLAGS} -o $@ -c $<
+CFLAGSPP=${TMPCFLAGS} -x cpp-output -c -Wunused-function $< -o $@
+LDFLAGS=-o $@ $^
+TESTO:=
+TARSIOO:=
+PROXIFIEDO:=
+LD=${CC}
 else
 CPPEXT:=.pp
 TCG=tcg $^ $@
@@ -138,6 +163,7 @@ TESTO:=
 TARSIOO:=
 PROXIFIEDO:=
 LD=${CC}
+endif
 endif
 endif
 endif

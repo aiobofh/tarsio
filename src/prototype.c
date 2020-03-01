@@ -178,7 +178,10 @@ static prototype_node_t* prototype_node_new(const char* raw,
   }
 
   if (0 == strlen(symbol)) {
-    warning1("Something fishy is going on, detected empty string '%s' as symbol, could be programming error in Tarsio comonents", symbol);
+    if (NULL != strstr("_Arglist", raw)) {
+      warning1("Something fishy is going on, detected empty string '%s' as symbol, could be programming error in Tarsio comonents", symbol);
+      warning1("%s", raw);
+    }
     goto strlen_zero;
   }
 
@@ -841,9 +844,15 @@ void generate_prototype(prototype_node_t* node, const char* prefix,
   if (NULL != prefix) {
     printf("%s", prefix);
   }
+  if (node->info.linkage_definition.is_declspec) {
+    printf(" __declspec(noalias) ");
+  }
   printf("%s", node->info.datatype.name);
   for (i = 0; i < node->info.datatype.datatype_definition.is_pointer; i++) {
     printf("*");
+  }
+  if (node->info.linkage_definition.is_cdecl) {
+    printf(" __cdecl");
   }
   printf(" ");
   if (NULL != prepend) {

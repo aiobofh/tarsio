@@ -64,6 +64,8 @@ LDFLAGS=/nologo /out:$@ $^
 CC=cl
 LD:=link
 else
+ifdef CLANG
+CC=clang
 EXE:=
 INCDIR:=../inc/
 ifdef SANITIZE
@@ -72,12 +74,29 @@ ifdef SANITIZE
         ASAN_OPTIONS=detect_leaks=1
         export ASAN_OPTIONS
 endif
-CFLAGS=${NODEBUG} -Wall -fstack-protector-all -D_FORTIFY_SOURCE=2 -fPIE ${SANITIZER_CFLAGS} -Wmissing-prototypes -Wmissing-declarations -Wstrict-prototypes -Wpointer-arith -Wwrite-strings -Wcast-qual -Wcast-align -Wbad-function-cast -Wformat-security -Winline -std=c11 -pedantic -O2 -g -I${INCDIR} -o $@ -c $<
+CFLAGS=${NODEBUG} -Wall -fstack-protector-all -D_FORTIFY_SOURCE=2 -fPIE ${SANITIZER_CFLAGS} -Wmissing-prototypes -Wmissing-declarations -Wstrict-prototypes -Wpointer-arith -Wwrite-strings -Wcast-qual -Wbad-function-cast -Wformat-security -Winline -std=c11 -pedantic -O2 -g -I${INCDIR} -o $@ -c $<
 LDFLAGS=-flto -Wl,-z,nodlopen -Wl,-z,nodump -Wl,-z,noexecstack -pie -Wl,-z,relro -Wl,-z,now ${SANITIZER_LDFLAGS} -o $@ $^
 LD:=${CC}
 ifdef COV
 CFLAGS+=-fprofile-arcs -ftest-coverage
 LDFLAGS+=-fprofile-arcs -lgcov --coverage
+endif
+else
+EXE:=
+INCDIR:=../inc/
+ifdef SANITIZE
+        SANITIZER_CFLAGS=-fsanitize=address,leak,undefined -fno-omit-frame-pointer
+	SANITIZER_LDFLAGS=-lasan -fsanitize=address,leak,undefined
+        ASAN_OPTIONS=detect_leaks=1
+        export ASAN_OPTIONS
+endif
+CFLAGS=${NODEBUG} -Wall -fstack-protector-all -D_FORTIFY_SOURCE=2 -fPIE ${SANITIZER_CFLAGS} -Wmissing-prototypes -Wmissing-declarations -Wstrict-prototypes -Wpointer-arith -Wwrite-strings -Wcast-align -Wbad-function-cast -Wformat-security -Winline -std=c11 -pedantic -O2 -g -I${INCDIR} -o $@ -c $<
+LDFLAGS=-flto -Wl,-z,nodlopen -Wl,-z,nodump -Wl,-z,noexecstack -pie -Wl,-z,relro -Wl,-z,now ${SANITIZER_LDFLAGS} -o $@ $^
+LD:=${CC}
+ifdef COV
+CFLAGS+=-fprofile-arcs -ftest-coverage
+LDFLAGS+=-fprofile-arcs -lgcov --coverage
+endif
 endif
 endif
 endif

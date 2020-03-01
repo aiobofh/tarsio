@@ -102,7 +102,9 @@ check(new_node_shall_set_contents_correctly) {
 check(print_len_warning_shall_print_to_stderr) {
   print_len_warning(NULL);
   assert_eq(1, m.fprintf.call_count);
+#ifndef VC
   assert_eq(stderr, m.fprintf.args.arg0);
+#endif
 }
 
 /***************************************************************************

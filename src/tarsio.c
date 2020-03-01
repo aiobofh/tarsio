@@ -170,6 +170,9 @@ void __tarsio_handle_arguments(int argc, char* argv[]) {
 }
 
 void __tarsio_skip(const char* reason, const char* check_name) {
+#ifndef VBCC
+  (void)reason; (void)check_name;
+#endif
   __tarsio_stats.skip++;
 }
 
@@ -202,10 +205,14 @@ void __tarsio_check_execute(__tarsio_data_t* __tarsio_mock_data,
 #endif
   __tarsio_clear_mock_data(__tarsio_mock_data, mock_data_size);
 
+#ifndef VC
   if (module_check) {
     /* Call generated inline function in the _data.h file */
     __tarsio_setup_mock_functions();
   }
+#else
+  (void)module_check;
+#endif
 
   /* Call the check-case */
   func(__tarsio_mock_data, name);

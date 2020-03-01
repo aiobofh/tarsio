@@ -58,7 +58,7 @@ int file_parse(file_parse_cb_t func, void* list_ptr, const file_t* file,
 
   const int parse_function_bodies = ((PARSE_FUNCTION_BODIES == parse_part) || (PARSE_ALL == parse_part));
   const int parse_declarations = ((PARSE_DECLARATIONS == parse_part) || (PARSE_ALL == parse_part));
-
+  char dut_filename[80];
   size_t i;
   size_t line_count = 1;
   size_t column_count = 0;
@@ -67,6 +67,7 @@ int file_parse(file_parse_cb_t func, void* list_ptr, const file_t* file,
   int in_function_body = 0;
   int in_single_quote_string = 0;
   int in_double_quote_string = 0;
+  int in_relevant_file = 1;
   int last_in_string = 0;
   int in_string = 0;
   int in_comment = 0;
@@ -76,11 +77,24 @@ int file_parse(file_parse_cb_t func, void* list_ptr, const file_t* file,
   size_t last_linefeed_offset = 0;
   size_t last_function_start = 0;
   size_t last_function_line = 0;
+  int look_for_line_statement = 0;
 
   assert((0 == ('0' == ' ')) && "This code assumes that bool false is 0 for mathematical operations");
   assert((1 == ('0' == '0')) && "This code assumes that bool true is 1 for mathematical operations");
 
   state.buf = malloc(file->len + 1);
+
+  memset(dut_filename, 0, sizeof(dut_filename));
+
+  /* Some special treatment for weird CPP */
+  if (0 == strncmp("#line 1 \"", file->buf, 9)) {
+    size_t ti = 9;
+    while ('"' != file->buf[ti]) {
+      dut_filename[ti - 9] = file->buf[ti];
+      look_for_line_statement = 1;
+      ti++;
+    }
+  }
 
   for (i = 0; i < file->len; i++) {
     char c = file->buf[i];
@@ -106,14 +120,30 @@ int file_parse(file_parse_cb_t func, void* list_ptr, const file_t* file,
     const int no_parenthesis_count = (num_paren == 0);
     const int no_braces_count = (num_braces == 0);
     const int one_braces_count = (num_braces == 1);
-    const int is_entering_function_body = ((is_code_block_start) && (no_parenthesis_count) && (no_braces_count));
-    const int is_exiting_function_body = ((is_code_block_end) && (no_parenthesis_count) && (one_braces_count));
+    const int is_entering_function_body = ((is_code_block_start) && (no_parenthesis_count) && (no_braces_count) && (in_relevant_file));
+    const int is_exiting_function_body = ((is_code_block_end) && (no_parenthesis_count) && (one_braces_count) && (in_relevant_file));
+    const int is_line_statement = ((look_for_line_statement == 1) && !in_string && !in_comment && (0 == strncmp("#line ", &file->buf[i], 6)));
 
     int do_parse;
     int is_inserted_space = 0;
 
     if (1 == state.done) {
       break;
+    }
+
+    if (is_line_statement) {
+      char* file_start = strchr(&file->buf[i], '"') + 1;
+      int found_file;
+      found_file = (0 == strncmp(file_start, dut_filename, strlen(dut_filename)));
+      if (0 == found_file && in_relevant_file) {
+        int num_pos = strlen("#line ");
+        char tc = file->buf[i + num_pos];
+        char tcn = file->buf[i + num_pos + 1];
+        if ((' ' == tcn) && ('1' == tc)) {
+          found_file = 1;
+        }
+      }
+      in_relevant_file = found_file;
     }
 
     num_braces += is_code_block_start;

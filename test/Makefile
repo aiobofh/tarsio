@@ -51,10 +51,15 @@ SEP:=
 EXECUTOR=vamos -c ~/.vamosrc ${SEP}
 FAILCOLLECT:=COMPACT
 else
+ifdef VC
+EXECUTOR:=wine ./
+FAILCOLLECT=-c || (echo "$$i failed")
+else
 EXECUTOR:=./
 FAILCOLLECT=-c || (echo "$$i failed")
 COV=1
 export COV
+endif
 endif
 endif
 
@@ -80,11 +85,11 @@ include ../inc/tarsio_dist.mk
 
 .PHONY: check
 check:: $(subst .c,${EXE},$(wildcard *${TCHECKSUFFIX}.c))
-	${Q}for i in $$(ls -1 *${TCHECKSUFFIX}); do ${EXECUTOR}$$i $(FAILCOLLECT) ; done; echo
+	${Q}for i in $$(ls -1 *${TCHECKSUFFIX}${EXE}); do ${EXECUTOR}$$i $(FAILCOLLECT) ; done; echo
 
 .PHONY: clean
 clean::
-	${Q}${RM} -f *.uaem *.lnk *.info *.pdb
+	${Q}${RM} -f *.uaem *.lnk *.info *.pdb *.exe
 
 .PHONY: clean-all
 clean-all:

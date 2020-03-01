@@ -72,11 +72,16 @@ info:
 check-all: clean
 	${Q}echo $@ && \
 	echo "----------------------------------------------------------" && \
-	echo "Native:" && \
+	echo "Native (GCC):" && \
 	$(MAKE) --no-print-directory -C src && \
 	$(MAKE) --no-print-directory -C test && \
 	${MAKE} --no-print-directory -C examples check && \
 	${MAKE} --no-print-directory -C examples clean && \
+	$(MAKE) --no-print-directory -C src clean && \
+	$(MAKE) --no-print-directory -C test clean && \
+	echo "Native (CLang):" && \
+	$(MAKE) --no-print-directory -C src CLANG=1 && \
+	$(MAKE) --no-print-directory -C test CLANG=1 && \
 	$(MAKE) --no-print-directory -C src clean && \
 	$(MAKE) --no-print-directory -C test clean && \
 	echo "SAS/C using Vamos:" && \
@@ -88,12 +93,12 @@ check-all: clean
 	$(MAKE) --no-print-directory -C src VBCC=1 && \
 	$(MAKE) --no-print-directory -C test VBCC=1 && \
 	$(MAKE) --no-print-directory -C src clean && \
-	$(MAKE) --no-print-directory -C test clean # && \ VisualC not working yet
-#	echo "VC cross compile, excution using Wine:" && \
-#	$(MAKE) --no-print-directory -C src VC=1 && \
-#	$(MAKE) --no-print-directory -C test VC=1 && \
-#	$(MAKE) --no-print-directory -C src clean && \
-#	$(MAKE) --no-print-directory -C test clean
+	$(MAKE) --no-print-directory -C test clean  && \
+	echo "VC cross compile, excution using Wine:" && \
+	$(MAKE) --no-print-directory -C src VC=1 && \
+	$(MAKE) --no-print-directory -C test VC=1 && \
+	$(MAKE) --no-print-directory -C src clean && \
+	$(MAKE) --no-print-directory -C test clean
 
 check-sasc: clean
 	$(MAKE) --no-print-directory -C src SASC=1 && \
