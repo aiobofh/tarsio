@@ -572,6 +572,8 @@ static int extract_return_type(prototype_node_t* node) {
     i++;
   }
 
+  assert(tmpbuf_i > 1);
+
   if (' ' == tmpbuf[tmpbuf_i - 1]) {
     tmpbuf[tmpbuf_i - 1] = '\0';
     tmpbuf_i--;
