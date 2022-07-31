@@ -79,7 +79,7 @@ static int ttg_options_init(ttg_options_t* options, int argc, char* argv[])
                                {'n', "no-module", "NOMODULE", NULL, 0},
                                {'d', "debug", "DEBUG", NULL, 0 } };
 
-  if (0 > (rest = options_init(argc, argv, ttg_options, 3))) {
+  if (0 > (rest = options_init(argc, argv, ttg_options, 4))) {
     usage(argv[0]);
     return -1;
   }
