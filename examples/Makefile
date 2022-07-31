@@ -36,7 +36,7 @@ export PATH:=../../src:${PATH}
 # Just build the write_file program in the various examples (not very useful)
 #
 all:
-	${Q}${MAKE} --no-print-directory -C 0_making_your_own_build_system_using_tario && \
+	${Q}${MAKE} --no-print-directory -C 0_making_your_own_build_system_using_tarsio && \
 	${MAKE} --no-print-directory -C 1_using_the_stock_build_system && \
 	${MAKE} --no-print-directory -C 2_out_of_source_checks && \
 	${MAKE} --no-print-directory -C 3_line_and_branch_coverage
@@ -45,7 +45,7 @@ all:
 # Perform the unit-checks in the various examples
 #
 check: compile_tarsio
-	${Q}${MAKE} --no-print-directory -C 0_making_your_own_build_system_using_tario check && \
+	${Q}${MAKE} --no-print-directory -C 0_making_your_own_build_system_using_tarsio check && \
 	${MAKE} --no-print-directory -C 1_using_the_stock_build_system check && \
 	${MAKE} --no-print-directory -C 2_out_of_source_checks check && \
 	${MAKE} --no-print-directory -C 3_line_and_branch_coverage check
@@ -74,7 +74,7 @@ compile_tarsio:
 # Cleanup all folders
 #
 clean:
-	${Q}${MAKE} --no-print-directory -C 0_making_your_own_build_system_using_tario clean && \
+	${Q}${MAKE} --no-print-directory -C 0_making_your_own_build_system_using_tarsio clean && \
 	${MAKE} --no-print-directory -C 1_using_the_stock_build_system clean && \
 	${MAKE} --no-print-directory -C 2_out_of_source_checks clean && \
 	${MAKE} --no-print-directory -C 3_line_and_branch_coverage clean && \

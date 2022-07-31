@@ -41,10 +41,10 @@ endif
 # actuall install Tarsio in the system PATH
 export PATH:=../../bin:${PATH}
 ifeq ($(shell which tcg 2>/dev/null),)
-  ifeq ($(shell test -f ../../bin/tcg && echo yes),yes)
-    $(warning Running tools from ../../bin not your normal PATH)
-  else
-    $(error You need to either install Tarsio or build it in ../../ using 'make')
+  ifneq ($(shell test -f ../../bin/tcg && echo yes),yes)
+    ifneq (${MAKECMDGOALS},clean)
+      $(warning You need to either install Tarsio or build it in ../../ using 'make')
+    endif
   endif
 endif
 
