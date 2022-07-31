@@ -19,6 +19,13 @@
   As a developer I want the freedom to have linefeeds in the function headers
   in order to keep my code pretty.
 
+* TODO 00 2022-07-31 Repalce the finnicky parsers/lexers             :tarsio:
+
+  As a maintainer I want a better (more generic) parser so that developers
+  and SDK's can have any kind of function prototoypes and still be able to
+  make Tarsio automock. The current implementation works most of the time,
+  but it could be better.
+
 * DONE 00 2020-02-22 Split ttg.c into a more static .c-file and gen  :tarsio:
 
   As a maintainer I do not want so much statically generated code in ttg.c,
