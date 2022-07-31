@@ -36,7 +36,7 @@ MAKEFLAGS += --no-builtin-rules
 Q=@
 
 export VERSION_MAJOR:=1
-export VERSION_MINOR:=0
+export VERSION_MINOR:=1
 export VERSION_PATCH:=0
 export AUTHOR:=Joakim Ekblad
 export VERSION:=${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}
