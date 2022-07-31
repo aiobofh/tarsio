@@ -38,6 +38,7 @@ MAKEFLAGS += --no-builtin-rules
 # without installing Tarsio anywhere a more specific configuration is needed
 #
 TARSIOHOME=../../..
+TARSIOBINDIR?=${TARSIOHOME}/bin
 TARSIOINCDIR?=${TARSIOHOME}/inc
 TARSIOSRCDIR?=${TARSIOHOME}/src
 TARSIOCFLAGS?=-I${TARSIOHOME}/inc

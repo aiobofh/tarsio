@@ -37,6 +37,17 @@ else
 	HINT=; echo; echo "All the files are kept in this folder, take a looksie to get a feel for what Tarsio creates for you"; echo
 endif
 
+# This is just to make it possible to explore this example without having to
+# actuall install Tarsio in the system PATH
+export PATH:=../../bin:${PATH}
+ifeq ($(shell which tcg 2>/dev/null),)
+  ifeq ($(shell test -f ../../bin/tcg && echo yes),yes)
+    $(warning Running tools from ../../bin not your normal PATH)
+  else
+    $(error You need to either install Tarsio or build it in ../../ using 'make')
+  endif
+endif
+
 #
 # Normally this should be:
 #
