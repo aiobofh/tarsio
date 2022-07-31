@@ -31,7 +31,7 @@ LDFLAGS+=-fprofile-arcs -lgcov --coverage -fno-exceptions -fno-inline
 COVERAGE_XML:=${TTESTROOT}coverage.xml
 LINES_COV:=${TTMPROOT}lines.cov
 BRANCHES_COV:=${TTMPROOT}branches.cov
-FILTER=-e ".*${TCHECKSUFFIX}.c" -e ".*$tarsio.c"
+FILTER=-e ".*${TCHECKSUFFIX}.c" -e ".*$tarsio.c" -e ".*$\_mocks.c" -e ".*$\_runner.c"
 
 GCOVR:=$(shell which gcovr)
 
