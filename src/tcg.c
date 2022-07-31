@@ -37,6 +37,7 @@
 
 #include "debug.h"
 #include "error.h"
+#include "options.h"
 
 #include "file.h"
 #include "prototype.h"
@@ -48,6 +49,8 @@
 static char field[] = "$Id: tcg,v " VERSION " " __DATE__ " " __TIME__ " " AUTHOR " Exp $";
 static char version[] = VERSION;
 static char timestamp[] = __DATE__ " " __TIME__;
+
+int __tarsio_debug_print = 0;
 
 /****************************************************************************
  * Program usage
@@ -75,25 +78,36 @@ typedef struct tcg_options_s tcg_options_t;
 
 static int tcg_options_init(tcg_options_t* options, int argc, char* argv[])
 {
-  if (argc == 2) {
-    if ((0 == strcmp("-v", argv[1])) || (0 == strcmp("--version", argv[1])) || (0 == strcmp("VERSION", argv[1]))) {
-      ver(argv[0]);
-      return -1;
-    }
-    if ((0 == strcmp("-h", argv[1])) || (0 == strcmp("--help", argv[1])) || (0 == strcmp("?", argv[1]))) {
-      usage(argv[0]);
-      return -1;
-    }
-  }
+  int rest;
+  options_t tcg_options[3] = { {'v', "version", "VERSION", NULL, 0 },
+                               {'h', "help", "?", NULL, 0 },
+                               {'d', "debug", "DEBUG", NULL, 0 } };
 
-  if (argc != 3) {
-    error1("ERROR: Illegal number (%d) of arguments", argc);
+  if (0 > (rest = options_init(argc, argv, tcg_options, 3))) {
     usage(argv[0]);
     return -1;
   }
 
-  options->code_filename = argv[1];
-  options->output_filename = argv[2];
+  if (tcg_options[0].enabled) {
+    ver(argv[0]);
+    return -1;
+  }
+  if (tcg_options[1].enabled) {
+    usage(argv[0]);
+    return -1;
+  }
+  if (tcg_options[2].enabled) {
+    __tarsio_debug_print = 1;
+  }
+
+  if ((argc - rest) != 3) {
+    error2("ERROR: Illegal number (%d) of arguments (%d)", argc, (argc - rest));
+    usage(argv[0]);
+    return -1;
+  }
+
+  options->code_filename = argv[rest + 1];
+  options->output_filename = argv[rest + 2];
 
   return 0;
 }
@@ -288,8 +302,8 @@ static int compare_prototype_lists(prototype_list_t* l1, prototype_list_t* l2)
     a2 = n2->info.argument_list.first;
     for (a1 = n1->info.argument_list.first; NULL != a1; a1 = a1->next) {
       debug2("  Checking argument type '%s' == '%s'...", a1->info.datatype.name, a2->info.datatype.name);
-      debug1("  a1 = %p", a1);
-      debug1("  a2 = %p", a2);
+      debug1("  a1 = %p", (void*)a1);
+      debug1("  a2 = %p", (void*)a2);
       if (NULL != a1->info.datatype.name) {
         if (0 != strcmp(a1->info.datatype.name, a2->info.datatype.name)) {
           error1("  Checking argument type 1 for '%s'", n1->info.symbol);

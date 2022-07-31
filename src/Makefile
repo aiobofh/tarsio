@@ -33,7 +33,7 @@
 
 MAKEFLAGS += --no-builtin-rules
 
-NODEBUG?=-DNODEBUG
+#NODEBUG?=-DNODEBUG
 Q:=@
 VERSION?=x.x.x
 AUTHOR?=unknown
@@ -132,15 +132,15 @@ version.h: Makefile
 #
 # Tarsio tool chain
 #
-tcg${EXE}: tcg.o list.o prototype.o file.o argument.o symbol_usage.o datatype.o symbol_cache.o
+tcg${EXE}: tcg.o list.o prototype.o file.o argument.o symbol_usage.o datatype.o symbol_cache.o options.o
 
-tsg${EXE}: tsg.o str.o list.o prototype.o cpp.o symbol_cache.o file.o argument.o symbol_usage.o datatype.o
+tsg${EXE}: tsg.o str.o list.o prototype.o cpp.o symbol_cache.o file.o argument.o symbol_usage.o datatype.o options.o
 
-tmg${EXE}: tmg.o list.o prototype.o symbol_cache.o file.o argument.o symbol_usage.o datatype.o
+tmg${EXE}: tmg.o list.o prototype.o symbol_cache.o file.o argument.o symbol_usage.o datatype.o options.o
 
-tam${EXE}: tam.o list.o prototype.o symbol_cache.o file.o argument.o symbol_usage.o datatype.o
+tam${EXE}: tam.o list.o prototype.o symbol_cache.o file.o argument.o symbol_usage.o datatype.o options.o
 
-ttg${EXE}: ttg.o str.o file.o checkcase.o
+ttg${EXE}: ttg.o str.o file.o checkcase.o options.o
 
 .PHONY: clean
 clean::

@@ -117,7 +117,7 @@ static void transform_structs(prototype_list_t* list, char* buf) {
       al->first = (argument_node_t*)buf;
     }
     an = NULL;
-    debug2("  first: %p last: %p", al->first, al->last);
+    debug2("  first: %p last: %p", (void*)al->first, (void*)al->last);
     for (j = 0; j < pn->info.argument_list.cnt; j++) {
       debug1("  Handling argument %lu", j);
       an = (argument_node_t*)buf;

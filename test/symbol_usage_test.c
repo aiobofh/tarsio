@@ -32,6 +32,8 @@
 
 #define m tarsio_mock
 
+int __tarsio_debug_print = 0;
+
 /***************************************************************************
  * symbol_usage_node_new()
  */

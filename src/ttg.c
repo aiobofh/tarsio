@@ -33,6 +33,7 @@
 #include <string.h>
 
 #include "error.h"
+#include "options.h"
 
 #include "file.h"
 #include "checkcase.h"
@@ -42,6 +43,8 @@
 static char field[] = "$Id: ttg,v " VERSION " " __DATE__ " " __TIME__ " " AUTHOR " Exp $";
 static char version[] = VERSION;
 static char timestamp[] = __DATE__ " " __TIME__;
+
+int __tarsio_debug_print = 0;
 
 /****************************************************************************
  * Program usage
@@ -70,34 +73,40 @@ typedef struct ttg_options_s ttg_options_t;
 
 static int ttg_options_init(ttg_options_t* options, int argc, char* argv[])
 {
-  options->no_module = 0;
+  int rest;
+  options_t ttg_options[4] = { {'v', "version", "VERSION", NULL, 0 },
+                               {'h', "help", "?", NULL, 0 },
+                               {'n', "no-module", "NOMODULE", NULL, 0},
+                               {'d', "debug", "DEBUG", NULL, 0 } };
 
-  if (argc == 2) {
-    if ((0 == strcmp("-v", argv[1])) || (0 == strcmp("--version", argv[1])) || (0 == strcmp("VERSION", argv[1]))) {
-      ver(argv[0]);
-      return -1;
-    }
-    if ((0 == strcmp("-h", argv[1])) || (0 == strcmp("--help", argv[1])) || (0 == strcmp("?", argv[1]))) {
-      usage(argv[0]);
-      return -1;
-    }
+  if (0 > (rest = options_init(argc, argv, ttg_options, 3))) {
+    usage(argv[0]);
+    return -1;
   }
 
-  if (argc != 3) {
-    if (argc == 4) {
-      if ((0 == strcmp("-n", argv[1])) || (0 == strcmp("--no-module", argv[1])) || (0 == strcmp("NOMODULE", argv[1]))) {
-        options->no_module = 1;
-      }
-    }
-    else {
-      error1("ERROR: Illegal number (%d) of arguments", argc);
-      usage(argv[0]);
-      return -1;
-    }
+  if (ttg_options[0].enabled) {
+    ver(argv[0]);
+    return -1;
+  }
+  if (ttg_options[1].enabled) {
+    usage(argv[0]);
+    return -1;
+  }
+  if (ttg_options[2].enabled) {
+    options->no_module = 1;
+  }
+  if (ttg_options[3].enabled) {
+    __tarsio_debug_print = 1;
   }
 
-  options->checkcases_filename = argv[argc - 2];
-  options->header_filename = argv[argc - 1];
+  if ((argc - rest) != 3) {
+    error2("ERROR: Illegal number (%d) of arguments (%d)", argc, (argc - rest));
+    usage(argv[0]);
+    return -1;
+  }
+
+  options->checkcases_filename = argv[rest + 1];
+  options->header_filename = argv[rest + 2];
 
   return 0;
 }

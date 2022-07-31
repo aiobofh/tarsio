@@ -32,6 +32,7 @@
 #include <string.h>
 
 #include "error.h"
+#include "options.h"
 
 #include "prototype.h"
 #include "symbol_cache.h"
@@ -41,6 +42,8 @@
 static char field[] = "$Id: tmg,v " VERSION " " __DATE__ " " __TIME__ " " AUTHOR " Exp $";
 static char version[] = VERSION;
 static char timestamp[] = __DATE__ " " __TIME__;
+
+int __tarsio_debug_print = 0;
 
 /****************************************************************************
  * Program usage
@@ -68,25 +71,36 @@ typedef struct tmg_options_s tmg_options_t;
 
 static int tmg_options_init(tmg_options_t* options, int argc, char* argv[])
 {
-  if (argc == 2) {
-    if ((0 == strcmp("-v", argv[1])) || (0 == strcmp("--version", argv[1])) || (0 == strcmp("VERSION", argv[1]))) {
-      ver(argv[0]);
-      return -1;
-    }
-    if ((0 == strcmp("-h", argv[1])) || (0 == strcmp("--help", argv[1])) || (0 == strcmp("?", argv[1]))) {
-      usage(argv[0]);
-      return -1;
-    }
-  }
+  int rest;
+  options_t tmg_options[3] = { {'v', "version", "VERSION", NULL, 0 },
+                               {'h', "help", "?", NULL, 0 },
+                               {'d', "debug", "DEBUG", NULL, 0 } };
 
-  if (argc != 3) {
-    error1("ERROR: Illegal number (%d) of arguments", argc);
+  if (0 > (rest = options_init(argc, argv, tmg_options, 3))) {
     usage(argv[0]);
     return -1;
   }
 
-  options->cache_filename = argv[1];
-  options->header_filename = argv[2];
+  if (tmg_options[0].enabled) {
+    ver(argv[0]);
+    return -1;
+  }
+  if (tmg_options[1].enabled) {
+    usage(argv[0]);
+    return -1;
+  }
+  if (tmg_options[2].enabled) {
+    __tarsio_debug_print = 1;
+  }
+
+  if ((argc - rest) != 3) {
+    error2("ERROR: Illegal number (%d) of arguments (%d)", argc, (argc - rest));
+    usage(argv[0]);
+    return -1;
+  }
+
+  options->cache_filename = argv[rest + 1];
+  options->header_filename = argv[rest + 2];
 
   return 0;
 }
