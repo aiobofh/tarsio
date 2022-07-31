@@ -6,7 +6,7 @@
  *                 |      ||    |         |    | |      |
  *                 |   ___||___ |         |___ | |______|
  *
- *              Copyright (C) 2020 AiO Secure Teletronics
+ *            Copyright (C) 2020-2022 AiO Secure Teletronics
  *
  * This is the run-time code that will be used to make a generated check-
  * runner execute and evaluate checks independently of each other.

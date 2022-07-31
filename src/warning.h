@@ -6,7 +6,7 @@
  *                 |      ||    |         |    | |      |
  *                 |   ___||___ |         |___ | |______|
  *
- *              Copyright (C) 2020 AiO Secure Teletronics
+ *            Copyright (C) 2020-2022 AiO Secure Teletronics
  *
  * This file contains macros for outputing (and documenting) warning
  * information.

@@ -6,7 +6,7 @@
  *                 |      ||    |         |    | |      |
  *                 |   ___||___ |         |___ | |______|
  *
- *              Copyright (C) 2020 AiO Secure Teletronics
+ *            Copyright (C) 2020-2022 AiO Secure Teletronics
  *
  * API declarations for check-suites. This file should be incldued in the top
  * of your check source file.

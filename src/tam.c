@@ -6,7 +6,7 @@
  *                 |      ||    |         |    | |      |
  *                 |   ___||___ |         |___ | |______|
  *
- *              Copyright (C) 2020 AiO Secure Teletronics
+ *            Copyright (C) 2020-2022 AiO Secure Teletronics
  *
  * This tool take a pre-processed source code (the design under check) as
  * input and replace all function calls within this file with calls to the

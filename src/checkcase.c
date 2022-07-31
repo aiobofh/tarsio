@@ -6,7 +6,7 @@
  *                 |      ||    |         |    | |      |
  *                 |   ___||___ |         |___ | |______|
  *
- *              Copyright (C) 2020 AiO Secure Teletronics
+ *            Copyright (C) 2020-2022 AiO Secure Teletronics
  *
  * This is a collection of functions to parse test-case (check case) files
  * a.k.a. suites to automatically generate check-runner progarms with the

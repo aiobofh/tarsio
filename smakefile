@@ -6,7 +6,7 @@
 #                  |      ||    |         |    | |      |
 #                  |   ___||___ |         |___ | |______|
 #
-#               Copyright (C) 2020 AiO Secure Teletronics
+#             Copyright (C) 2020-2022 AiO Secure Teletronics
 #
 # This is the make-file to build the binary tools in the Tarsio tool-chain using
 # SAS/C.

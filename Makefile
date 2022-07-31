@@ -6,7 +6,7 @@
 #                  |      ||    |         |    | |      |
 #                  |   ___||___ |         |___ | |______|
 #
-#               Copyright (C) 2020 AiO Secure Teletronics
+#             Copyright (C) 2020-2022 AiO Secure Teletronics
 #
 # This is the main mail-file for building distributions and running all the
 # regression checks of the Tarso project

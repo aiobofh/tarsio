@@ -6,7 +6,7 @@
 #                  |      ||    |         |    | |      |
 #                  |   ___||___ |         |___ | |______|
 #
-#               Copyright (C) 2020 AiO Secure Teletronics
+#             Copyright (C) 2020-2022 AiO Secure Teletronics
 #
 # This Makefile will compile (and run) the example project for Tarsio.
 #
