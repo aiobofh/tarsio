@@ -1,3 +1,45 @@
+#include "tokenizer.h"
+
+#ifndef NDEBUG
+#include <assert.h>
+#endif
+
+#if UINTPTR_MAX == 0xffffffff
+#else
+#define Q64BIT
+#endif
+
+#define _q1(H,N) ((*(U08*)&(H)[0] ^ *(U08*)&(N)[0]))
+#define _q2(H,N) ((*(U16*)&(H)[0] ^ *(U16*)&(N)[0]))
+#define _q3(H,N) (_q2(&(H)[0],&(N)[0]) | _q1(&(H)[2],&(N)[2]))
+#define _q4(H,N) ((*(U32*)&(H)[0] ^ *(U32*)&(N)[0]))
+#define _q5(H,N) (_q4(&(H)[0],&(N)[0]) | _q1(&(H)[4],&(N)[4]))
+#define _q6(H,N) (_q4(&(H)[0],&(N)[0]) | _q2(&(H)[4],&(N)[4]))
+#define _q7(H,N) (_q4(&(H)[0],&(N)[0]) | _q3(&(H)[4],&(N)[4]))
+#ifdef Q64BIT
+#define _q8(H,N) ((*(U64*)&(H)[0] ^ *(U64*)&(N)[0]))
+#else
+#define _q8(H,N) (_q4(&(H)[0],&(N)[0]) | _q4(&(H)[4],&(N)[4]))
+#endif
+
+#ifndef NDEBUG
+#define _qstrncmp_assert(S) | qstrncmp_assert(S)
+#else
+#define _qstrncmp_assert(S)
+#endif
+#define qstrncmp(H,N,S) (_q##S(H,N) _qstrncmp_assert(sizeof(N) - 1 - S))
+#ifndef NDEBUG
+#ifndef STRNCMP_ASSERT
+#define STRNCMP_ASSERT
+static inline int qstrncmp_assert(int s) {
+  assert(!s && "Wrong constant size");
+  return 0;
+}
+#else
+extern static inline int qstrncmp_assert(int s);
+#endif
+#endif
+
 #define return_token(type, dst, value)                           \
   do {                                                           \
     token_value_t __value;                                       \
@@ -14,7 +56,6 @@ lexer_t lexer_new(const char* begin, const char* end) {
   lexer.text_end = end;
   return lexer;
 }
-
 
 static size_t text_left(lexer_t* lexer) {
   return lexer->text_end - lexer->text_next;
@@ -59,7 +100,6 @@ static token_t lex_number_oct(lexer_t* lexer) {
   return_token(T_INTEGER, i, value);
 }
 
-
 static token_t lex_number_dec(lexer_t* lexer) {
   uint64_t value = 0;
   while (1) {
@@ -91,27 +131,44 @@ static token_t lex_identifier(lexer_t* lexer) {
 #define streq(length, string) \
   (end - begin == length) && (memcmp(begin, string, end - begin) == 0)
 
+#define eq(N) \
+  (qstrncmp(begin, N))
+
   const char* end = lexer->text_next;
-  if      (streq(4, "auto"))     { return_token(T_AUTO, i ,0); }
-  else if (streq(6, "struct"))   { return_token(T_STRUCT, i, 0); }
-  else if (streq(5, "union"))    { return_token(T_UNION, i, 0); }
-  else if (streq(4, "enum"))     { return_token(T_ENUM, i, 0); }
-  else if (streq(3, "for"))      { return_token(T_FOR, i, 0); }
-  else if (streq(5, "while"))    { return_token(T_WHILE, i, 0); }
-  else if (streq(2, "do"))       { return_token(T_DO, i, 0); }
-  else if (streq(2, "if"))       { return_token(T_IF, i, 0); }
-  else if (streq(4, "else"))     { return_token(T_ELSE, i, 0); }
-  else if (streq(3, "asm"))      { return_token(T_ASM, i, 0); }
-  else if (streq(6, "switch"))   { return_token(T_SWITCH, i, 0); }
-  else if (streq(4, "case"))     { return_token(T_CASE, i, 0); }
-  else if (streq(5, "break"))    { return_token(T_BREAK, i, 0); }
-  else if (streq(8, "continue")) { return_token(T_CONTINUE, i, 0); }
-  else if (streq(5, "const"))    { return_token(T_CONST, i, 0); }
-  else if (streq(8, "volatile")) { return_token(T_VOLATILE, i, 0); }
-  else if (streq(6, "return"))   { return_token(T_RETURN, i, 0); }
-  else if (streq(4, "cast"))     { return_token(T_CAST, i, 0); }
+  if      (eq("auto"    )) { return_token(T_AUTO, i ,0); }
+  else if (eq("break"   )) { return_token(T_STRUCT, i, 0); }
+  else if (eq("case"    )) { return_token(T_STRUCT, i, 0); }
+  else if (eq("char"    )) { return_token(T_STRUCT, i, 0); }
+  else if (eq("const"   )) { return_token(T_STRUCT, i, 0); }
+  else if (eq("continue")) { return_token(T_STRUCT, i, 0); }
+  else if (eq("default" )) { return_token(T_STRUCT, i, 0); }
+  else if (eq("do"      )) { return_token(T_STRUCT, i, 0); }
+  else if (eq("double"  )) { return_token(T_STRUCT, i, 0); }
+  else if (eq("else"    )) { return_token(T_STRUCT, i, 0); }
+  else if (eq("enum"    )) { return_token(T_STRUCT, i, 0); }
+  else if (eq("extern"  )) { return_token(T_STRUCT, i, 0); }
+  else if (eq("float"   )) { return_token(T_STRUCT, i, 0); }
+  else if (eq("for"     )) { return_token(T_STRUCT, i, 0); }
+  else if (eq("goto"    )) { return_token(T_STRUCT, i, 0); }
+  else if (eq("if"      )) { return_token(T_STRUCT, i, 0); }
+  else if (eq("int"     )) { return_token(T_STRUCT, i, 0); }
+  else if (eq("long"    )) { return_token(T_STRUCT, i, 0); }
+  else if (eq("register")) { return_token(T_STRUCT, i, 0); }
+  else if (eq("return"  )) { return_token(T_STRUCT, i, 0); }
+  else if (eq("short"   )) { return_token(T_STRUCT, i, 0); }
+  else if (eq("signed"  )) { return_token(T_STRUCT, i, 0); }
+  else if (eq("sizeof"  )) { return_token(T_STRUCT, i, 0); }
+  else if (eq("static"  )) { return_token(T_STRUCT, i, 0); }
+  else if (eq("struct"  )) { return_token(T_STRUCT, i, 0); }
+  else if (eq("switch"  )) { return_token(T_STRUCT, i, 0); }
+  else if (eq("typedef" )) { return_token(T_STRUCT, i, 0); }
+  else if (eq("union"   )) { return_token(T_STRUCT, i, 0); }
+  else if (eq("unsigned")) { return_token(T_STRUCT, i, 0); }
+  else if (eq("void"    )) { return_token(T_STRUCT, i, 0); }
+  else if (eq("volatile")) { return_token(T_STRUCT, i, 0); }
+  else if (eq("while"   )) { return_token(T_STRUCT, i, 0); }
   else {  return_token(T_IDENT, ident, ident_intern(begin, end, hash)); }
-#undef streq
+#undef eq
 }
 
 static void skip_whitespace(lexer_t* lexer) {
