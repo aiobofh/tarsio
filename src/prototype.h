@@ -40,6 +40,7 @@
 #include "file.h"
 #include "argument.h"
 #include "symbol_usage.h"
+#include "tokenizer.h"
 
 struct raw_prototype_s {
   size_t decl_len;
@@ -67,6 +68,7 @@ typedef struct linkage_definition_s linkage_definition_t;
 struct prototype_s {
   raw_prototype_t raw_prototype;
   linkage_definition_t linkage_definition;
+  token_node_t* token_node;
   datatype_t datatype;
   size_t symbol_len;
   char* symbol;
@@ -107,7 +109,9 @@ typedef struct prototype_list_s prototype_list_t;
 #define PROTOTYPE_LIST_EMPTY {NULL, 0, 0, 0, NULL, NULL}
 
 int prototype_list_init(prototype_list_t* list, const file_t* file);
+int prototype_list_init_from_tokens(prototype_list_t* list, token_list_t* token_list);
 int prototype_usage(prototype_list_t* list, const file_t* file);
+int prototype_usage_from_tokens(prototype_list_t* list, token_list_t* token_list);
 int prototype_remove_unused(prototype_list_t* list);
 int prototype_extract_return_types(prototype_list_t* list);
 int prototype_extract_arguments(prototype_list_t* list);

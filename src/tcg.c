@@ -37,9 +37,11 @@
 
 #include "debug.h"
 #include "error.h"
+#include "warning.h"
 #include "options.h"
 
 #include "file.h"
+#include "tokenizer.h"
 #include "prototype.h"
 #include "cpp.h"
 #include "symbol_cache.h"
@@ -71,6 +73,7 @@ static void ver(const char* program_name) {
  * Option handling
  */
 struct tcg_options_s {
+  int tokenizer;
   char* code_filename;
   char* output_filename;
 };
@@ -79,11 +82,12 @@ typedef struct tcg_options_s tcg_options_t;
 static int tcg_options_init(tcg_options_t* options, int argc, char* argv[])
 {
   int rest;
-  options_t tcg_options[3] = { {'v', "version", "VERSION", NULL, 0 },
+  options_t tcg_options[4] = { {'v', "version", "VERSION", NULL, 0 },
                                {'h', "help", "?", NULL, 0 },
+                               {'t', "tokenizer", "TOKENIZER", NULL, 0 },
                                {'d', "debug", "DEBUG", NULL, 0 } };
 
-  if (0 > (rest = options_init(argc, argv, tcg_options, 3))) {
+  if (0 > (rest = options_init(argc, argv, tcg_options, 4))) {
     usage(argv[0]);
     return -1;
   }
@@ -97,6 +101,9 @@ static int tcg_options_init(tcg_options_t* options, int argc, char* argv[])
     return -1;
   }
   if (tcg_options[2].enabled) {
+    options->tokenizer = 1;
+  }
+  if (tcg_options[3].enabled) {
     __tarsio_debug_print = 1;
   }
 
@@ -346,6 +353,7 @@ int main(int argc, char* argv[])
   int retval = EXIT_SUCCESS;
   tcg_options_t options;
   file_t code_file = FILE_EMPTY;
+  token_list_t token_list = TOKEN_LIST_EMPTY;
   prototype_list_t prototype_list = PROTOTYPE_LIST_EMPTY;
   prototype_list_t check_prototype_list = PROTOTYPE_LIST_EMPTY;
   cpp_list_t cpp_list = CPP_LIST_EMPTY;
@@ -367,23 +375,43 @@ int main(int argc, char* argv[])
     goto read_preprocessed_file_failed;
   }
 
-  /* TODO: Extract line-feed style */
+  if (0 == options.tokenizer) {
+    /* TODO: Extract line-feed style */
 
-  /*
-   * Find all prototypes to declare
-   */
-  if (0 != prototype_list_init(&prototype_list, &code_file)) {
-    retval = EXIT_FAILURE;
-    goto prototypes_init_failed;
+    /*
+     * Find all prototypes to declare
+     */
+    if (0 != prototype_list_init(&prototype_list, &code_file)) {
+      retval = EXIT_FAILURE;
+      goto prototypes_init_failed;
+    }
+
+    /*
+     * Find function calls to any of the prototypes within the design under
+     * check to be replaced by calls to the Tarsio proxy functions instead.
+     */
+    if (0 != prototype_usage(&prototype_list, &code_file)) {
+      retval = EXIT_FAILURE;
+      goto prototypes_usage_failed;
+    }
   }
+  else {
+    warning0("Running prototoype tokenizer implementation");
 
-  /*
-   * Find function calls to any of the prototypes within the design under
-   * check to be replaced by calls to the Tarsio proxy functions instead.
-   */
-  if (0 != prototype_usage(&prototype_list, &code_file)) {
-    retval = EXIT_FAILURE;
-    goto prototypes_usage_failed;
+    if (0 != token_list_init(&token_list, &code_file)) {
+      retval = EXIT_FAILURE;
+      goto token_list_init_failed;
+    }
+
+    if (0 != prototype_list_init_from_tokens(&prototype_list, &token_list)) {
+      retval = EXIT_FAILURE;
+      goto prototypes_init_failed;
+    }
+
+    if (0 != prototype_usage_from_tokens(&prototype_list, &token_list)) {
+      retval = EXIT_FAILURE;
+      goto prototypes_usage_failed;
+    }
   }
 
   /*
@@ -439,6 +467,10 @@ int main(int argc, char* argv[])
  prototypes_usage_failed:
   prototype_list_cleanup(&prototype_list);
  prototypes_init_failed:
+  if (options.tokenizer) {
+    token_list_cleanup(&token_list);
+  }
+ token_list_init_failed:
   file_cleanup(&code_file);
  read_preprocessed_file_failed:
  options_init_failed:
