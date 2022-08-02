@@ -424,21 +424,38 @@ int main(int argc, char* argv[])
     goto prototype_remove_unused_failed;
   }
 
-  /*
-   * Extract funciton return data types of all used function.
-   */
-  if (0 != prototype_extract_return_types(&prototype_list)) {
-    retval = EXIT_FAILURE;
-    goto prototype_extract_return_type_failed;
+  if (0 == options.tokenizer) {
+    /*
+     * Extract funciton return data types of all used function.
+     */
+    if (0 != prototype_extract_return_types(&prototype_list)) {
+      retval = EXIT_FAILURE;
+      goto prototype_extract_return_type_failed;
+    }
+
+    /*
+     * Extract function arguments and datatypes of all used functions.
+     */
+    if (0 != prototype_extract_arguments(&prototype_list)) {
+      retval = EXIT_FAILURE;
+      goto prototype_extract_arguments_failed;
+    }
+  }
+  else {
+    if (0 != prototype_extract_return_types_from_tokens(&prototype_list, &token_list)) {
+      retval = EXIT_FAILURE;
+      goto prototype_extract_return_type_failed;
+    }
+
+    /*
+     * Extract function arguments and datatypes of all used functions.
+     */
+    if (0 != prototype_extract_arguments_from_tokens(&prototype_list, &token_list)) {
+      retval = EXIT_FAILURE;
+      goto prototype_extract_arguments_failed;
+    }
   }
 
-  /*
-   * Extract function arguments and datatypes of all used functions.
-   */
-  if (0 != prototype_extract_arguments(&prototype_list)) {
-    retval = EXIT_FAILURE;
-    goto prototype_extract_arguments_failed;
-  }
 
   if (0 != generate_symbol_cache(&prototype_list, &cpp_list, options.output_filename)) {
     retval = EXIT_FAILURE;

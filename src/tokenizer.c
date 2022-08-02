@@ -67,6 +67,7 @@
 #define _q8(H,N) (_q4(&(H)[0],&(N)[0]) | _q4(&(H)[4],&(N)[4]))
 #endif
 #define _q9(H,N) (_q8(&(H)[0],&(N)[0]) | _q1(&(H)[8],&(N)[8]))
+#define _q10(H,N) (_q8(&(H)[0],&(N)[0]) | _q2(&(H)[8],&(N)[8]))
 
 #ifndef NDEBUG
 #define _qstrncmp_assert(S,N) | qstrncmp_assert(S,N)
@@ -200,55 +201,55 @@ static token_t lex_identifier(lexer_t* lexer) {
 #define eq(N,S)                                 \
   0 == qstrncmp(begin, N, S)
 
-  if      (eq("auto"     , 4)) { return_token(T_AUTO,      i ,0); }
-  else if (eq("asm"      , 3)) { return_token(T_ASM,       i, 0); }
-  else if (eq("break"    , 5)) { return_token(T_BREAK,     i, 0); }
-  else if (eq("case"     , 4)) { return_token(T_CASE,      i, 0); }
-  else if (eq("catch"    , 5)) { return_token(T_CATCH,     i, 0); }
-  else if (eq("char"     , 4)) { return_token(T_CHAR,      i, 0); }
-  else if (eq("class"    , 5)) { return_token(T_CLASS,     i, 0); }
-  else if (eq("const"    , 5)) { return_token(T_CONST,     i, 0); }
-  else if (eq("continue" , 8)) { return_token(T_CONTINUE,  i, 0); }
-  else if (eq("default"  , 7)) { return_token(T_DEFAULT,   i, 0); }
-  else if (eq("delete"   , 6)) { return_token(T_DELETE,    i, 0); }
-  else if (eq("do"       , 2)) { return_token(T_DO,        i, 0); }
-  else if (eq("double"   , 6)) { return_token(T_DOUBLE,    i, 0); }
-  else if (eq("else"     , 4)) { return_token(T_ELSE,      i, 0); }
-  else if (eq("enum"     , 4)) { return_token(T_ENUM,      i, 0); }
-  else if (eq("extern"   , 6)) { return_token(T_EXTERN,    i, 0); }
-  else if (eq("float"    , 5)) { return_token(T_FLOAT,     i, 0); }
-  else if (eq("for"      , 3)) { return_token(T_FOR,       i, 0); }
-  else if (eq("friend"   , 6)) { return_token(T_FRIEND,    i, 0); }
-  else if (eq("goto"     , 4)) { return_token(T_GOTO,      i, 0); }
-  else if (eq("if"       , 2)) { return_token(T_IF,        i, 0); }
-  else if (eq("inline"   , 6)) { return_token(T_INLINE,    i, 0); }
-  else if (eq("__inline" , 8)) { return_token(T___INLINE,  i, 0); }
-  else if (eq("int"      , 3)) { return_token(T_INT,       i, 0); }
-  else if (eq("long"     , 4)) { return_token(T_LONG,      i, 0); }
-  else if (eq("new"      , 3)) { return_token(T_NEW,       i, 0); }
-  else if (eq("operator" , 8)) { return_token(T_OPERATOR,  i, 0); }
-  else if (eq("private"  , 7)) { return_token(T_PRIVATE,   i, 0); }
-  else if (eq("protected", 9)) { return_token(T_PROTECTED, i, 0); }
-  else if (eq("public"   , 6)) { return_token(T_PUBLIC,    i, 0); }
-  else if (eq("register" , 8)) { return_token(T_REGISTER,  i, 0); }
-  else if (eq("return"   , 6)) { return_token(T_RETURN,    i, 0); }
-  else if (eq("short"    , 5)) { return_token(T_SHORT,     i, 0); }
-  else if (eq("signed"   , 6)) { return_token(T_SIGNED,    i, 0); }
-  else if (eq("sizeof"   , 6)) { return_token(T_SIZEOF,    i, 0); }
-  else if (eq("static"   , 6)) { return_token(T_STATIC,    i, 0); }
-  else if (eq("struct"   , 6)) { return_token(T_STRUCT,    i, 0); }
-  else if (eq("switch"   , 6)) { return_token(T_SWITCH,    i, 0); }
-  else if (eq("template" , 8)) { return_token(T_TEMPLATE,  i, 0); }
-  else if (eq("this"     , 4)) { return_token(T_THIS,      i, 0); }
-  else if (eq("throw"    , 5)) { return_token(T_THROW,     i, 0); }
-  else if (eq("try"      , 3)) { return_token(T_TRY,       i, 0); }
-  else if (eq("typedef"  , 7)) { return_token(T_TYPEDEF,   i, 0); }
-  else if (eq("union"    , 5)) { return_token(T_UNION,     i, 0); }
-  else if (eq("unsigned" , 8)) { return_token(T_UNSIGNED,  i, 0); }
-  else if (eq("virtual"  , 7)) { return_token(T_VIRTUAL,   i, 0); }
-  else if (eq("void"     , 4)) { return_token(T_VOID,      i, 0); }
-  else if (eq("volatile" , 8)) { return_token(T_VOLATILE,  i, 0); }
-  else if (eq("while"    , 5)) { return_token(T_WHILE,     i, 0); }
+  if      (eq("auto"      , 4)) { return_token(T_AUTO,      i ,0); }
+  else if (eq("asm"       , 3)) { return_token(T_ASM,       i, 0); }
+  else if (eq("break"     , 5)) { return_token(T_BREAK,     i, 0); }
+  else if (eq("case"      , 4)) { return_token(T_CASE,      i, 0); }
+  else if (eq("catch"     , 5)) { return_token(T_CATCH,     i, 0); }
+  else if (eq("char"      , 4)) { return_token(T_CHAR,      i, 0); }
+  else if (eq("class"     , 5)) { return_token(T_CLASS,     i, 0); }
+  else if (eq("const"     , 5)) { return_token(T_CONST,     i, 0); }
+  else if (eq("continue"  , 8)) { return_token(T_CONTINUE,  i, 0); }
+  else if (eq("default"   , 7)) { return_token(T_DEFAULT,   i, 0); }
+  else if (eq("delete"    , 6)) { return_token(T_DELETE,    i, 0); }
+  else if (eq("do"        , 2)) { return_token(T_DO,        i, 0); }
+  else if (eq("double"    , 6)) { return_token(T_DOUBLE,    i, 0); }
+  else if (eq("else"      , 4)) { return_token(T_ELSE,      i, 0); }
+  else if (eq("enum"      , 4)) { return_token(T_ENUM,      i, 0); }
+  else if (eq("extern"    , 6)) { return_token(T_EXTERN,    i, 0); }
+  else if (eq("float"     , 5)) { return_token(T_FLOAT,     i, 0); }
+  else if (eq("for"       , 3)) { return_token(T_FOR,       i, 0); }
+  else if (eq("friend"    , 6)) { return_token(T_FRIEND,    i, 0); }
+  else if (eq("goto"      , 4)) { return_token(T_GOTO,      i, 0); }
+  else if (eq("if"        , 2)) { return_token(T_IF,        i, 0); }
+  else if (eq("inline"    , 6)) { return_token(T_INLINE,    i, 0); }
+  else if (eq("__inline"  , 8)) { return_token(T___INLINE,  i, 0); }
+  else if (eq("int"       , 3)) { return_token(T_INT,       i, 0); }
+  else if (eq("long"      , 4)) { return_token(T_LONG,      i, 0); }
+  else if (eq("new"       , 3)) { return_token(T_NEW,       i, 0); }
+  else if (eq("operator"  , 8)) { return_token(T_OPERATOR,  i, 0); }
+  else if (eq("private"   , 7)) { return_token(T_PRIVATE,   i, 0); }
+  else if (eq("protected" , 9)) { return_token(T_PROTECTED, i, 0); }
+  else if (eq("public"    , 6)) { return_token(T_PUBLIC,    i, 0); }
+  else if (eq("register"  , 8)) { return_token(T_REGISTER,  i, 0); }
+  else if (eq("return"    , 6)) { return_token(T_RETURN,    i, 0); }
+  else if (eq("short"     , 5)) { return_token(T_SHORT,     i, 0); }
+  else if (eq("signed"    , 6)) { return_token(T_SIGNED,    i, 0); }
+  else if (eq("sizeof"    , 6)) { return_token(T_SIZEOF,    i, 0); }
+  else if (eq("static"    , 6)) { return_token(T_STATIC,    i, 0); }
+  else if (eq("struct"    , 6)) { return_token(T_STRUCT,    i, 0); }
+  else if (eq("switch"    , 6)) { return_token(T_SWITCH,    i, 0); }
+  else if (eq("template"  , 8)) { return_token(T_TEMPLATE,  i, 0); }
+  else if (eq("this"      , 4)) { return_token(T_THIS,      i, 0); }
+  else if (eq("throw"     , 5)) { return_token(T_THROW,     i, 0); }
+  else if (eq("try"       , 3)) { return_token(T_TRY,       i, 0); }
+  else if (eq("typedef"   , 7)) { return_token(T_TYPEDEF,   i, 0); }
+  else if (eq("union"     , 5)) { return_token(T_UNION,     i, 0); }
+  else if (eq("unsigned"  , 8)) { return_token(T_UNSIGNED,  i, 0); }
+  else if (eq("virtual"   , 7)) { return_token(T_VIRTUAL,   i, 0); }
+  else if (eq("void"      , 4)) { return_token(T_VOID,      i, 0); }
+  else if (eq("volatile"  , 8)) { return_token(T_VOLATILE,  i, 0); }
+  else if (eq("while"     , 5)) { return_token(T_WHILE,     i, 0); }
   else {  return_token(T_IDENT, ident, ident_intern(begin, end, hash)); }
 #undef eq
 }
@@ -518,6 +519,20 @@ token_list_find_next_symbol_usage(token_list_t* list, token_node_t* token_node) 
     n = n->next;
   }
   return NULL;
+}
+
+token_node_t* token_list_find_beginning_of_statement(token_node_t* n) {
+  /* Rewind until last semi-colon (or right bracet) */
+  for (; ((NULL != n) && ((T_SEMICOLON != n->token.type) && (T_RBRACE != n->token.type))); n = n->prev);
+
+  if (NULL == n) return NULL;
+
+  /* Then forward again, until we find some kind of identifier */
+
+  /* See tokenizer.h for the 200 and 299 values */
+  for (; ((NULL != n) && ((n->token.type < 200) || (n->token.type > 299))); n = n->next);
+
+  return n;
 }
 
 /*

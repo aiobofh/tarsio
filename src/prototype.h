@@ -117,7 +117,9 @@ prototype_usage_from_tokens(prototype_list_t* list, token_list_t* token_list);
 
 int prototype_remove_unused(prototype_list_t* list);
 int prototype_extract_return_types(prototype_list_t* list);
+int prototype_extract_return_types_from_tokens(prototype_list_t* list, token_list_t* token_list);
 int prototype_extract_arguments(prototype_list_t* list);
+int prototype_extract_arguments_from_tokens(prototype_list_t* list, token_list_t* token_list);
 size_t prototype_get_first_function_implementation_line(prototype_list_t* list);
 void prototype_list_cleanup(prototype_list_t* list);
 

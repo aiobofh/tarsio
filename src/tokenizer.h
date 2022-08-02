@@ -32,7 +32,7 @@ typedef enum {
   T_GOTO,
   T_IF,
   T_INLINE,
-  T___INLINE,
+  T___INLINE, /* Older compilers */
   T_INT,
   T_LONG,
   T_NEW,
@@ -174,5 +174,6 @@ int token_list_init(token_list_t* list, file_t* file);
 void token_list_cleanup(token_list_t* list);
 token_node_t* token_list_find_function_declaration(token_node_t* node);
 token_node_t* token_list_find_next_symbol_usage(token_list_t* list, token_node_t* node);
+token_node_t* token_list_find_beginning_of_statement(token_node_t* node);
 
 #endif

@@ -977,17 +977,21 @@ prototype_list_init_from_tokens(prototype_list_t* list, token_list_t* token_list
 }
 
 static int prototype_usage_from_token(prototype_node_t* prototype_node, token_list_t* list) {
-  token_node_t* node_to_search_for = prototype_node->info.token_node;
+  symbol_usage_list_t* usage_list = &prototype_node->info.symbol_usage_list;
+  token_node_t* search = prototype_node->info.token_node;
   token_node_t* node;
+
   list->brace_depth = 0;
   list->current = list->first;
-  while (NULL != (node = token_list_find_next_symbol_usage(list, node_to_search_for))) {
-    symbol_usage_node_t* usage_node = symbol_usage_new_from_token(node, prototype_node);
-    if (NULL == usage_node) {
+
+  while (NULL != (node = token_list_find_next_symbol_usage(list, search))) {
+    symbol_usage_node_t* usage = symbol_usage_new_from_token(node,
+                                                             prototype_node);
+    if (NULL == usage) {
       error0("Out of memory");
       return -1;
     }
-    symbol_usage_list_append_node(&prototype_node->info.symbol_usage_list, usage_node);
+    symbol_usage_list_append_node(usage_list, usage);
   }
   return 0;
 }
@@ -998,6 +1002,117 @@ prototype_usage_from_tokens(prototype_list_t* list, token_list_t* token_list) {
   for (node = list->first; NULL != node; node = node->next) {
     if (0 != prototype_usage_from_token(node, token_list)) {
       error0("Could not find usage due to errors");
+      return -1;
+    }
+  }
+  return 0;
+}
+
+static int extract_return_type_from_tokens(prototype_node_t* node, token_list_t* token_list) {
+  token_node_t* token_node;
+  token_t* token;
+  token_t* next_token;
+  prototype_t* prototype;
+  char datatype_name[1024]; /* Should be enough */
+
+  token_node = token_list_find_beginning_of_statement(node->info.token_node);
+  if (NULL == (token_node)) {
+    error1("Could not find the beginning of the function prototype for '%s'",
+           node->info.symbol);
+    return -1;
+  }
+
+  debug1("%d", token_node->token.type);
+
+  /* Then skip from the statment ending to the first token of the function
+   * prototype */
+  prototype = &node->info;
+
+  debug2("First token in the function prototype for '%s' found at line %u",
+         node->info.symbol, token_node->token.line);
+
+  for (; token_node != node->info.token_node; token_node = token_node->next) {
+    char* dst;
+    token = &token_node->token;
+    next_token = &token_node->next->token;
+    if (T_EXTERN == token->type) {
+      prototype->linkage_definition.is_extern = 1;
+      debug0("extern");
+      continue;
+    }
+    if (T_STATIC == token->type) {
+      prototype->linkage_definition.is_static = 1;
+      debug0("static");
+      continue;
+    }
+    if ((T_INLINE == token->type) || (T___INLINE == token->type)) {
+      prototype->linkage_definition.is_inline = 1;
+      debug0("inline");
+      continue;
+    }
+    /* Pointer return type */
+    if (T_STAR == token->type) {
+      prototype->datatype.datatype_definition.is_pointer++;
+      debug0("*");
+      continue;
+    }
+
+    /* Other compiler specific shit like __declspec(...), __cdecl(...) ... */
+    if ((T_IDENT == token->type) && (T_LPAREN == next_token->type)) {
+      debug0("<compiler specific>");
+      while (T_RPAREN != token->type) {
+        token_node = token_node->next;
+      }
+      continue;
+    }
+
+    dst = &datatype_name[prototype->datatype.name_len];
+    memcpy(dst, token->ptr, token->len);
+
+    prototype->datatype.name_len += token->len + 1;
+
+    datatype_name[prototype->datatype.name_len - 1] = ' ';
+
+    assert(prototype->datatype.name_len < sizeof(datatype_name) &&
+           "Unusual datatype name - Too long!");
+  }
+
+  if (NULL == (prototype->datatype.name = malloc(prototype->datatype.name_len))) {
+    error0("Out of memory");
+    return -1;
+  }
+  memcpy(prototype->datatype.name, datatype_name, prototype->datatype.name_len);
+  prototype->datatype.name[prototype->datatype.name_len - 1] = '\0';
+
+  debug1("Datatype: '%s'", prototype->datatype.name);
+
+  return 0;
+}
+
+int prototype_extract_return_types_from_tokens(prototype_list_t* list,
+                                               token_list_t* token_list) {
+  prototype_node_t* node;
+  for (node = list->first; NULL != node; node = node->next) {
+    if (0 != extract_return_type_from_tokens(node, token_list)) {
+      error1("Return type could not be extracted for '%s'", node->info.symbol);
+      return -1;
+    }
+  }
+  return 0;
+}
+
+static int extract_arguments_from_tokens(prototype_node_t* node,
+                                         token_list_t* token_list) {
+
+  return -1;
+}
+
+int prototype_extract_arguments_from_tokens(prototype_list_t* list,
+                                            token_list_t* token_list) {
+  prototype_node_t* node;
+  for (node = list->first; NULL != node; node = node->next) {
+    if (0 != extract_arguments_from_tokens(node, token_list)) {
+      error1("Arguments could not be extracted for '%s'", node->info.symbol);
       return -1;
     }
   }
