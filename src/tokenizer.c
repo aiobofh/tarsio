@@ -94,7 +94,7 @@ extern static inline int qstrncmp_assert(int s);
     token_t __tok = {lexer->text_next - lexer->text_start,       \
                      (char*)lexer->text_start,                   \
                      type,                                       \
-                     lexer->offset,                              \
+                     lexer->text_start - lexer->text,            \
                      lexer->line,                                \
                      lexer->column};                             \
     return __tok;                                                \
@@ -106,9 +106,11 @@ lexer_t lexer;
 static void lexer_new(const char* begin, const char* end) {
   lexer.line = 1;
   lexer.column = 1;
+  lexer.offset = 0;
   lexer.text_start = begin,
   lexer.text_next = begin;
   lexer.text_end = end;
+  lexer.text = begin;
 }
 
 static size_t text_left(lexer_t* lexer) {
@@ -411,7 +413,7 @@ int token_list_init(token_list_t* list, file_t* file) {
       char* buf = malloc(token.len + 1);
       memcpy(buf, token.ptr, token.len);
       buf[token.len] = '\0';
-      debug1("Found identifier: '%s'", buf);
+      debug4("Found identifier: '%s' at line %u col %u offset %lu", buf, token.line, token.column, token.offset );
       free(buf);
     }
     token_list_append(list, &token);
@@ -441,7 +443,7 @@ static token_node_t* parse_identifier(token_node_t* node) {
 }
 
 token_node_t* token_list_find_function_declaration(token_node_t* node) {
-  int waiting_for = 0;
+  token_type_t waiting_for = 0;
   int brace_depth = 0;
   int paren_depth = 0;
   while (node) {
@@ -477,7 +479,44 @@ token_node_t* token_list_find_function_declaration(token_node_t* node) {
   return NULL;
 }
 
-token_node_t* token_list_find_function_usage(token_list_t* list, token_node_t* node) {
+/*
+static void debug_print_symbol(token_t* token) {
+  if (__tarsio_debug_print) {
+    unsigned int i;
+    fprintf(stderr, "DEBUG: ");
+    for (i = 0; i < token->len; i++) {
+      fputc(token->ptr[i], stderr);
+    }
+    fprintf(stderr, "\n");
+  }
+}
+*/
+
+static token_node_t* find_next_identifier(token_node_t* node) {
+  for (; ((NULL != node) && (T_IDENT != node->token.type)); node = node->next);
+  return node;
+}
+
+token_node_t*
+token_list_find_next_symbol_usage(token_list_t* list, token_node_t* token_node) {
+  token_node_t* n = list->current;
+  while (n) {
+    list->brace_depth += (T_LBRACE == n->token.type);
+    list->brace_depth -= (T_RBRACE == n->token.type);
+    if (!list->brace_depth) goto skip_ahead;
+    if ((T_IDENT == n->token.type) &&
+        (NULL != n->next) &&
+        ((T_LPAREN == n->next->token.type) ||
+         (T_SEMICOLON == n->next->token.type)) && /* Function pointer assign */
+        (n->token.len == token_node->token.len) &&
+        (0 == strncmp(n->token.ptr, token_node->token.ptr, n->token.len))) {
+      list->current = find_next_identifier(n->next
+                                           );
+      return n;
+    }
+  skip_ahead:
+    n = n->next;
+  }
   return NULL;
 }
 

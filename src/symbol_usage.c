@@ -40,6 +40,8 @@
 #include "debug.h"
 #include "symbol_usage.h"
 
+#include "tokenizer.h"
+
 static symbol_usage_node_t* symbol_usage_node_new(const size_t line, const size_t col, const size_t offset, const size_t last_function_start, const size_t last_function_line, void* prototype_node) {
   symbol_usage_node_t* node = malloc(sizeof(*node));
   if (NULL == node) {
@@ -82,4 +84,54 @@ void symbol_usage_list_cleanup(symbol_usage_list_t* list) {
     node = next_node;
     list->cnt--;
   }
+}
+
+/******************************************************************************
+ * THE NEW STUFF
+ */
+symbol_usage_node_t*
+symbol_usage_new_from_token(token_node_t* token_node, void* prototype_node)
+{
+  symbol_usage_node_t* node = malloc(sizeof(*node));
+  if (NULL == node) {
+    error0("Out of memory while allocating usage node");
+    return NULL;
+  }
+  memset(node, 0, sizeof(*node));
+  node->info.line = token_node->token.line;
+  node->info.col = token_node->token.column;
+  node->info.offset = token_node->token.offset;
+  node->info.token_node = token_node;
+  /*
+  node->info.last_function_start = last_function_start;
+  node->info.last_function_line = last_function_line;
+  */
+
+  /* Loose connection via void* */
+  node->info.prototype_node = prototype_node;
+  return node;
+}
+
+void
+symbol_usage_list_append_node(symbol_usage_list_t* list,
+                              symbol_usage_node_t* node)
+{
+  char* buf = malloc(node->info.token_node->token.len);
+  memcpy(buf, node->info.token_node->token.ptr, node->info.token_node->token.len);
+  buf[node->info.token_node->token.len] = '\0';
+
+  debug4("Symbol '%s' usage at line %u col %u offset %lu",
+         buf,
+         node->info.token_node->token.line,
+         node->info.token_node->token.column,
+         node->info.token_node->token.offset);
+  free(buf);
+  if (NULL == list->first) {
+    list->first = node;
+  }
+  if (NULL != list->last) {
+    list->last->next = node;
+  }
+  list->last = node;
+  list->cnt++;
 }

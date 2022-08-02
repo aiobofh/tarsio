@@ -418,114 +418,6 @@ int prototype_list_init(prototype_list_t* list, const file_t* file) {
   return 0;
 }
 
-static
-prototype_node_t* prototype_node_new_from_token(token_node_t* token_node,
-                                                prototype_list_t* list)
-{
-  prototype_node_t* node = NULL;
-  prototype_node_t* n;
-  char* symbol;
-
-  symbol = malloc(token_node->token.len);
-  if (NULL == symbol) {
-    error0("Out of memory");
-    goto symbol_malloc_failed;
-  }
-  memcpy(symbol, token_node->token.ptr, token_node->token.len);
-  symbol[token_node->token.len] = '\0';
-
-  /* Don't make duplicates, but keep the earliset found one */
-  if (NULL != (n = prototype_list_find_symbol(list, symbol, 0))) {
-    prototype_list_remove(list, n);
-  }
-
-  node = malloc(sizeof(*node));
-  if (NULL == node) {
-    error1("Out of memory while allocating prototype node for '%s'", symbol);
-    goto node_malloc_failed;
-  }
-
-  memset(node, 0, sizeof(*node));
-
-  /*
-  node->info.raw_prototype.decl_len = strlen(raw) + 1;
-  node->info.raw_prototype.decl = washing_machine(raw);
-  if (NULL == node->info.raw_prototype.decl) {
-    error1("Out of memory while allocating raw prototype for '%s'", raw);
-    goto raw_prototype_malloc_failed;
-  }
-  */
-  node->info.symbol_len = strlen(symbol) + 1;
-  node->info.symbol = symbol;
-  node->info.token_node = token_node;
-  /*
-  node->info.raw_prototype.offset = token_node->token.offset;
-  node->info.raw_prototype.line = token_node->token.line;
-  node->info.raw_prototype.column = token_node->token.column;
-  */
-  goto normal_exit;
-
- node_malloc_failed:
-  free(symbol);
- symbol_malloc_failed:
-  node = NULL;
- normal_exit:
-  return node;
-}
-
-
-static
-void prototype_list_append_node(prototype_list_t* list, prototype_node_t* node) {
-  if (NULL == list->first) {
-    list->first = node;
-  }
-  if (NULL != list->last) {
-    list->last->next = node;
-  }
-  list->last = node;
-
-  /* TODO: Do I need the is_function_implementation still? If i recall
-   *       correctly. It matters when proxifying the code. */
-  /*
-  if (is_function_implementation) {
-    if (is_function_implementation < list->first_function_implementation_offset) {
-      list->first_function_implementation_offset = is_function_implementation;
-    }
-    node->info.is_function_implementation = offset;
-    node->info.is_function_implementation_line = line;
-  }
-  */
-
-  /* TODO: This magic is sym-file related since the old format had raw
-   *       prototypes stored... Must go! */
-  list->size += (sizeof(node) + node->info.symbol_len);
-  list->cnt++;
-}
-
-int prototype_list_init_from_tokens(prototype_list_t* list, token_list_t* token_list) {
-  token_node_t* node = token_list->first;
-
-  assert((NULL != list) && "Argument 'list' must not be NULL");
-  assert((NULL != token_list) && "Argument 'token_list' must not be NULL");
-
-  list->filename = token_list->filename;
-  list->first_function_implementation_offset = token_list->filesize;
-
-  /* First extract all function prototypes */
-  while (NULL != (node = token_list_find_function_declaration(node))) {
-    prototype_node_t* prototype_node = prototype_node_new_from_token(node, list);
-    prototype_list_append_node(list, prototype_node);
-
-    node = node->next;
-  }
-
-  return 0;
-}
-
-int prototype_usage_from_tokens(prototype_list_t* list, token_list_t* token_list) {
-  return 0;
-}
-
 static int find_symbol_usage(void* list_ptr, file_parse_state_t* state,
                              const char c, const size_t line,
                              const size_t col, const size_t offset,
@@ -992,4 +884,122 @@ void generate_prototype(prototype_node_t* node, const char* prefix,
     }
   }
   printf(")%s\n", suffix);
+}
+
+/*******************************************************************************
+ * THE NEW STUFF
+ */
+
+static
+prototype_node_t*
+prototype_node_new_from_token(token_node_t* token_node, prototype_list_t* list) {
+  prototype_node_t* node = NULL;
+  prototype_node_t* n;
+  char* symbol;
+
+  symbol = malloc(token_node->token.len);
+  if (NULL == symbol) {
+    error0("Out of memory");
+    goto symbol_malloc_failed;
+  }
+
+  memcpy(symbol, token_node->token.ptr, token_node->token.len);
+  symbol[token_node->token.len] = '\0';
+
+  /* Don't make duplicates, but keep the earliset found one */
+  if (NULL != (n = prototype_list_find_symbol(list, symbol, 0))) {
+    prototype_list_remove(list, n);
+  }
+
+  node = malloc(sizeof(*node));
+  if (NULL == node) {
+    error1("Out of memory while allocating prototype node for '%s'", symbol);
+    goto node_malloc_failed;
+  }
+
+  memset(node, 0, sizeof(*node));
+
+  node->info.symbol_len = strlen(symbol) + 1;
+  node->info.symbol = symbol;
+  node->info.token_node = token_node;
+
+  goto normal_exit;
+
+ node_malloc_failed:
+  free(symbol);
+ symbol_malloc_failed:
+  node = NULL;
+ normal_exit:
+  return node;
+}
+
+static
+void
+prototype_list_append_node(prototype_list_t* list, prototype_node_t* node) {
+  if (NULL == list->first) {
+    list->first = node;
+  }
+  if (NULL != list->last) {
+    list->last->next = node;
+  }
+  list->last = node;
+
+  /* TODO: Do I need the is_function_implementation still? If i recall
+   *       correctly. It matters when proxifying the code. */
+
+  /* TODO: This magic is sym-file related since the old format had raw
+   *       prototypes stored... Must go! */
+  list->size += (sizeof(node) + node->info.symbol_len);
+  list->cnt++;
+}
+
+int
+prototype_list_init_from_tokens(prototype_list_t* list, token_list_t* token_list)
+{
+  token_node_t* node = token_list->first;
+
+  assert((NULL != list) && "Argument 'list' must not be NULL");
+  assert((NULL != token_list) && "Argument 'token_list' must not be NULL");
+
+  list->filename = token_list->filename;
+  list->first_function_implementation_offset = token_list->filesize;
+
+  /* First extract all function prototypes */
+  while (NULL != (node = token_list_find_function_declaration(node))) {
+    prototype_node_t* prototype_node = prototype_node_new_from_token(node, list);
+
+    prototype_list_append_node(list, prototype_node);
+
+    node = node->next;
+  }
+
+  return 0;
+}
+
+static int prototype_usage_from_token(prototype_node_t* prototype_node, token_list_t* list) {
+  token_node_t* node_to_search_for = prototype_node->info.token_node;
+  token_node_t* node;
+  list->brace_depth = 0;
+  list->current = list->first;
+  while (NULL != (node = token_list_find_next_symbol_usage(list, node_to_search_for))) {
+    symbol_usage_node_t* usage_node = symbol_usage_new_from_token(node, prototype_node);
+    if (NULL == usage_node) {
+      error0("Out of memory");
+      return -1;
+    }
+    symbol_usage_list_append_node(&prototype_node->info.symbol_usage_list, usage_node);
+  }
+  return 0;
+}
+
+int
+prototype_usage_from_tokens(prototype_list_t* list, token_list_t* token_list) {
+  prototype_node_t* node = list->first;
+  for (node = list->first; NULL != node; node = node->next) {
+    if (0 != prototype_usage_from_token(node, token_list)) {
+      error0("Could not find usage due to errors");
+      return -1;
+    }
+  }
+  return 0;
 }

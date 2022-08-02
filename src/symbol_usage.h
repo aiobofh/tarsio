@@ -37,17 +37,20 @@
 
 #include <stdlib.h>
 
+#include "tokenizer.h"
+
 struct symbol_usage_s {
   size_t line;
   size_t col;
   size_t offset;
   size_t last_function_start;
   size_t last_function_line;
+  token_node_t* token_node;
   void* prototype_node;
 };
 typedef struct symbol_usage_s symbol_usage_t;
 
-#define SYMBOL_USAGE_EMPTY {0, 0, 0, 0, 0, NULL}
+#define SYMBOL_USAGE_EMPTY {0, 0, 0, 0, 0, NULL, NULL}
 
 struct symbol_usage_node_s {
   struct symbol_usage_node_s* next;
@@ -69,4 +72,12 @@ typedef struct symbol_usage_list_s symbol_usage_list_t;
 void symbol_usage_append(symbol_usage_list_t* list, const size_t line, const size_t col, const size_t offset, const size_t last_function_start, const size_t last_function_line, void* prototype_node);
 
 void symbol_usage_list_cleanup(symbol_usage_list_t* list);
+
+symbol_usage_node_t*
+symbol_usage_new_from_token(token_node_t* token_node, void* prototype_node);
+
+void
+symbol_usage_list_append_node(symbol_usage_list_t* list,
+                              symbol_usage_node_t* node);
+
 #endif

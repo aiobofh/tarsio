@@ -133,19 +133,21 @@ typedef struct {
   char* ptr;
   token_type_t type;
   size_t offset;
-  int line;
-  int column;
+  unsigned int line;
+  unsigned int column;
 } token_t;
 
 /* The context needed to tokenize code. */
 typedef struct {
   /* "Coordinates" in the file */
-  int line, column;
+  unsigned int line;
+  unsigned int column;
   size_t offset;
   // The remaining range of text to be tokenized.
   const char* text_start;
   const char* text_next;
   const char* text_end;
+  const char* text;
 } lexer_t;
 
 struct token_node_s {
@@ -161,14 +163,16 @@ struct token_list_s {
   size_t cnt;
   token_node_t* first;
   token_node_t* last;
+  int brace_depth;
+  token_node_t* current;
 };
 typedef struct token_list_s token_list_t;
 
-#define TOKEN_LIST_EMPTY {NULL, 0, 0, NULL, NULL}
+#define TOKEN_LIST_EMPTY {NULL, 0, 0, NULL, NULL, 0}
 
 int token_list_init(token_list_t* list, file_t* file);
 void token_list_cleanup(token_list_t* list);
 token_node_t* token_list_find_function_declaration(token_node_t* node);
-token_node_t* token_list_find_function_usage(token_list_t* list, token_node_t* node);
+token_node_t* token_list_find_next_symbol_usage(token_list_t* list, token_node_t* node);
 
 #endif

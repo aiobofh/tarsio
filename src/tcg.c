@@ -79,6 +79,8 @@ struct tcg_options_s {
 };
 typedef struct tcg_options_s tcg_options_t;
 
+#define OPTIONS_EMPTY {0, NULL, NULL};
+
 static int tcg_options_init(tcg_options_t* options, int argc, char* argv[])
 {
   int rest;
@@ -351,7 +353,7 @@ static int compare_prototype_lists(prototype_list_t* l1, prototype_list_t* l2)
 int main(int argc, char* argv[])
 {
   int retval = EXIT_SUCCESS;
-  tcg_options_t options;
+  tcg_options_t options = OPTIONS_EMPTY;
   file_t code_file = FILE_EMPTY;
   token_list_t token_list = TOKEN_LIST_EMPTY;
   prototype_list_t prototype_list = PROTOTYPE_LIST_EMPTY;
