@@ -54,16 +54,22 @@ typedef struct raw_prototype_s raw_prototype_t;
 
 #define RAW_PROTOTYPE_EMPTY {0, NULL, NULL, 0, 0, 0, 0, NULL}
 
+/* TODO: Re-design this as a bit-field rather than ints. Also take a look on
+ *       joining return type with ordinary datatype implementation. */
 struct linkage_definition_s {
+  int is_const;
+  int is_struct;
   int is_inline;
+  int is_register;
   int is_static;
   int is_extern;
+  int is_volatile;
   int is_declspec;
   int is_cdecl;
 };
 typedef struct linkage_definition_s linkage_definition_t;
 
-#define LINKAGE_DEFINITION_EMPTY {0, 0, 0, 0}
+#define LINKAGE_DEFINITION_EMPTY {0, 0, 0, 0, 0, 0}
 
 struct prototype_s {
   raw_prototype_t raw_prototype;
@@ -109,17 +115,18 @@ typedef struct prototype_list_s prototype_list_t;
 #define PROTOTYPE_LIST_EMPTY {NULL, 0, 0, 0, NULL, NULL}
 
 int prototype_list_init(prototype_list_t* list, const file_t* file);
-int prototype_list_init_from_tokens(prototype_list_t* list, token_list_t* token_list);
+int prototype_list_init_from_tokens(prototype_list_t* list,
+                                    const token_list_t* token_list);
 int prototype_usage(prototype_list_t* list, const file_t* file);
-
-int
-prototype_usage_from_tokens(prototype_list_t* list, token_list_t* token_list);
-
+int prototype_usage_from_tokens(prototype_list_t* list,
+                                token_list_t* token_list);
 int prototype_remove_unused(prototype_list_t* list);
 int prototype_extract_return_types(prototype_list_t* list);
-int prototype_extract_return_types_from_tokens(prototype_list_t* list, token_list_t* token_list);
+int prototype_extract_return_types_from_tokens(prototype_list_t* list,
+                                               const token_list_t* token_list);
 int prototype_extract_arguments(prototype_list_t* list);
-int prototype_extract_arguments_from_tokens(prototype_list_t* list, token_list_t* token_list);
+int prototype_extract_arguments_from_tokens(prototype_list_t* list,
+                                            const token_list_t* token_list);
 size_t prototype_get_first_function_implementation_line(prototype_list_t* list);
 void prototype_list_cleanup(prototype_list_t* list);
 

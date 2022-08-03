@@ -5,7 +5,7 @@
 
 #include "file.h"
 
-typedef enum {
+enum token_type_e {
   /* Represents the absense of token. */
   T_NONE      = 0,
 
@@ -21,8 +21,8 @@ typedef enum {
   T_CONTINUE,
   T_DEFAULT,
   T_DELETE,
-  T_DO,
   T_DOUBLE,
+  T_DO,
   T_ELSE,
   T_ENUM,
   T_EXTERN,
@@ -59,6 +59,7 @@ typedef enum {
   T_VOID,
   T_VOLATILE,
   T_WHILE,
+  T_VARIADIC,
 
   /* Symbols */
   T_EXCLAM    = '!',
@@ -114,7 +115,9 @@ typedef enum {
   T_IDENT     = 200, /* an identifier */
 
   T_EOF       = 299, /* End of file, no more tokens to parse */
-} token_type_t;
+};
+typedef enum token_type_e token_type_t;
+
 
 typedef unsigned int ident_t;
 
@@ -127,14 +130,26 @@ typedef union {
   const char* s;
 } token_value_t;
 
+enum token_datatype_e {
+  DT_NONE = 0,
+  DT_PLAIN,
+  DT_ENUM,
+  DT_UNION,
+  DT_STRUCT,
+};
+typedef enum token_datatype_e token_datatype_t;
+
 /* The complete representation of a token. */
-typedef struct {
+typedef struct token_s {
   int len;
   char* ptr;
   token_type_t type;
   size_t offset;
   unsigned int line;
   unsigned int column;
+  token_datatype_t datatype;
+  int function_prototype;
+  struct token_s* definition;
 } token_t;
 
 /* The context needed to tokenize code. */
@@ -143,11 +158,17 @@ typedef struct {
   unsigned int line;
   unsigned int column;
   size_t offset;
-  // The remaining range of text to be tokenized.
+  /* The remaining range of text to be tokenized. */
   const char* text_start;
   const char* text_next;
   const char* text_end;
   const char* text;
+  /* Some initial parsing can efficiently be done in the lexer... */
+  int typedef_scan;
+  int enum_scan;
+  int union_scan;
+  int struct_scan;
+  int brace_depth;
 } lexer_t;
 
 struct token_node_s {
@@ -170,10 +191,12 @@ typedef struct token_list_s token_list_t;
 
 #define TOKEN_LIST_EMPTY {NULL, 0, 0, NULL, NULL, 0}
 
+char* token_name(const token_t* token);
 int token_list_init(token_list_t* list, file_t* file);
 void token_list_cleanup(token_list_t* list);
 token_node_t* token_list_find_function_declaration(token_node_t* node);
 token_node_t* token_list_find_next_symbol_usage(token_list_t* list, token_node_t* node);
-token_node_t* token_list_find_beginning_of_statement(token_node_t* node);
+const token_node_t* token_list_find_beginning_of_statement(const token_node_t* node);
+const token_node_t* token_list_find_end_of_argument_list(const token_node_t* node);
 
 #endif

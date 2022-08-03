@@ -97,7 +97,10 @@ extern static inline int qstrncmp_assert(int s);
                      type,                                       \
                      lexer->text_start - lexer->text,            \
                      lexer->line,                                \
-                     lexer->column};                             \
+                     lexer->column,                              \
+                     DT_NONE,                                    \
+                     0,                                          \
+                     NULL};                                      \
     return __tok;                                                \
   } while (0)
 
@@ -112,6 +115,11 @@ static void lexer_new(const char* begin, const char* end) {
   lexer.text_next = begin;
   lexer.text_end = end;
   lexer.text = begin;
+  lexer.typedef_scan = 0;
+  lexer.enum_scan = 0;
+  lexer.union_scan = 0;
+  lexer.struct_scan = 0;
+  lexer.brace_depth = 0;
 }
 
 static size_t text_left(lexer_t* lexer) {
@@ -212,8 +220,8 @@ static token_t lex_identifier(lexer_t* lexer) {
   else if (eq("continue"  , 8)) { return_token(T_CONTINUE,  i, 0); }
   else if (eq("default"   , 7)) { return_token(T_DEFAULT,   i, 0); }
   else if (eq("delete"    , 6)) { return_token(T_DELETE,    i, 0); }
-  else if (eq("do"        , 2)) { return_token(T_DO,        i, 0); }
   else if (eq("double"    , 6)) { return_token(T_DOUBLE,    i, 0); }
+  else if (eq("do"        , 2)) { return_token(T_DO,        i, 0); }
   else if (eq("else"      , 4)) { return_token(T_ELSE,      i, 0); }
   else if (eq("enum"      , 4)) { return_token(T_ENUM,      i, 0); }
   else if (eq("extern"    , 6)) { return_token(T_EXTERN,    i, 0); }
@@ -250,6 +258,7 @@ static token_t lex_identifier(lexer_t* lexer) {
   else if (eq("void"      , 4)) { return_token(T_VOID,      i, 0); }
   else if (eq("volatile"  , 8)) { return_token(T_VOLATILE,  i, 0); }
   else if (eq("while"     , 5)) { return_token(T_WHILE,     i, 0); }
+  else if (eq("..."       , 3)) { return_token(T_VARIADIC,  i, 0); }
   else {  return_token(T_IDENT, ident, ident_intern(begin, end, hash)); }
 #undef eq
 }
@@ -377,11 +386,11 @@ static void token_node_delete(token_node_t* node) {
   free(node);
 }
 
-static void token_list_append(token_list_t* list, token_t* token) {
+static token_t* token_list_append(token_list_t* list, token_t* token) {
   token_node_t* node = token_node_new(token);
 
   if (NULL == node) {
-    return;
+    return NULL;
   }
   if (NULL == list->first) {
     list->first = node;
@@ -391,6 +400,7 @@ static void token_list_append(token_list_t* list, token_t* token) {
   }
   node->prev = list->last;
   list->last = node;
+  return &node->token;
 }
 
 static void token_list_delete(token_list_t* list) {
@@ -402,22 +412,169 @@ static void token_list_delete(token_list_t* list) {
   }
 }
 
+char* token_name(const token_t* token) {
+  /* NOT thread safe, but quick! */
+  static char buf[1024];
+  memcpy(buf, token->ptr, token->len);
+  buf[token->len] = '\0';
+  return buf;
+}
+
+static token_t* find_definition(token_node_t* start, token_t* token) {
+  for (; (NULL != start); start = start->prev) {
+    /* TODO: Scope symbols with braces? */
+    token_t* t = &start->token;
+    if (T_IDENT != t->type) continue;
+    if (t->len != token->len) continue;
+    if ((t->datatype == DT_NONE) && (0 == t->function_prototype)) {
+      if (NULL != t->definition) {
+        if (0 == memcmp(t->definition->ptr, token->ptr, token->len)) {
+          return t->definition;
+        }
+      }
+      continue;
+    }
+    if (0 == memcmp(t->ptr, token->ptr, token->len)) return t;
+  }
+  return NULL;
+}
+
 int token_list_init(token_list_t* list, file_t* file) {
+  token_t* previous_previous_token = NULL;
+  token_t* previous_token = NULL;
   list->filename = file->filename;
   list->filesize = file->len;
   lexer_new(file->buf, file->buf + file->len);
 
   while (text_left(&lexer) > 1) {
     token_t token;
+
     token = lexer_next(&lexer);
+
+    /* If the found token is an identifer, a lot of conclusions can be made */
     if (T_IDENT == token.type) {
-      char* buf = malloc(token.len + 1);
-      memcpy(buf, token.ptr, token.len);
-      buf[token.len] = '\0';
-      debug4("Found identifier: '%s' at line %u col %u offset %lu", buf, token.line, token.column, token.offset );
-      free(buf);
+      debug4("Found identifier: '%s' at line %u col %u offset %lu",
+             token_name(&token), token.line, token.column, token.offset );
+      /* Replicate datatypes with the first info found searching backwards
+       * NOTE: This can have scope implications */
+      if (NULL != list->last) {
+        token.definition = find_definition(list->last, &token);
+        if (NULL != token.definition) {
+          if (token.definition->datatype) {
+            token.datatype = token.definition->datatype;
+            debug2("'%s' is a type, defined at line %u",
+                   token_name(&token), token.definition->line);
+          }
+          else if (token.definition->function_prototype) {
+            token.function_prototype = token.definition->function_prototype;
+            debug2("'%s' is a function or functino call, defined at line %u",
+                   token_name(&token), token.definition->line);
+          }
+        }
+      }
     }
-    token_list_append(list, &token);
+
+    /* Tag some keywords as datatypes as well */
+    else if ((T_AUTO == token.type) ||
+             (T_CHAR == token.type) ||
+             (T_DOUBLE == token.type) ||
+             (T_FLOAT == token.type) ||
+             (T_INT == token.type) ||
+             (T_LONG == token.type) ||
+             (T_SHORT == token.type) ||
+             (T_SIGNED == token.type) ||
+             (T_UNSIGNED == token.type) ||
+             (T_VOID == token.type)) {
+      debug1("Setting '%s' as DT_PLAIN", token_name(&token));
+      token.datatype = DT_PLAIN;
+    }
+
+    /* It's perfectly possible to figure out if we stubled upon a function
+     * prototype */
+    else if ((T_LPAREN == token.type) &&
+             (NULL != previous_token) &&
+             (NULL != previous_previous_token) &&
+             (T_IDENT == previous_token->type)) {
+      const int datatype = ((previous_previous_token->datatype) ||
+                            (T_AUTO == previous_previous_token->type) ||
+                            (T_CHAR == previous_previous_token->type) ||
+                            (T_DOUBLE == previous_previous_token->type) ||
+                            (T_FLOAT == previous_previous_token->type) ||
+                            (T_INT == previous_previous_token->type) ||
+                            (T_LONG == previous_previous_token->type) ||
+                            (T_SHORT == previous_previous_token->type) ||
+                            (T_SIGNED == previous_previous_token->type) ||
+                            (T_UNSIGNED == previous_previous_token->type) ||
+                            (T_VOID == previous_previous_token->type));
+      debug2("Foo? %d %d", datatype, token.datatype);
+      if ((datatype) ||
+          (T_CONST == previous_previous_token->type) ||
+          (T_STAR == previous_previous_token->type)) {
+        previous_token->function_prototype = 1;
+        debug1("Setting '%s' as function prototype",
+               token_name(previous_token));
+      }
+    }
+
+    /* This is border-line parsing, however - we're already doing smart things
+     * so why not make things easier for the prototype.c code? */
+
+    /* TODO: Deal with it?
+     * - function pointers as typedefs
+     * - arrays as typedefs
+     */
+
+    else if (T_TYPEDEF == token.type) { lexer.typedef_scan = 1; }
+    else if (T_ENUM    == token.type) { lexer.enum_scan    = 1; }
+    else if (T_UNION   == token.type) { lexer.union_scan   = 1; }
+    else if (T_STRUCT  == token.type) { lexer.struct_scan  = 1; }
+
+    else if ((NULL != previous_token) && (0 == lexer.brace_depth)) {
+      if (T_IDENT != token.type) {
+        /* If the syntax suggests anonymous enum, union or struct, terminate
+         * scanning for these types */
+        if (T_ENUM == previous_token->type)        { lexer.enum_scan   = 0; }
+        else if (T_UNION == previous_token->type)  { lexer.union_scan  = 0; }
+        else if (T_STRUCT == previous_token->type) { lexer.struct_scan = 0; }
+      }
+      if (T_IDENT == previous_token->type) {
+        /* It seems the previous token was an identifier... */
+        if (T_LBRACE == token.type) {
+          if (lexer.enum_scan) {
+            previous_token->datatype = DT_ENUM;
+            debug1("Setting '%s' as enum type", token_name(previous_token));
+            lexer.enum_scan = 0;
+          }
+          else if (lexer.union_scan) {
+            previous_token->datatype = DT_UNION;
+            debug1("Setting '%s' as union type", token_name(previous_token));
+            lexer.union_scan = 0;
+          }
+          else if (lexer.struct_scan) {
+            previous_token->datatype = DT_STRUCT;
+            debug1("Setting '%s' as struct type", token_name(previous_token));
+            lexer.struct_scan = 0;
+          }
+        }
+        else if (T_SEMICOLON == token.type) {
+          if (lexer.struct_scan) { /* Forward declaration */
+            previous_token->datatype = DT_STRUCT;
+            lexer.struct_scan = 0;
+          }
+          if (lexer.typedef_scan) {
+            previous_token->datatype = DT_PLAIN;
+            debug1("Setting '%s' as plan type", token_name(previous_token));
+            /* Terminate nested scan (anonymous enum, struct and union) */
+            lexer.enum_scan = lexer.union_scan = lexer.struct_scan = 0;
+          }
+        }
+      }
+    }
+    /* Enable datatype scanners on level 0 */
+    lexer.brace_depth += (T_LBRACE == token.type);
+    lexer.brace_depth -= (T_RBRACE == token.type);
+    previous_previous_token = previous_token;
+    previous_token = token_list_append(list, &token);
   }
 
   return 0;
@@ -480,26 +637,14 @@ token_node_t* token_list_find_function_declaration(token_node_t* node) {
   return NULL;
 }
 
-/*
-static void debug_print_symbol(token_t* token) {
-  if (__tarsio_debug_print) {
-    unsigned int i;
-    fprintf(stderr, "DEBUG: ");
-    for (i = 0; i < token->len; i++) {
-      fputc(token->ptr[i], stderr);
-    }
-    fprintf(stderr, "\n");
-  }
-}
-*/
-
 static token_node_t* find_next_identifier(token_node_t* node) {
   for (; ((NULL != node) && (T_IDENT != node->token.type)); node = node->next);
   return node;
 }
 
-token_node_t*
-token_list_find_next_symbol_usage(token_list_t* list, token_node_t* token_node) {
+token_node_t* token_list_find_next_symbol_usage(token_list_t* list,
+                                                token_node_t* token_node)
+{
   token_node_t* n = list->current;
   while (n) {
     list->brace_depth += (T_LBRACE == n->token.type);
@@ -511,8 +656,7 @@ token_list_find_next_symbol_usage(token_list_t* list, token_node_t* token_node) 
          (T_SEMICOLON == n->next->token.type)) && /* Function pointer assign */
         (n->token.len == token_node->token.len) &&
         (0 == strncmp(n->token.ptr, token_node->token.ptr, n->token.len))) {
-      list->current = find_next_identifier(n->next
-                                           );
+      list->current = find_next_identifier(n->next);
       return n;
     }
   skip_ahead:
@@ -521,7 +665,7 @@ token_list_find_next_symbol_usage(token_list_t* list, token_node_t* token_node) 
   return NULL;
 }
 
-token_node_t* token_list_find_beginning_of_statement(token_node_t* n) {
+const token_node_t* token_list_find_beginning_of_statement(const token_node_t* n) {
   /* Rewind until last semi-colon (or right bracet) */
   for (; ((NULL != n) && ((T_SEMICOLON != n->token.type) && (T_RBRACE != n->token.type))); n = n->prev);
 
@@ -535,47 +679,15 @@ token_node_t* token_list_find_beginning_of_statement(token_node_t* n) {
   return n;
 }
 
-/*
-int main(int argc, char* argv[]) {
-   FILE *fd;
-   size_t size;
-   char* buf;
-   token_list_t list = {0, NULL, NULL};
+const token_node_t* token_list_find_end_of_argument_list(const token_node_t* n) {
+  int paren = 1;
+  /* Start from the left parenthesis */
+  n = n->next;
 
-   if (argc != 2) {
-     fprintf(stderr, "ERROR: Too few arguments\n");
-     exit(EXIT_FAILURE);
-   }
+  for (; ((NULL != n) && (0 != paren)); n = n->next) {
+    paren += (T_LPAREN == n->token.type);
+    paren -= (T_LPAREN == n->token.type);
+  }
 
-   if (NULL == (fd = fopen(argv[1], "rb"))) {
-     fprintf(stderr, "ERROR: Could not open %s\n", argv[1]);
-     exit(EXIT_FAILURE);
-   }
-
-   size = fsize(fd);
-
-   if (NULL == (buf = malloc(size))) {
-     fprintf(stderr, "ERROR: Out of memory\n");
-     fclose(fd);
-     exit(EXIT_FAILURE);
-   }
-
-   fread(buf, 1, size, fd);
-
-   fclose(fd);
-
-   lexer_new(buf, buf + size);
-
-   while (text_left(&lexer) > 1) {
-     char b[1024];
-     token_t token;
-     token = lexer_next(&lexer);
-
-     token_list_append(&list, &token);
-   }
-
-   token_list_delete(&list);
-
-   free(buf);
- }
-*/
+  return n->prev; /* Don't care about the last parenthesis */
+}

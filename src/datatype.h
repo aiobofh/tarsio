@@ -35,6 +35,7 @@
 
 #include <stdlib.h>
 
+/* TODO: Make this a bitmask instead */
 struct datatype_definition_s {
   int is_static;
   int is_pointer;
@@ -49,6 +50,7 @@ typedef struct datatype_definition_s datatype_definition_t;
 struct datatype_s {
   size_t name_len;
   char* name;
+  /* TODO: Make this a bitmask instead */
   datatype_definition_t datatype_definition;
 };
 typedef struct datatype_s datatype_t;

@@ -953,8 +953,8 @@ prototype_list_append_node(prototype_list_t* list, prototype_node_t* node) {
   list->cnt++;
 }
 
-int
-prototype_list_init_from_tokens(prototype_list_t* list, token_list_t* token_list)
+int prototype_list_init_from_tokens(prototype_list_t* list,
+                                    const token_list_t* token_list)
 {
   token_node_t* node = token_list->first;
 
@@ -968,6 +968,10 @@ prototype_list_init_from_tokens(prototype_list_t* list, token_list_t* token_list
   while (NULL != (node = token_list_find_function_declaration(node))) {
     prototype_node_t* prototype_node = prototype_node_new_from_token(node, list);
 
+    if (0 == node->token.function_prototype) {
+      error1("The tokenizer failed to identify '%s' as a function prototype",
+             token_name(&node->token));
+    }
     prototype_list_append_node(list, prototype_node);
 
     node = node->next;
@@ -976,7 +980,9 @@ prototype_list_init_from_tokens(prototype_list_t* list, token_list_t* token_list
   return 0;
 }
 
-static int prototype_usage_from_token(prototype_node_t* prototype_node, token_list_t* list) {
+static int prototype_usage_from_token(prototype_node_t* prototype_node,
+                                      token_list_t* list)
+{
   symbol_usage_list_t* usage_list = &prototype_node->info.symbol_usage_list;
   token_node_t* search = prototype_node->info.token_node;
   token_node_t* node;
@@ -996,8 +1002,9 @@ static int prototype_usage_from_token(prototype_node_t* prototype_node, token_li
   return 0;
 }
 
-int
-prototype_usage_from_tokens(prototype_list_t* list, token_list_t* token_list) {
+int prototype_usage_from_tokens(prototype_list_t* list,
+                                token_list_t* token_list)
+{
   prototype_node_t* node = list->first;
   for (node = list->first; NULL != node; node = node->next) {
     if (0 != prototype_usage_from_token(node, token_list)) {
@@ -1008,9 +1015,11 @@ prototype_usage_from_tokens(prototype_list_t* list, token_list_t* token_list) {
   return 0;
 }
 
-static int extract_return_type_from_tokens(prototype_node_t* node, token_list_t* token_list) {
-  token_node_t* token_node;
-  token_t* token;
+static int extract_return_type_from_tokens(prototype_node_t* node,
+                                           const token_list_t* token_list)
+{
+  const token_node_t* token_node;
+  const token_t* token;
   token_t* next_token;
   prototype_t* prototype;
   char datatype_name[1024]; /* Should be enough */
@@ -1035,35 +1044,56 @@ static int extract_return_type_from_tokens(prototype_node_t* node, token_list_t*
     char* dst;
     token = &token_node->token;
     next_token = &token_node->next->token;
-    if (T_EXTERN == token->type) {
+    /* TODO: Const position matters....
+     *       https://www.c-programming-simple-steps.com/c-const.html */
+    if (T_CONST == token->type) {
+      prototype->linkage_definition.is_const = 1;
+      continue;
+    }
+    else if (T_VOLATILE == token->type) {
+      prototype->linkage_definition.is_volatile = 1;
+      continue;
+    }
+    else if (T_REGISTER == token->type) {
+      prototype->linkage_definition.is_register = 1;
+      continue;
+    }
+    else if (T_STRUCT == token->type) {
+      prototype->linkage_definition.is_struct = 1;
+      continue;
+    }
+    else if (T_EXTERN == token->type) {
       prototype->linkage_definition.is_extern = 1;
-      debug0("extern");
       continue;
     }
-    if (T_STATIC == token->type) {
+    else if (T_STATIC == token->type) {
       prototype->linkage_definition.is_static = 1;
-      debug0("static");
       continue;
     }
-    if ((T_INLINE == token->type) || (T___INLINE == token->type)) {
+    else if ((T_INLINE == token->type) || (T___INLINE == token->type)) {
       prototype->linkage_definition.is_inline = 1;
-      debug0("inline");
       continue;
     }
     /* Pointer return type */
-    if (T_STAR == token->type) {
+    else if (T_STAR == token->type) {
       prototype->datatype.datatype_definition.is_pointer++;
       debug0("*");
       continue;
     }
 
-    /* Other compiler specific shit like __declspec(...), __cdecl(...) ... */
+    /* Just skip other compiler specific shit like e.g.:
+     * __declspec(...), __cdecl(...) ... */
     if ((T_IDENT == token->type) && (T_LPAREN == next_token->type)) {
       debug0("<compiler specific>");
       while (T_RPAREN != token->type) {
         token_node = token_node->next;
       }
       continue;
+    }
+
+    if (DT_NONE == token->datatype) {
+      error1("The tokenizer failed to identify '%s' as a type",
+             token_name(token));
     }
 
     dst = &datatype_name[prototype->datatype.name_len];
@@ -1090,7 +1120,8 @@ static int extract_return_type_from_tokens(prototype_node_t* node, token_list_t*
 }
 
 int prototype_extract_return_types_from_tokens(prototype_list_t* list,
-                                               token_list_t* token_list) {
+                                               const token_list_t* token_list)
+{
   prototype_node_t* node;
   for (node = list->first; NULL != node; node = node->next) {
     if (0 != extract_return_type_from_tokens(node, token_list)) {
@@ -1102,13 +1133,42 @@ int prototype_extract_return_types_from_tokens(prototype_list_t* list,
 }
 
 static int extract_arguments_from_tokens(prototype_node_t* node,
-                                         token_list_t* token_list) {
+                                         const token_list_t* token_list) {
+  char type_buf[1024]; /* Is this enough? */
+  char name_buf[1024]; /* Is this enough? */
+  const token_node_t* token_node = node->info.token_node;
+  const token_node_t* start = token_node->next;
+  const token_node_t* end = token_list_find_end_of_argument_list(token_node);
+  const token_node_t* n;
+  int paren = 0;
+
+  type_buf[0] = '\0';
+  name_buf[0] = '\0';
+
+  for (n = start; n != end; n = n->next) {
+    const token_t* token = &n->token;
+    const token_t* next_token = &n->next->token;
+
+    paren += (T_LPAREN == token->type);
+    paren -= (T_RPAREN == token->type);
+
+    if (0 == paren) {
+      /* An identifier followed by a comma or right parenthesis should indicate
+       * an argument name */
+      if (((T_COMMA == next_token->type) || (T_RPAREN == next_token->type)) &&
+          (T_IDENT == token->type)) {
+        memcpy(name_buf, token->ptr, token->len);
+        name_buf[token->len] = '\0';
+      }
+    }
+
+  }
 
   return -1;
 }
 
 int prototype_extract_arguments_from_tokens(prototype_list_t* list,
-                                            token_list_t* token_list) {
+                                            const token_list_t* token_list) {
   prototype_node_t* node;
   for (node = list->first; NULL != node; node = node->next) {
     if (0 != extract_arguments_from_tokens(node, token_list)) {
