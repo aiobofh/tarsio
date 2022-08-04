@@ -12,6 +12,7 @@ enum token_type_e {
   /* Keywords */
   T_AUTO      = 201,
   T_ASM,
+  T_ATTRIBUTE,
   T_BREAK,
   T_CASE,
   T_CATCH,
@@ -169,7 +170,9 @@ typedef struct {
   int enum_scan;
   int union_scan;
   int struct_scan;
+  int attribute_scan;
   int brace_depth;
+  int paren_depth;
 } lexer_t;
 
 struct token_node_s {
@@ -195,10 +198,12 @@ typedef struct token_list_s token_list_t;
 char* token_name(const token_t* token);
 int token_list_init(token_list_t* list, const file_t* file);
 void token_list_cleanup(token_list_t* list);
-const token_node_t* token_list_find_function_declaration(token_node_t* node);
-const token_node_t* token_list_find_next_symbol_usage(token_list_t* list,
-                                                      token_node_t* node);
-const token_node_t* token_list_find_beginning_of_statement(const token_node_t* node);
-const token_node_t* token_list_find_end_of_argument_list(const token_node_t* node);
+token_node_t* token_list_find_function_declaration(token_node_t* node);
+token_node_t* token_list_find_next_symbol_usage(token_list_t* list,
+                                                token_node_t* node);
+const
+token_node_t* token_list_find_beginning_of_statement(const token_node_t* node);
+const
+token_node_t* token_list_find_end_of_argument_list(const token_node_t* node);
 
 #endif
