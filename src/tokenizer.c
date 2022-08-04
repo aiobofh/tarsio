@@ -100,7 +100,8 @@ extern static inline int qstrncmp_assert(int s);
                      lexer->column,                              \
                      DT_NONE,                                    \
                      0,                                          \
-                     NULL};                                      \
+                     NULL,                                       \
+                     0};                                         \
     return __tok;                                                \
   } while (0)
 
@@ -439,7 +440,7 @@ static token_t* find_definition(token_node_t* start, token_t* token) {
   return NULL;
 }
 
-int token_list_init(token_list_t* list, file_t* file) {
+int token_list_init(token_list_t* list, const file_t* file) {
   token_t* previous_previous_token = NULL;
   token_t* previous_token = NULL;
   list->filename = file->filename;
@@ -462,13 +463,17 @@ int token_list_init(token_list_t* list, file_t* file) {
         if (NULL != token.definition) {
           if (token.definition->datatype) {
             token.datatype = token.definition->datatype;
+            token.definition->used++;
             debug2("'%s' is a type, defined at line %u",
                    token_name(&token), token.definition->line);
           }
           else if (token.definition->function_prototype) {
-            token.function_prototype = token.definition->function_prototype;
-            debug2("'%s' is a function or functino call, defined at line %u",
-                   token_name(&token), token.definition->line);
+            if (lexer.brace_depth) {
+              token.function_prototype = token.definition->function_prototype;
+              token.definition->used++;
+              debug2("'%s' is a function or functino call, defined at line %u",
+                     token_name(&token), token.definition->line);
+            }
           }
         }
       }
@@ -600,50 +605,24 @@ static token_node_t* parse_identifier(token_node_t* node) {
   return NULL;
 }
 
-token_node_t* token_list_find_function_declaration(token_node_t* node) {
-  token_type_t waiting_for = 0;
-  int brace_depth = 0;
-  int paren_depth = 0;
-  while (node) {
-    /* TODO: Braces might be inside a namespace or a class in C++ */
-    brace_depth += (T_LBRACE == node->token.type);
-    brace_depth -= (T_RBRACE == node->token.type);
-    paren_depth += (T_LPAREN == node->token.type);
-    paren_depth -= (T_RPAREN == node->token.type);
-    if (brace_depth || paren_depth) {
-      goto skip_ahead;
-    }
-    if ((waiting_for) && (waiting_for != node->token.type)) {
-      goto skip_ahead;
-    }
-    if (T_TYPEDEF == node->token.type) {
-      waiting_for = T_SEMICOLON;
-    }
-    else {
-      waiting_for = 0;
-    }
-
-    /* Usually function signatures has a datatype identifier in-front the
-     * function name */
-    if (T_IDENT == node->token.type) {
-      token_node_t* start_node;
-      if (NULL != (start_node = parse_identifier(node))) {
-        return node;
-      }
-    }
-  skip_ahead:
-    node = node->next;
-  }
-  return NULL;
+const token_node_t* token_list_find_function_declaration(token_node_t* node) {
+#define is_prototype node->token.function_prototype
+#define is_used node->token.used
+  for (; (node && (!is_prototype || !is_used)); node = node->next);
+  debug3("Used function '%s' %d used %d times", token_name(&node->token),
+         node->token.function_prototype, node->token.used);
+  return node;
+#undef is_used
+#undef is_prototype
 }
 
 static token_node_t* find_next_identifier(token_node_t* node) {
-  for (; ((NULL != node) && (T_IDENT != node->token.type)); node = node->next);
+  for (; ((!node) && (T_IDENT != node->token.type)); node = node->next);
   return node;
 }
 
-token_node_t* token_list_find_next_symbol_usage(token_list_t* list,
-                                                token_node_t* token_node)
+const token_node_t* token_list_find_next_symbol_usage(token_list_t* list,
+                                                      token_node_t* token_node)
 {
   token_node_t* n = list->current;
   while (n) {

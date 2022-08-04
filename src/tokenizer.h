@@ -150,6 +150,7 @@ typedef struct token_s {
   token_datatype_t datatype;
   int function_prototype;
   struct token_s* definition;
+  int used;
 } token_t;
 
 /* The context needed to tokenize code. */
@@ -192,10 +193,11 @@ typedef struct token_list_s token_list_t;
 #define TOKEN_LIST_EMPTY {NULL, 0, 0, NULL, NULL, 0}
 
 char* token_name(const token_t* token);
-int token_list_init(token_list_t* list, file_t* file);
+int token_list_init(token_list_t* list, const file_t* file);
 void token_list_cleanup(token_list_t* list);
-token_node_t* token_list_find_function_declaration(token_node_t* node);
-token_node_t* token_list_find_next_symbol_usage(token_list_t* list, token_node_t* node);
+const token_node_t* token_list_find_function_declaration(token_node_t* node);
+const token_node_t* token_list_find_next_symbol_usage(token_list_t* list,
+                                                      token_node_t* node);
 const token_node_t* token_list_find_beginning_of_statement(const token_node_t* node);
 const token_node_t* token_list_find_end_of_argument_list(const token_node_t* node);
 

@@ -1133,7 +1133,8 @@ int prototype_extract_return_types_from_tokens(prototype_list_t* list,
 }
 
 static int extract_arguments_from_tokens(prototype_node_t* node,
-                                         const token_list_t* token_list) {
+                                         const token_list_t* token_list)
+{
   char type_buf[1024]; /* Is this enough? */
   char name_buf[1024]; /* Is this enough? */
   const token_node_t* token_node = node->info.token_node;
