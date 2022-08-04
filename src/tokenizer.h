@@ -140,6 +140,24 @@ enum token_datatype_e {
 };
 typedef enum token_datatype_e token_datatype_t;
 
+struct token_s; /* Forward declaration */
+
+struct token_usage_node_s {
+  struct token_usage_node_s* prev;
+  struct token_usage_node_s* next;
+  struct token_s* token;
+};
+typedef struct token_usage_node_s token_usage_node_t;
+
+struct token_usage_list_s {
+  token_usage_node_t* first;
+  token_usage_node_t* last;
+  int cnt;
+};
+typedef struct token_usage_list_s token_usage_list_t;
+
+#define DEFAULT_TOKEN_USAGE_LIST {NULL, NULL, 0}
+
 /* The complete representation of a token. */
 typedef struct token_s {
   int len;
@@ -152,6 +170,7 @@ typedef struct token_s {
   int function_prototype;
   struct token_s* definition;
   int used;
+  token_usage_list_t usage_list;
 } token_t;
 
 /* The context needed to tokenize code. */

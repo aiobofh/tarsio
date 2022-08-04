@@ -123,7 +123,8 @@ extern static inline int qstrncmp_assert(int s);
                      datatype,                                   \
                      0,                                          \
                      NULL,                                       \
-                     0};                                         \
+                     0,                                          \
+                     DEFAULT_TOKEN_USAGE_LIST};                  \
     return __tok;                                                \
   } while (0)
 
@@ -470,6 +471,35 @@ static token_t* find_previous_token_definition(token_node_t* start,
   return NULL;
 }
 
+static token_usage_node_t* token_usage_node_new(token_t* token) {
+  token_usage_node_t* node = malloc(sizeof(*node));
+  if (NULL == node) {
+    error0("Out of memory");
+    return NULL;
+  }
+  node->next = node->prev = NULL;
+  node->token = token;
+  return node;
+}
+
+static token_usage_node_t* token_usage_list_append(token_usage_list_t* list,
+                                                   token_t* token) {
+  token_usage_node_t* node = token_usage_node_new(token);
+
+  if (NULL == node) {
+    return NULL;
+  }
+  if (NULL == list->first) {
+    list->first = node;
+  }
+  if (NULL != list->last) {
+    list->last->next = node;
+  }
+  node->prev = list->last;
+  list->last = node;
+  return node;
+}
+
 static void parse_identifier(token_t* token, token_list_t* list) {
   debug4("Found identifier: '%s' at line %u col %u offset %lu",
          token_name(token), token->line, token->column, token->offset);
@@ -621,7 +651,7 @@ static void parse_datatype_definition(token_t* token, token_t* prev_token) {
 
 int token_list_init(token_list_t* list, const file_t* file) {
   token_t* prev_prev_token = NULL; /* These are used for parsing, by  */
-  token_t* prev_token = NULL;          /* looking backwards a few tokens. */
+  token_t* prev_token = NULL;      /* looking backwards a few tokens. */
   list->filename = file->filename;
   list->filesize = file->len;
   lexer_new(file->buf, file->buf + file->len);
@@ -678,9 +708,32 @@ int token_list_init(token_list_t* list, const file_t* file) {
     lexer.brace_depth -= (T_RBRACE == token.type);
     lexer.paren_depth += (T_LPAREN == token.type);
     lexer.paren_depth -= (T_RPAREN == token.type);
+
     prev_prev_token = prev_token;
-    prev_token = token_list_append(list, &token);
+
+    prev_token = token_list_append(list, &token); /* <------------ THE MAGIC */
+
+    if (NULL == prev_token) {
+      error0("Could not append token to list");
+      return -1;
+    }
+
+    /* DO STUFF HERE!!!!!! */
+    if (prev_token->definition) {
+      token_usage_list_t* usage_list = &prev_token->definition->usage_list;
+      if (NULL == token_usage_list_append(usage_list, prev_token)) {
+        error0("Could not append symbol usage to usage list");
+        return -2;
+      }
+
+      /* TODO: Add return type parsing for function */
+
+      /* TODO: Add argument list parsing for functions */
+
+    }
   }
+
+  /* Now tehre is sufficient infromation to prune a lot of data :) */
 
   return 0;
 }
