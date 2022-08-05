@@ -4,6 +4,8 @@
 #include <stdlib.h>
 
 #include "file.h"
+#include "argument.h"
+#include "datatype.h"
 
 enum token_type_e {
   /* Represents the absense of token. */
@@ -12,7 +14,6 @@ enum token_type_e {
   /* Keywords */
   T_AUTO      = 201,
   T_ASM,
-  T_ATTRIBUTE,
   T_BREAK,
   T_CASE,
   T_CATCH,
@@ -156,7 +157,23 @@ struct token_usage_list_s {
 };
 typedef struct token_usage_list_s token_usage_list_t;
 
-#define DEFAULT_TOKEN_USAGE_LIST {NULL, NULL, 0}
+#define TOKEN_USAGE_LIST_EMPTY {NULL, NULL, 0}
+
+struct token_return_type_node_s {
+  struct token_return_type_node_s* prev;
+  struct token_return_type_node_s* next;
+  struct token_s* token;
+};
+typedef struct token_return_type_node_s token_return_type_node_t;
+
+struct token_return_type_list_s {
+  token_return_type_node_t* first;
+  token_return_type_node_t* last;
+  int cnt;
+};
+typedef struct token_return_type_list_s token_return_type_list_t;
+
+#define TOKEN_RETURN_TYPE_LIST_EMPTY {NULL, NULL, 0}
 
 /* The complete representation of a token. */
 typedef struct token_s {
@@ -171,6 +188,8 @@ typedef struct token_s {
   struct token_s* definition;
   int used;
   token_usage_list_t usage_list;
+  token_return_type_list_t return_type_list;
+  argument_list_t argument_list;
 } token_t;
 
 /* The context needed to tokenize code. */
