@@ -125,8 +125,8 @@ extern static inline int qstrncmp_assert(int s);
                      NULL,                                       \
                      0,                                          \
                      TOKEN_USAGE_LIST_EMPTY,                     \
-                     TOKEN_RETURN_TYPE_LIST_EMPTY,               \
-                     ARGUMENT_LIST_EMPTY};                       \
+                     TOKEN_TYPE_LIST_EMPTY,                      \
+                     TOKEN_ARGUMENT_LIST_EMPTY};                 \
     return __tok;                                                \
   } while (0)
 
@@ -379,7 +379,10 @@ static token_t lexer_next(lexer_t* lexer) {
     lexer->text_next++;
     return_token(400 + c, DT_NONE, 0); /* Check the definition for these tokens. */
 
-    /* Single character tokens */
+  } else if (0 == qstrncmp(lexer->text_next, "...", 3)) {
+    lexer->text_next += 3;
+    return_token(T_VARIADIC, DT_NONE, 0);
+  /* Single character tokens */
   } else if ((c == '(') || (c == ')') || (c == '{') || (c == '}') ||
              (c == '[') || (c == ']') || (c == '.') || (c == ';') ||
              (c == ':') || (c == ',') || (c == '~') || (c == '|') ||
@@ -599,8 +602,8 @@ static int is_return_type_style_token_node(token_node_t* node) {
           T_EXTERN == node->token.type);
 }
 
-static token_return_type_node_t* token_return_type_node_new(token_t* token) {
-  token_return_type_node_t* node = malloc(sizeof(*node));
+static token_type_node_t* token_type_node_new(token_t* token) {
+  token_type_node_t* node = malloc(sizeof(*node));
   if (NULL == node) {
     error0("Out of memory");
     return NULL;
@@ -611,9 +614,8 @@ static token_return_type_node_t* token_return_type_node_new(token_t* token) {
   return node;
 }
 
-static int token_return_type_list_prepend(token_t* func, token_t* token) {
-  token_return_type_list_t* list = &func->return_type_list;
-  token_return_type_node_t* node = token_return_type_node_new(token);
+static int token_type_list_prepend(token_type_list_t* list, token_t* token) {
+  token_type_node_t* node = token_type_node_new(token);
 
   if (NULL == node) {
     return -1;
@@ -631,12 +633,34 @@ static int token_return_type_list_prepend(token_t* func, token_t* token) {
   return 0;
 }
 
+static int token_type_list_append(token_type_list_t* list, token_t* token) {
+  token_type_node_t* node = token_type_node_new(token);
+
+  debug1("       Adding '%s'", token_name(token));
+
+  if (NULL == node) {
+    error0("Out of memory");
+    return -1;
+  }
+
+  if (NULL == list->first) {
+    list->first = node;
+  }
+  if (NULL != list->last) {
+    list->last->next = node;
+  }
+  node->prev = list->last;
+  list->last = node;
+  list->cnt++;
+  return 0;
+}
+
 static int parse_return_type(token_node_t* node) {
   token_node_t* n = node->prev;
   debug1("Tagging the return type of '%s'", token_name(&node->token));
   for (; is_return_type_style_token_node(n); n = n->prev) {
     debug1("   %s", token_name(&n->token));
-    if (0 != token_return_type_list_prepend(&node->token, &n->token)) {
+    if (0 != token_type_list_prepend(&node->token.return_type_list, &n->token)) {
       return -1;
     }
   }
@@ -733,25 +757,96 @@ static void parse_datatype_definition(token_t* token, token_t* prev_token) {
   }
 }
 
+static int token_argument_list_append_copy(token_argument_list_t* list,
+                                           token_argument_node_t* template_node,
+                                           token_t* token)
+{
+  token_argument_node_t* node = malloc(sizeof(*node));
+
+  if (NULL == node) {
+    error0("Out of memory");
+    return -1;
+  }
+  memcpy(node, template_node, sizeof(*node));
+  memset(template_node, 0, sizeof(*template_node));
+
+  node->token = token;
+
+  if (NULL == node) {
+    return -2;
+  }
+  if (NULL == list->first) {
+    list->first = node;
+  }
+  if (NULL != list->last) {
+    list->last->next = node;
+  }
+  node->prev = list->last;
+  list->last = node;
+  list->cnt++;
+
+  return 0;
+}
+
 static int parse_argument_list(token_node_t* node) {
+  token_t* token = &node->token;
   token_node_t* n = node->next->next; /* Skip the parenthesis */
   int paren_depth = 1;
 
-  debug1("Parsing arguments to '%s'", token_name(&node->token));
+  token_argument_node_t argument_node = {NULL,
+                                         NULL,
+                                         TOKEN_TYPE_LIST_EMPTY,
+                                         NULL};
+
+  debug1("Parsing arguments to '%s'", token_name(token));
 
   for (; paren_depth; n = n->next) {
     paren_depth += (T_LPAREN == n->token.type);
     paren_depth -= (T_RPAREN == n->token.type);
     if (paren_depth == 0) break;
 
-    debug2("   %d '%s'", paren_depth, token_name(&n->token));
+    if (is_datatype_style_token_node(n) || (T_VARIADIC == n->token.type)) {
+      /* Add the type to the list of types for the current argument */
+      debug2("   '%s' %d", token_name(&n->token), n->token.type);
+      if (0 != token_type_list_append(&argument_node.type_list, &n->token)) {
+        error1("Could not add datatype '%s' to argument", token_name(&n->token));
+        return -1;
+      }
+    }
+    else if (T_IDENT == n->token.type) {
+      if (T_IDENT == n->next->token.type) {
+        token_type_list_append(&argument_node.type_list, &n->token);
+        continue;
+      }
+      if (!argument_node.type_list.first) {
+        error1("Unable to parse argument list for '%s'",
+               token_name(&n->token));
+        return -1;
+      }
 
-    if (!is_datatype_style_token_node(n)) {
+      /* There should be a populated type list now */
+      debug2("   name: '%s' %d", token_name(&n->token), n->token.type);
+      if (0 != token_argument_list_append_copy(&token->argument_list,
+                                               &argument_node,
+                                               &n->token)) {
+        error1("Unable to append argument node to '%s'",
+               token_name(&n->token));
+      }
+
+      if (T_COMMA == n->next->token.type) {
+        n = n->next; /* Skip the comma */
+      }
+    }
+    else if (T_COMMA == n->token.type) {
+      debug0("   anonymous argument name...");
+      token_argument_list_append_copy(&token->argument_list,
+                                      &argument_node,
+                                      NULL);
+    }
+    else {
       error1("Unable to parse argument '%s'", token_name(&n->token));
       return -1;
     }
-
-
   }
   return 0;
 }
@@ -779,12 +874,6 @@ int token_list_init(token_list_t* list, const file_t* file) {
 
     /* It's perfectly possible to figure out if we stubled upon a function
      * prototype */
-    /*
-    else if (T_ATTRIBUTE == token.type) {
-      lexer.attribute_scan = 1;
-      debug0("Entering __attribute__ scanning mode");
-    }
-    */
     else if (T_LPAREN == token.type) {
       if (T_RPAREN == prev_prev_token->type) {
         lexer.attribute_scan = 1;
@@ -857,18 +946,64 @@ int token_list_init(token_list_t* list, const file_t* file) {
 
   /* Clear text log of all the symbols we care about */
   for (node = list->first; node; node = node->next) {
-    token_return_type_list_t* rt_list;
-    token_return_type_node_t* rt_node;
+    token_argument_list_t* arg_list;
+    token_argument_node_t* arg_node;
+    token_type_list_t* rt_list;
+    token_type_node_t* rt_node;
     if (!node->token.used) continue; /* Only care about used tokens */
     if (!node->token.function_prototype) continue;
 
     rt_list = &node->token.return_type_list;
+    arg_list = &node->token.argument_list;
 
     for (rt_node = rt_list->first; rt_node; rt_node = rt_node->next) {
-      printf("%s ", token_name(rt_node->token));
+      if (rt_node->next && (T_STAR == rt_node->next->token->type)) {
+        printf("%s", token_name(rt_node->token));
+      }
+      else {
+        printf("%s ", token_name(rt_node->token));
+      }
     }
 
     printf("%s(", token_name(&node->token));
+
+    for (arg_node = arg_list->first; arg_node; arg_node = arg_node->next) {
+      token_type_list_t* t_list = &arg_node->type_list;
+      token_type_node_t* t_node;
+      for (t_node = t_list->first; t_node; t_node = t_node->next) {
+        if (T_VARIADIC == t_node->token->type) {
+          debug0("IT's in there!!!");
+        }
+        if (t_node->next) {
+          if (T_STAR == t_node->next->token->type) {
+            printf("%s(%d)", token_name(t_node->token), t_node->token->type);
+          }
+          else {
+            printf("%s(%d) ", token_name(t_node->token), t_node->token->type);
+          }
+        }
+        else {
+          if (arg_node->token) {
+            printf("%s(%d) ", token_name(t_node->token), t_node->token->type);
+          }
+          else {
+            printf("%s(%d)", token_name(t_node->token), t_node->token->type);
+          }
+        }
+      }
+      if (NULL != arg_node->token) {
+        if (arg_node->next) {
+          printf("%s, ", token_name(arg_node->token));
+        }
+        else {
+          printf("%s", token_name(arg_node->token));
+        }
+      }
+      else {
+        printf(", ");
+      }
+    }
+
     printf(");\n");
   }
 
