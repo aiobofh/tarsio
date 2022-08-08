@@ -956,7 +956,7 @@ prototype_list_append_node(prototype_list_t* list, prototype_node_t* node) {
 int prototype_list_init_from_tokens(prototype_list_t* list,
                                     const token_list_t* token_list)
 {
-  token_node_t* node = token_list->first;
+  token_node_t* node = first(token_list);
 
   assert((NULL != list) && "Argument 'list' must not be NULL");
   assert((NULL != token_list) && "Argument 'token_list' must not be NULL");
@@ -974,7 +974,7 @@ int prototype_list_init_from_tokens(prototype_list_t* list,
     }
     prototype_list_append_node(list, prototype_node);
 
-    node = node->next;
+    node = next(node);
   }
 
   return 0;
@@ -988,7 +988,7 @@ static int prototype_usage_from_token(prototype_node_t* prototype_node,
   token_node_t* node;
 
   list->brace_depth = 0;
-  list->current = list->first;
+  list->current = first(list);
 
   while (NULL != (node = token_list_find_next_symbol_usage(list, search))) {
     symbol_usage_node_t* usage = symbol_usage_new_from_token(node,
@@ -1040,10 +1040,11 @@ static int extract_return_type_from_tokens(prototype_node_t* node,
   debug2("First token in the function prototype for '%s' found at line %u",
          node->info.symbol, token_node->token.line);
 
-  for (; token_node != node->info.token_node; token_node = token_node->next) {
+  for (; token_node != node->info.token_node; token_node = next(token_node)) {
     char* dst;
+    token_node_t* next_token_node = next(token_node);
     token = &token_node->token;
-    next_token = &token_node->next->token;
+    next_token = &next_token_node->token;
     /* TODO: Const position matters....
      *       https://www.c-programming-simple-steps.com/c-const.html */
     if (T_CONST == token->type) {
@@ -1086,7 +1087,7 @@ static int extract_return_type_from_tokens(prototype_node_t* node,
     if ((T_IDENT == token->type) && (T_LPAREN == next_token->type)) {
       debug0("<compiler specific>");
       while (T_RPAREN != token->type) {
-        token_node = token_node->next;
+        token_node = next(token_node);
       }
       continue;
     }
@@ -1138,7 +1139,7 @@ static int extract_arguments_from_tokens(prototype_node_t* node,
   char type_buf[1024]; /* Is this enough? */
   char name_buf[1024]; /* Is this enough? */
   const token_node_t* token_node = node->info.token_node;
-  const token_node_t* start = token_node->next;
+  const token_node_t* start = next(token_node);
   const token_node_t* end = token_list_find_end_of_argument_list(token_node);
   const token_node_t* n;
   int paren = 0;
@@ -1146,9 +1147,10 @@ static int extract_arguments_from_tokens(prototype_node_t* node,
   type_buf[0] = '\0';
   name_buf[0] = '\0';
 
-  for (n = start; n != end; n = n->next) {
+  for (n = start; n != end; n = next(n)) {
     const token_t* token = &n->token;
-    const token_t* next_token = &n->next->token;
+    const token_node_t* next_token_node = next(n);
+    const token_t* next_token = &next_token_node->token;
 
     paren += (T_LPAREN == token->type);
     paren -= (T_RPAREN == token->type);

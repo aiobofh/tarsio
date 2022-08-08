@@ -355,7 +355,7 @@ int main(int argc, char* argv[])
   int retval = EXIT_SUCCESS;
   tcg_options_t options = OPTIONS_EMPTY;
   file_t code_file = FILE_EMPTY;
-  token_list_t token_list = TOKEN_LIST_EMPTY;
+  token_list_t token_list = {LIST_INIT};
   prototype_list_t prototype_list = PROTOTYPE_LIST_EMPTY;
   prototype_list_t check_prototype_list = PROTOTYPE_LIST_EMPTY;
   cpp_list_t cpp_list = CPP_LIST_EMPTY;

@@ -1,11 +1,12 @@
 #ifndef _TOKENIZER_H_
 #define _TOKENIZER_H_
 
+#include "file.h"
+#include "list.h"
+#include "node.h"
+
 #include <stdlib.h>
 
-#include "file.h"
-#include "argument.h"
-#include "datatype.h"
 
 enum token_type_e {
   /* Represents the absense of token. */
@@ -143,54 +144,49 @@ typedef enum token_datatype_e token_datatype_t;
 
 struct token_s; /* Forward declaration */
 
+/*
+ * Token nodes and list
+ */
 struct token_usage_node_s {
-  struct token_usage_node_s* prev;
-  struct token_usage_node_s* next;
+  NODE_STRUCT(struct token_usage_node_s);
   struct token_s* token;
 };
 typedef struct token_usage_node_s token_usage_node_t;
 
 struct token_usage_list_s {
-  token_usage_node_t* first;
-  token_usage_node_t* last;
-  int cnt;
+  LIST_STRUCT(token_usage_node_t);
 };
 typedef struct token_usage_list_s token_usage_list_t;
 
-#define TOKEN_USAGE_LIST_EMPTY {NULL, NULL, 0}
 
+/*
+ * Token as datatype nodes and list
+ */
 struct token_type_node_s {
-  struct token_type_node_s* prev;
-  struct token_type_node_s* next;
+  NODE_STRUCT(struct token_type_node_s);
   struct token_s* token;
 };
 typedef struct token_type_node_s token_type_node_t;
 
 struct token_type_list_s {
-  token_type_node_t* first;
-  token_type_node_t* last;
-  int cnt;
+  LIST_STRUCT(token_type_node_t);
 };
 typedef struct token_type_list_s token_type_list_t;
 
-#define TOKEN_TYPE_LIST_EMPTY {NULL, NULL, 0}
-
+/*
+ * Argument list nodes and list
+ */
 struct token_argument_node_s {
-  struct token_argument_node_s* prev;
-  struct token_argument_node_s* next;
+  NODE_STRUCT(struct token_argument_node_s);
   token_type_list_t type_list;
   struct token_s* token; /* Name of the argument (if any) */
 };
 typedef struct token_argument_node_s token_argument_node_t;
 
 struct token_argument_list_s {
-  token_argument_node_t* first;
-  token_argument_node_t* last;
-  int cnt;
+  LIST_STRUCT(token_argument_node_t);
 };
 typedef struct token_argument_list_s token_argument_list_t;
-
-#define TOKEN_ARGUMENT_LIST_EMPTY {NULL, NULL, 0}
 
 /* The complete representation of a token. */
 typedef struct token_s {
@@ -230,19 +226,18 @@ typedef struct {
   int paren_depth;
 } lexer_t;
 
+#define LEXER_EMPTY {1, 1, 0, NULL, NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 0}
+
 struct token_node_s {
+  NODE_STRUCT(struct token_node_s);
   token_t token;
-  struct token_node_s* next;
-  struct token_node_s* prev;
 };
 typedef struct token_node_s token_node_t;
 
 struct token_list_s {
+  LIST_STRUCT(token_node_t);
   const char* filename;
   size_t filesize;
-  size_t cnt;
-  token_node_t* first;
-  token_node_t* last;
   int brace_depth;
   token_node_t* current;
 };

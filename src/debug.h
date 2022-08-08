@@ -38,6 +38,7 @@
  */
 
 #ifdef NODEBUG
+#define todo(STR)
 #define debug0(STR)
 #define debug1(FMT, ARG1)
 #define debug2(FMT, ARG1, ARG2)
@@ -47,6 +48,7 @@
 #define debug6(FMT, ARG1, ARG2, ARG3, ARG4, ARG5, ARG6)
 #define debug7(FMT, ARG1, ARG2, ARG3, ARG4, ARG5, ARG6, ARG7)
 #else
+#define todo(STR) if (__tarsio_debug_print) { fprintf(stderr, "TODO: " STR "\n"); }
 #define debug0(STR) if (__tarsio_debug_print) { fprintf(stderr, "DEBUG: " STR "\n"); }
 #define debug1(FMT, ARG1) if (__tarsio_debug_print) { fprintf(stderr, "DEBUG: " FMT "\n", ARG1); }
 #define debug2(FMT, ARG1, ARG2) if (__tarsio_debug_print) { fprintf(stderr, "DEBUG: " FMT "\n", ARG1, ARG2); }

@@ -89,9 +89,12 @@ ifdef SANITIZE
 	SANITIZER_LDFLAGS=-lasan -fsanitize=address,leak,undefined
         ASAN_OPTIONS=detect_leaks=1
         export ASAN_OPTIONS
+	CFLAGS=${NODEBUG} -Wall ${SANITIZER_CFLAGS} -Wmissing-prototypes -Wmissing-declarations -Wstrict-prototypes -Wpointer-arith -Wwrite-strings -Wcast-align -Wbad-function-cast -Wformat-security -Winline -std=c11 -pedantic -O2 -g -I${INCDIR} -o $@ -c $<
+	LDFLAGS=-flto -Wl,-z,nodlopen -Wl,-z,nodump -Wl,-z,noexecstack ${SANITIZER_LDFLAGS} -o $@ $^
+else
+	CFLAGS=${NODEBUG} -Wall -fstack-protector-all -D_FORTIFY_SOURCE=2 -fPIE ${SANITIZER_CFLAGS} -Wmissing-prototypes -Wmissing-declarations -Wstrict-prototypes -Wpointer-arith -Wwrite-strings -Wcast-align -Wbad-function-cast -Wformat-security -Winline -std=c11 -pedantic -O2 -g -I${INCDIR} -o $@ -c $<
+	LDFLAGS=-flto -Wl,-z,nodlopen -Wl,-z,nodump -Wl,-z,noexecstack -pie -Wl,-z,relro -Wl,-z,now ${SANITIZER_LDFLAGS} -o $@ $^
 endif
-CFLAGS=${NODEBUG} -Wall -fstack-protector-all -D_FORTIFY_SOURCE=2 -fPIE ${SANITIZER_CFLAGS} -Wmissing-prototypes -Wmissing-declarations -Wstrict-prototypes -Wpointer-arith -Wwrite-strings -Wcast-align -Wbad-function-cast -Wformat-security -Winline -std=c11 -pedantic -O2 -g -I${INCDIR} -o $@ -c $<
-LDFLAGS=-flto -Wl,-z,nodlopen -Wl,-z,nodump -Wl,-z,noexecstack -pie -Wl,-z,relro -Wl,-z,now ${SANITIZER_LDFLAGS} -o $@ $^
 LD:=${CC}
 ifdef COV
 CFLAGS+=-fprofile-arcs -ftest-coverage
@@ -132,13 +135,13 @@ version.h: Makefile
 #
 # Tarsio tool chain
 #
-tcg${EXE}: tcg.o list.o prototype.o file.o argument.o symbol_usage.o datatype.o symbol_cache.o options.o tokenizer.o
+tcg${EXE}: tcg.o list.o node.o prototype.o file.o argument.o symbol_usage.o datatype.o symbol_cache.o options.o tokenizer.o helpers.o
 
-tsg${EXE}: tsg.o str.o list.o prototype.o cpp.o symbol_cache.o file.o argument.o symbol_usage.o datatype.o options.o tokenizer.o
+tsg${EXE}: tsg.o str.o node.o list.o prototype.o cpp.o symbol_cache.o file.o argument.o symbol_usage.o datatype.o options.o tokenizer.o helpers.o
 
-tmg${EXE}: tmg.o list.o prototype.o symbol_cache.o file.o argument.o symbol_usage.o datatype.o options.o tokenizer.o
+tmg${EXE}: tmg.o list.o node.o prototype.o symbol_cache.o file.o argument.o symbol_usage.o datatype.o options.o tokenizer.o helpers.o
 
-tam${EXE}: tam.o list.o prototype.o symbol_cache.o file.o argument.o symbol_usage.o datatype.o options.o tokenizer.o
+tam${EXE}: tam.o list.o node.o prototype.o symbol_cache.o file.o argument.o symbol_usage.o datatype.o options.o tokenizer.o helpers.o
 
 ttg${EXE}: ttg.o str.o file.o checkcase.o options.o
 
