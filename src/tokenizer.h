@@ -173,12 +173,20 @@ struct token_type_list_s {
 };
 typedef struct token_type_list_s token_type_list_t;
 
+enum argument_type_e {
+  AT_PLAIN,
+  AT_ARRAY,
+  AT_FUNCTION_POINTER
+};
+typedef enum argument_type_e argument_type_t;
+
 /*
  * Argument list nodes and list
  */
 struct token_argument_node_s {
   NODE_STRUCT(struct token_argument_node_s);
   token_type_list_t type_list;
+  argument_type_t type;
   struct token_s* token; /* Name of the argument (if any) */
 };
 typedef struct token_argument_node_s token_argument_node_t;

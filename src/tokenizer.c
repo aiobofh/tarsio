@@ -709,9 +709,12 @@ static int _parse_argument_list(token_node_t* node) {
   token_node_t* n = next(next(node)); /* Skip the parenthesis */
   int paren_depth = 1;
   token_t* name_token = NULL;
+  int function_pointer_mode = 0;
+  int array_mode = 0;
 
   token_argument_node_t argument_node = {NODE_INIT,
                                          {LIST_INIT},
+                                         AT_PLAIN,
                                          NULL};
 
   token_type_list_t* t_list = &argument_node.type_list;
@@ -723,25 +726,40 @@ static int _parse_argument_list(token_node_t* node) {
     paren_depth += (T_LPAREN == n->token.type);
     paren_depth -= (T_RPAREN == n->token.type);
 
-    /*
     debug2("   '%s' (paren_depth %d)", token_name(&n->token), paren_depth);
-    */
 
     /* All datatype identifiers should be added to the type-list */
     if (((1 == paren_depth) && (T_COMMA == n->token.type)) ||
         ((0 == paren_depth) && (T_RPAREN == n->token.type))) {
       token_argument_node_t* a_node;
 
+      if (function_pointer_mode) {
+        argument_node.type = AT_FUNCTION_POINTER;
+        debug0("Exiting function pointer mode");
+        function_pointer_mode = 0;
+      }
+      else if (array_mode) {
+        argument_node.type = AT_ARRAY;
+        debug0("Exiting array mode");
+        array_mode = 0;
+      }
+
       a_node = token_argument_node_new_copy(&argument_node, name_token) else {
         ret(token_argument_node_new_copy_failed);
       }
-
-      debug1("%p", (void*)a_list);
 
       list_add(a_list, a_node);
 
       if (NULL == name_token) {
         debug1("Creating a new anonymous argument for '%s'",
+               token_name(&node->token));
+      }
+      else if (function_pointer_mode) {
+        debug1("Creating a new function pointer argument for '%s'",
+               token_name(&node->token));
+      }
+      else if (array_mode) {
+        debug1("Creating a new array argument for '%s'",
                token_name(&node->token));
       }
       else {
@@ -750,6 +768,8 @@ static int _parse_argument_list(token_node_t* node) {
         debug2("Creating a new named argument '%s' for argument '%s'",
                buf, token_name(&node->token));
       }
+
+      debug0("");
 
       name_token = NULL;
     }
@@ -762,6 +782,16 @@ static int _parse_argument_list(token_node_t* node) {
         ret(token_type_node_new_failed);
       }
 
+      if ((T_STAR == n->token.type) &&
+          (T_LPAREN == prev(n)->token.type) &&
+          (T_IDENT == next(n)->token.type)) {
+        debug0("Entering function pointer mode");
+        function_pointer_mode = 1;
+      }
+      else if (T_LBRACKET == n->token.type) {
+        array_mode = 1;
+      }
+
       debug1("Adding '%s' to the datatype list for argument",
              token_name(t_node->token));
 
@@ -769,14 +799,23 @@ static int _parse_argument_list(token_node_t* node) {
     }
     /* Capture the argument name (if any) */
     else if ((T_IDENT == n->token.type) || (T_RPAREN == n->token.type)) {
-      if (is_empty(t_list)) { /* Sanity check - TODO: Remove me! */
+      /* Sanity check - TODO: Remove me! */
+      if (is_empty(t_list)) {
         error1("Unable to parse argument list for '%s'",
                token_name(&n->token));
         return -1;
       }
 
-
-      name_token = &n->token;
+      /*
+      if (function_pointer_mode) {
+        function_pointer_name_token = &n->token;
+      }
+      else {
+      */
+        name_token = &n->token;
+        /*
+      }
+        */
 
       debug1("Argument name '%s'", token_name(name_token));
 
@@ -795,8 +834,9 @@ static int _parse_argument_list(token_node_t* node) {
         n = next(n);
       }
       */
+
     }
-    else {
+    else if (1 == paren_depth) {
       error1("Unable to parse argument '%s'", token_name(&n->token));
       return -1;
     }
@@ -847,7 +887,7 @@ int token_list_init(token_list_t* list, const file_t* file) {
     /* For example: It's perfectly possible to figure out if we stubled upon a
      * function prototype */
 
-    /* DETTA Ã„R IFFY!!!!!! */
+    /* DETTA ÄR IFFY!!!!!! */
     else if (T_LPAREN == token.type) {
       debug1("%d", prev_prev_token->type)
       if (T_RPAREN == prev_prev_token->type) {
@@ -910,7 +950,7 @@ int token_list_init(token_list_t* list, const file_t* file) {
 
   /* Second pass - find all the function arguments for each used function */
   for (each(list, node)) {
-    /* if (!node->token.used) continue; */ /* Only care about used tokens */
+    if (!node->token.used) continue;
     if (!node->token.function_prototype) continue;
 
     parse_argument_list(node) else ret(parse_argument_list_failed);
@@ -945,9 +985,6 @@ int token_list_init(token_list_t* list, const file_t* file) {
       token_type_node_t* t_node;
       for (each(t_list, t_node)) {
         token_type_node_t* next = next(t_node);
-        if (T_VARIADIC == t_node->token->type) {
-          debug0("IT's in there!!!");
-        }
         if (next) {
           if (T_STAR == next->token->type) {
             printf("%s", token_name(t_node->token));
@@ -973,9 +1010,6 @@ int token_list_init(token_list_t* list, const file_t* file) {
         else {
           printf("%s", token_name(arg_node->token));
         }
-      }
-      else {
-        printf(", ");
       }
     }
 
