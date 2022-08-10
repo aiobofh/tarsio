@@ -196,6 +196,31 @@ struct token_argument_list_s {
 };
 typedef struct token_argument_list_s token_argument_list_t;
 
+/*
+ * Files (defined by # in a pre-processed source)
+ */
+struct token_file_s {
+  char* name;
+  int len;
+  size_t current_line;
+};
+typedef struct token_file_s token_file_t;
+
+struct token_file_node_s {
+  NODE_STRUCT(struct token_file_node_s);
+  token_file_t file;
+};
+
+typedef struct token_file_node_s token_file_node_t;
+
+struct token_file_list_s {
+  LIST_STRUCT(token_file_node_t);
+  token_file_t* current;
+};
+typedef struct token_file_list_s token_file_list_t;
+
+#define TOKEN_FILE_LIST_EMPTY LIST_INIT, NULL
+
 /* The complete representation of a token. */
 typedef struct token_s {
   int len;
@@ -211,6 +236,8 @@ typedef struct token_s {
   token_usage_list_t usage_list;
   token_type_list_t return_type_list;
   token_argument_list_t argument_list;
+  token_file_t* file;
+  size_t file_line;
 } token_t;
 
 /* The context needed to tokenize code. */
@@ -230,11 +257,30 @@ typedef struct {
   int union_scan;
   int struct_scan;
   int attribute_scan;
+  int file_scan;
   int brace_depth;
   int paren_depth;
+  token_file_list_t file_list;
 } lexer_t;
 
-#define LEXER_EMPTY {1, 1, 0, NULL, NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 0}
+#define LEXER_EMPTY \
+  1,                                            \
+    1,                                          \
+    0,                                          \
+    NULL,                                       \
+    NULL,                                       \
+    NULL,                                       \
+    NULL,                                       \
+    0,                                          \
+    0,                                          \
+    0,                                          \
+    0,                                          \
+    0,                                          \
+    0,                                          \
+    0,                                          \
+    0,                                          \
+  {TOKEN_FILE_LIST_EMPTY}                       \
+
 
 struct token_node_s {
   NODE_STRUCT(struct token_node_s);

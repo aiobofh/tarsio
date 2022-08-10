@@ -55,7 +55,7 @@ struct list_s {
   LIST(node_t);
 };
 
-#define LIST_EMPTY {0, NULL, NULL}
+#define LIST_EMPTY 0, NULL, NULL
 
 typedef struct list_s list_t;
 

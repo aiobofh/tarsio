@@ -450,7 +450,7 @@ int main(int argc, char* argv[])
     /*
      * Extract function arguments and datatypes of all used functions.
      */
-    if (0 != prototype_extract_arguments_from_tokens(&prototype_list, &token_list)) {
+    if (0 != prototype_extract_arguments_from_tokens(&prototype_list)) {
       retval = EXIT_FAILURE;
       goto prototype_extract_arguments_failed;
     }

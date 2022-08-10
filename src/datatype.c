@@ -34,10 +34,12 @@
 #include <string.h>
 
 #include "datatype.h"
+#include "debug.h"
 
 void datatype_init(datatype_t* datatype, char* name, int is_static,
                    int is_function_pointer, int is_const,
                    int is_variadic, int astrisks) {
+  debug1("Datatype: '%s'", name);
   datatype->name = name;
   datatype->datatype_definition.is_static = (int)is_static;
   datatype->datatype_definition.is_pointer = (int)astrisks;

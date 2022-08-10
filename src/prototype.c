@@ -39,6 +39,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "list.h"
 #include "warning.h"
 #include "error.h"
 #include "debug.h"
@@ -964,17 +965,17 @@ int prototype_list_init_from_tokens(prototype_list_t* list,
   list->filename = token_list->filename;
   list->first_function_implementation_offset = token_list->filesize;
 
-  /* First extract all function prototypes */
-  while (NULL != (node = token_list_find_function_declaration(node))) {
-    prototype_node_t* prototype_node = prototype_node_new_from_token(node, list);
+  for (each(token_list, node)) {
+    prototype_node_t* prototype_node;
+    if ((!node->token.used) || (!node->token.function_prototype)) continue;
+
+    prototype_node = prototype_node_new_from_token(node, list);
 
     if (0 == node->token.function_prototype) {
       error1("The tokenizer failed to identify '%s' as a function prototype",
              token_name(&node->token));
     }
     prototype_list_append_node(list, prototype_node);
-
-    node = next(node);
   }
 
   return 0;
@@ -984,19 +985,22 @@ static int prototype_usage_from_token(prototype_node_t* prototype_node,
                                       token_list_t* list)
 {
   symbol_usage_list_t* usage_list = &prototype_node->info.symbol_usage_list;
-  token_node_t* search = prototype_node->info.token_node;
   token_node_t* node;
 
   list->brace_depth = 0;
   list->current = first(list);
 
-  while (NULL != (node = token_list_find_next_symbol_usage(list, search))) {
-    symbol_usage_node_t* usage = symbol_usage_new_from_token(node,
-                                                             prototype_node);
+  for (each(list, node)) {
+    symbol_usage_node_t* usage;
+    if ((!node->token.used) || (!node->token.function_prototype)) continue;
+
+    usage = symbol_usage_new_from_token(node, prototype_node);
+
     if (NULL == usage) {
       error0("Out of memory");
       return -1;
     }
+
     symbol_usage_list_append_node(usage_list, usage);
   }
   return 0;
@@ -1133,48 +1137,85 @@ int prototype_extract_return_types_from_tokens(prototype_list_t* list,
   return 0;
 }
 
-static int extract_arguments_from_tokens(prototype_node_t* node,
-                                         const token_list_t* token_list)
-{
-  char type_buf[1024]; /* Is this enough? */
-  char name_buf[1024]; /* Is this enough? */
-  const token_node_t* token_node = node->info.token_node;
-  const token_node_t* start = next(token_node);
-  const token_node_t* end = token_list_find_end_of_argument_list(token_node);
-  const token_node_t* n;
-  int paren = 0;
+/* TODO: All of this can be tossed whan operating directly on tokens and a new
+ *       file format has been established. */
+static int extract_arguments_from_tokens(prototype_node_t* node) {
+  token_node_t* token_node = node->info.token_node;
+  token_argument_list_t* a_list = &token_node->token.argument_list;
+  token_argument_node_t* a_node;
 
-  type_buf[0] = '\0';
-  name_buf[0] = '\0';
+  debug1("Extracting arguments for '%s'", token_name(&token_node->token));
 
-  for (n = start; n != end; n = next(n)) {
-    const token_t* token = &n->token;
-    const token_node_t* next_token_node = next(n);
-    const token_t* next_token = &next_token_node->token;
+  for (each(a_list, a_node)) {
+    char* name_buf = NULL;
+    const token_t* token = a_node->token;
+    token_type_list_t* t_list = &a_node->type_list;
+    token_type_node_t* t_node;
+    argument_node_t* arg_node;
+    int is_const = 0;
+    int is_variadic = 0;
+    int astrisks = 0;
+    int len = 0;
 
-    paren += (T_LPAREN == token->type);
-    paren -= (T_RPAREN == token->type);
+    char* type_buf = malloc(1024);;
 
-    if (0 == paren) {
-      /* An identifier followed by a comma or right parenthesis should indicate
-       * an argument name */
-      if (((T_COMMA == next_token->type) || (T_RPAREN == next_token->type)) &&
-          (T_IDENT == token->type)) {
-        memcpy(name_buf, token->ptr, token->len);
-        name_buf[token->len] = '\0';
+    /* TOTALLY USELESS once we already found everything in tokenizer.c */
+    for (each(t_list, t_node)) {
+      if (T_VARIADIC == t_node->token->type) {
+        debug0("Variadic argument");
+        free(type_buf);
+        type_buf = NULL;
+        is_variadic = 1;
+      }
+      else if (T_CONST == t_node->token->type) {
+        is_const = 1;
+      }
+      else if (T_STAR == t_node->token->type) {
+        type_buf[len++] = '*';
+        type_buf[len] = '\0';
+        astrisks++;
+        if (next(t_node) && (T_STAR != next(t_node)->token->type)) {
+          type_buf[len++] = ' ';
+          type_buf[len] = '\0';
+        }
+      }
+      else {
+        memcpy(&type_buf[len], t_node->token->ptr, t_node->token->len);
+        len += t_node->token->len;
+        type_buf[len] = '\0';
+        if (next(t_node) && (T_STAR != next(t_node)->token->type)) {
+          type_buf[len++] = ' ';
+          type_buf[len] = '\0';
+        }
       }
     }
 
+    if (token) {
+      name_buf = malloc(token->len + 1);
+      memcpy(name_buf, token->ptr, token->len);
+      name_buf[token->len] = '\0';
+    }
+
+    arg_node = argument_node_new(type_buf, name_buf, is_const, is_variadic, astrisks);
+    if (NULL == arg_node) {
+      error2("Could not allocate new argument node '%s' to '%s'", name_buf, token_name(&token_node->token));
+      return -3;
+    }
+
+    if (0 != argument_list_append(&node->info.argument_list, arg_node)) {
+      error2("Could not append argument '%s' to '%s'", name_buf, token_name(&token_node->token));
+      return -4;
+    }
+    debug0(" All good");
   }
 
-  return -1;
+  return 0;
 }
 
-int prototype_extract_arguments_from_tokens(prototype_list_t* list,
-                                            const token_list_t* token_list) {
+int prototype_extract_arguments_from_tokens(prototype_list_t* list) {
   prototype_node_t* node;
   for (node = list->first; NULL != node; node = node->next) {
-    if (0 != extract_arguments_from_tokens(node, token_list)) {
+    if (0 != extract_arguments_from_tokens(node)) {
       error1("Arguments could not be extracted for '%s'", node->info.symbol);
       return -1;
     }

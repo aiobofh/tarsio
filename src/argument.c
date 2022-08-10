@@ -36,6 +36,7 @@
 #include "list.h"
 
 #include "error.h"
+#include "debug.h"
 
 #include "argument.h"
 #include "datatype.h"
@@ -51,6 +52,8 @@ argument_node_t* argument_node_new(char* data_type, char* argument_name,
   memset(node, 0, sizeof(*node));
 
   node->info.name = (char*)argument_name;
+
+  debug1("Argument: '%s'", node->info.name);
 
   datatype_init(&node->info.datatype, data_type, 0, 0,
                 is_const, is_variadic, astrisks);

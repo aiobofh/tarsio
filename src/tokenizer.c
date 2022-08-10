@@ -45,26 +45,28 @@
 #endif
 
 
-#define return_token(type, datatype, value)                      \
-  do {                                                           \
-    token_t __tok = {lexer->text_next - lexer->text_start,       \
-                     (char*)lexer->text_start,                   \
-                     type,                                       \
-                     lexer->text_start - lexer->text,            \
-                     lexer->line,                                \
-                     lexer->column,                              \
-                     datatype,                                   \
-                     0,                                          \
-                     NULL,                                       \
-                     0,                                          \
-                     {LIST_INIT},                                \
-                     {LIST_INIT},                                \
-                     {LIST_INIT}};                               \
+#define return_token(type, datatype, value)                             \
+  do {                                                                  \
+    token_t __tok = {lexer->text_next - lexer->text_start,              \
+                     (char*)lexer->text_start,                          \
+                     type,                                              \
+                     lexer->text_start - lexer->text,                   \
+                     lexer->line,                                       \
+                     lexer->column,                                     \
+                     datatype,                                          \
+                     0,                                                 \
+                     NULL,                                              \
+                     0,                                                 \
+                     {LIST_INIT},                                       \
+                     {LIST_INIT},                                       \
+                     {LIST_INIT},                                       \
+                     lexer->file_list.current,                          \
+                     lexer->file_list.current ? lexer->file_list.current->current_line : 0}; \
     return __tok;                                                \
   } while (0)
 
 
-lexer_t lexer = LEXER_EMPTY;
+lexer_t lexer = {LEXER_EMPTY};
 
 static void lexer_init(const char* begin, const char* end) {
   lexer.text_start = begin,
@@ -148,7 +150,14 @@ static token_t lex_string(lexer_t* lexer, char c) {
     char d = *lexer->text_next;
     if ((0 == esc) && (c == d)) { lexer->text_next++; break; }
     else if ('\\' == d) { lexer->text_next++; esc = 1; continue; }
-    else if ('\n' == d) { lexer->line++; lexer->column = 1; };
+    else if ('\n' == d) {
+      if (lexer->file_list.current) {
+        lexer->file_list.current->current_line++;
+        debug1("Current line: %lu", lexer->file_list.current->current_line);
+      }
+      lexer->line++;
+      lexer->column = 1;
+    };
     lexer->text_next++;
     lexer->column++;
     esc = 0;
@@ -228,6 +237,9 @@ static void skip_whitespace(lexer_t* lexer) {
          lexer->text_next++) {
       lexer->column = (('\n' == *lexer->text_next) ? 1 : lexer->column + 1);
       lexer->line += ('\n' == *lexer->text_next);
+      if (lexer->file_list.current) {
+        lexer->file_list.current->current_line += ('\n' == *lexer->text_next);
+      }
     }
 
     char c = *lexer->text_next;
@@ -238,6 +250,9 @@ static void skip_whitespace(lexer_t* lexer) {
       for (; (text_left(lexer) > 0) && (lexer->text_next[0] != '\n');
            lexer->text_next++) { lexer->column++; }
       continue;
+      if (lexer->file_list.current) {
+        lexer->file_list.current->current_line++;
+      }
       lexer->line++;
       lexer->column = 1;
 
@@ -372,6 +387,13 @@ char* token_name(const token_t* token) {
   return buf;
 }
 
+static char* token_file_name(const token_file_t* token_file) {
+  static char buf[1024];
+  memcpy(buf, token_file->name, token_file->len);
+  buf[token_file->len] = '\0';
+  return buf;
+}
+
 static token_t* find_previous_token_definition(token_node_t* start,
                                                token_t* token)
 {
@@ -433,6 +455,8 @@ static void parse_identifier(token_t* token, token_list_t* list) {
 
   debug4("Found identifier: '%s' at line %u col %u offset %lu",
          token_name(token), token->line, token->column, token->offset);
+
+  debug2("%s:%lu", token_file_name(token->file), token->file_line);
 
   /* Replicate datatypes with the first info found searching backwards
    * NOTE: This can have scope implications */
@@ -613,7 +637,6 @@ static int parse_function_prototype(token_t* token, token_list_t* list) {
               (T_SIGNED == prev_prev_token->type) ||
               (T_UNSIGNED == prev_prev_token->type) ||
               (T_VOID == prev_prev_token->type));
-
   if ((datatype) ||
       (T_CONST == prev_prev_token->type) ||
       (T_STAR == prev_prev_token->type)) {
@@ -806,34 +829,9 @@ static int _parse_argument_list(token_node_t* node) {
         return -1;
       }
 
-      /*
-      if (function_pointer_mode) {
-        function_pointer_name_token = &n->token;
-      }
-      else {
-      */
-        name_token = &n->token;
-        /*
-      }
-        */
+      name_token = &n->token;
 
       debug1("Argument name '%s'", token_name(name_token));
-
-      /*
-      debug1("Creating a new argument node for argument '%s'",
-             token_name(&n->token));
-      a_node = token_argument_node_new_copy(&argument_node, &n->token) else {
-        ret(token_argument_node_new_copy_failed);
-      }
-
-      debug2("   name: '%s' %d", token_name(&n->token), n->token.type);
-
-      list_add(a_list, a_node);
-
-      if (T_COMMA == next(n)->token.type) {
-        n = next(n);
-      }
-      */
 
     }
     else if (1 == paren_depth) {
@@ -851,12 +849,84 @@ static int _parse_argument_list(token_node_t* node) {
   return retval;
 }
 
+static token_file_node_t* token_file_node_find(token_file_list_t* list,
+                                               token_t* token)
+{
+  token_file_node_t* node;
+  for (each(list, node)) {
+    if (token->len != node->file.len) continue;
+    if (0 == memcmp(token->ptr, node->file.name, token->len)) {
+      return node;
+    }
+  }
+  return NULL;
+}
+
+static size_t token2size_t(token_t* token) {
+  int i;
+  size_t retval = 0;
+  for (i = 0; i < token->len; i++) {
+    retval *= 10;
+    retval += token->ptr[i] - '0';
+  }
+  return retval;
+}
+
+#define token_file_node_new(token, line_token) __safepcall(_token_file_node_new(token, line_token))
+static token_file_node_t* _token_file_node_new(token_t* token, token_t* line_token) {
+  enum {
+    ok = 0,
+    node_malloc_failed = -1
+  } retval = ok;
+  token_file_node_t* node;
+
+  node = node_malloc(sizeof(*node)) else ret(node_malloc_failed);
+
+  node->file.name = token->ptr;
+  node->file.len = token->len;
+
+  node->file.current_line = token2size_t(line_token);
+  debug2("Creating file node for '%s':%lu", token_file_name(&node->file),
+         node->file.current_line);
+ node_malloc_failed:
+  return (ok == retval) ? node : NULL;
+}
+
+#define parse_line_directive(filename_token, line_number_token) \
+  __safeicall(_parse_line_directive(filename_token, line_number_token))
+static int _parse_line_directive(token_t* filename_token,
+                                 token_t* line_number_token)
+{
+  enum {
+    ok = 0,
+    token_file_node_new_failed = -1
+  } retval = ok;
+  token_file_list_t* l = &lexer.file_list;
+  token_file_node_t* f = token_file_node_find(l, filename_token);
+  if (NULL == f) {
+    f = token_file_node_new(filename_token, line_number_token) else {
+      ret(token_file_node_new_failed);
+    }
+
+    list_add(l, f);
+  }
+  lexer.file_list.current = &f->file;
+  lexer.file_list.current->current_line = token2size_t(line_number_token) - 1;
+  debug2("Parsing file '%s' line %lu",
+         token_file_name(lexer.file_list.current),
+         lexer.file_list.current->current_line);
+  lexer.file_scan = 0;
+ token_file_node_new_failed:
+  return retval;
+}
+
 int token_list_init(token_list_t* list, const file_t* file) {
   enum {
     ok = 0,
     token_node_new_failed = -1,
-    token_usage_node_new_failed = -2,
-    parse_argument_list_failed = -3
+    parse_line_directive_failed = -2,
+    token_usage_node_new_failed = -3,
+    parse_argument_list_failed = -4
   } retval = ok;
 
   token_node_t* node;
@@ -889,7 +959,6 @@ int token_list_init(token_list_t* list, const file_t* file) {
 
     /* DETTA ÄR IFFY!!!!!! */
     else if (T_LPAREN == token.type) {
-      debug1("%d", prev_prev_token->type)
       if (T_RPAREN == prev_prev_token->type) {
         lexer.attribute_scan = 1;
         debug0("Entering arbitrary-compiler-secific-nonsense scanning mode");
@@ -914,6 +983,15 @@ int token_list_init(token_list_t* list, const file_t* file) {
     else if (T_ENUM    == token.type) { lexer.enum_scan    = 1; }
     else if (T_UNION   == token.type) { lexer.union_scan   = 1; }
     else if (T_STRUCT  == token.type) { lexer.struct_scan  = 1; }
+    else if ((T_STRING == token.type) && (prev_token && prev_prev_token)) {
+      /* GCC style line directives */
+      if ((T_CPP == prev_prev_token->type) &&
+          (T_INTEGER == prev_token->type)) {
+        parse_line_directive(&token, prev_token) else {
+          ret(parse_line_directive_failed);
+        }
+      }
+    }
 
     /* It's now perfectly possible to find out if the current token is a data
      * type definition. */
@@ -935,9 +1013,12 @@ int token_list_init(token_list_t* list, const file_t* file) {
     /* Append the freshly detected and classified token to the token-list */
     node = token_node_new(&token) else ret(token_node_new_failed);
 
+    /* Replace the reference to the token pointer in the file node! */
+
     list_add(list, node);
 
     prev_token = &last(list)->token;
+
 
     if (prev_token->definition) {
       token_usage_list_t* l = &prev_token->definition->usage_list;
@@ -1017,6 +1098,7 @@ int token_list_init(token_list_t* list, const file_t* file) {
   }
  parse_argument_list_failed:
  token_usage_node_new_failed:
+ parse_line_directive_failed:
  token_node_new_failed:
   return retval;
 }
