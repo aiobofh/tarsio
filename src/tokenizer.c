@@ -48,6 +48,10 @@
 
 #define return_token(type, datatype, value)                             \
   do {                                                                  \
+    size_t current_line = 0;                                            \
+    if (lexer->file_list.current && lexer->file_list.current->current_line) { \
+      current_line = lexer->file_list.current->current_line - 1;        \
+    }                                                                   \
     token_t __tok = {lexer->text_next - lexer->text_start,              \
                      (char*)lexer->text_start,                          \
                      lexer->brace_depth,                                \
@@ -64,9 +68,20 @@
                      {LIST_INIT},                                       \
                      {LIST_INIT},                                       \
                      lexer->file_list.current,                          \
-                     lexer->file_list.current ? (lexer->file_list.current->current_line ? lexer->file_list.current->current_line-1 : 0) : 0}; \
-    return __tok;                                                \
+                     current_line};                                     \
+    return __tok;                                                       \
   } while (0)
+/*
+                     lexer->file_list.current ? (lexer->file_list.current->current_line ? lexer->file_list.current->current_line-1 : 0) : 0}; \
+*/
+
+/* Some macros to make it easier to understand various early-exit or continue
+ * expressions */
+#define token_is_not_an_identifier(token) (T_IDENT != token->type)
+#define token_length_mismatch(token1, token2) (token1->len != token2->len)
+#define token_is_not_referencing_a_datatype_nor_a_prototype(token)      \
+  (token->definition && ((token->definition->class != TC_DATATYPE) &&   \
+                         (token->definition->class != TC_FUNCTION_PROTOTYPE)))
 
 static void token_argument_node_delete(token_argument_node_t* node);
 
@@ -377,20 +392,26 @@ static token_node_t* _token_node_new(token_t* token) {
   memcpy(&node->token, token, sizeof(*token));
 
  node_malloc_failed:
+
   return (ok == retval) ? node : NULL;
 }
 
 static void token_node_delete(token_node_t* node) {
   assert(NULL != node && "node agument can not be NULL");
+
   list_cleanup(&node->token.usage_list, free);
   list_cleanup(&node->token.return_type_list, free);
   list_cleanup(&node->token.argument_list, token_argument_node_delete);
+
   free(node);
 }
 
 char* token_name(const token_t* token) {
-  /* NOT thread safe, but quick! */
+  /* NOTE: NOT thread safe, but quick! */
   static char buf[1024];
+
+  assert(NULL != token && "token argument can not be NULL");
+
   memcpy(buf, token->ptr, token->len);
   buf[token->len] = '\0';
   return buf;
@@ -399,44 +420,35 @@ char* token_name(const token_t* token) {
 static token_t* find_previous_token_definition(token_node_t* start,
                                                token_t* token)
 {
+  token_node_t* node = start;
+
+  assert(NULL != start && "start argument can not be NULL");
+  assert(NULL != token && "token argument can not be NULL");
+
   /* Traverse the list backwards from the last known token */
-  for (; (NULL != start); start = prev(start)) {
+  for (; (NULL != node); node = prev(node)) {
     /* TODO: Scope symbols with braces? */
-    token_t* t = &start->token;
-    if (T_IDENT != t->type) continue; /* Only search for identifiers  */
-    /*
-    else if (t->definition &&
-             (t->definition->class != TC_DATATYPE) &&
-             (t->definition->class != TC_FUNCTION_PROTOTYPE)) continue;
-    */
-    else if (t->len != token->len) continue; /* .. of the same length */
+    const token_t* t = &node->token;
+
+    if (token_is_not_an_identifier(t)) continue;
+    if (token_length_mismatch(t, token)) continue;
+    if (token_is_not_referencing_a_datatype_nor_a_prototype(t)) continue;
+
     else if (0 == memcmp(t->ptr, token->ptr, token->len)) {
       /* We seem to have found the previous token matching the current one */
 
       /* If the lookup was previously done return the original (top-most)
-       * token with the same name as "definition" */
+       * token with the same name as "definition" return it directly so
+       * that the need for looping further back is irrelevant */
       if (t->definition) {
-        /*
-        debug4("      definition: %s:%lu '%s' %d",
-               token_file_name(token->file),
-               t->definition->file_line,
-               token_name(t->definition),
-               t->definition->used + 1);
-        */
         return t->definition;
       }
 
       /* Otherwise this is considered to be the first time we found it. */
-      /*
-      debug3("      definition: %s:%lu '%s' 1",
-             token_file_name(token->file),
-             t->file_line,
-             token_name(t));
-      */
       if ((t->class != TC_DATATYPE) && (t->class != TC_FUNCTION_PROTOTYPE)) {
         return NULL;
       }
-      return t;
+      return (token_t*)t;
     }
   }
   return NULL;
@@ -453,7 +465,12 @@ static token_usage_node_t* _token_usage_node_new(token_t* token) {
 
   node = node_malloc(sizeof(*node)) else ret(node_malloc_failed);
 
-  verbose5("%s:%lu node = %p, token = %p '%s'", token_file_name(token->file), token->file_line, (void*)node, (void*)token, token_name(token));
+  verbose5("%s:%lu node = %p, token = %p '%s'",
+           token_file_name(token->file),
+           token->file_line,
+           (void*)node,
+           (void*)token,
+           token_name(token));
 
   node->token = token;
 
@@ -481,99 +498,10 @@ static int parse_identifier(token_t* token, token_list_t* list) {
     return -2;
   }
 
-  /*
-  token->definition = find_previous_token_definition(last(list), token);
-  */
-  if (NULL == token->definition) {
-    verbose1("No previous definition for '%s'", token_name(token));
-    verbose1("No further evaluation of '%s' in parse_identifer()",
-             token_name(token));
-    return -3;
-  }
-
-  debug3("Found identifier: %s:%lu '%s'",
-         token_file_name(token->file), token->file_line, token_name(token));
-
-  debug4("      definition: %s:%lu '%s' %d",
-         token_file_name(token->definition->file),
-         token->definition->file_line,
-         token_name(token->definition),
-         token->definition->used + 1);
-
-  if (token->definition->datatype) {
-    token->datatype = token->definition->datatype;
-    token->class = TC_TYPE_REFERENCE;
-    token->definition->used++;
-    verbose4("'%s' is a type,\n"
-             "\n"
-             "           Originally defined at line %u,\n"
-             "           Now used %d times\n"
-             "           This time at line %u\n",
-             token_name(token),
-             token->definition->line,
-             token->definition->used,
-             token->line);
-  }
-  else if (token->definition->function_prototype) {
-    if (lexer.brace_depth) {
-      token->function_prototype = token->definition->function_prototype;
-      token->class = TC_FUNCTION_CALL;
-      token->definition->used++;
-      verbose7("'%s' is a function call.\n"
-               "\n"
-               "           Originally defined at line %u,\n"
-               "           Now used %d times\n"
-               "           This time at line %u\n"
-               "           And in %s:%lu\n"
-               "           Braces depth: %d\n",
-               token_name(token),
-               token->definition->line,
-               token->definition->used,
-               token->line,
-               token_file_name(token->file), token->file_line,
-               lexer.brace_depth);
-    }
-    else {
-      token->function_prototype = token->definition->function_prototype;
-      if (lexer.attribute_scan && lexer.paren_depth) {
-        verbose2("'%s' is a function used as __attribute__.\n"
-                 "\n"
-                 "           Originally defined at line %u,\n",
-                 token_name(token),
-                 token->definition->line);
-      }
-      else {
-        token->class = TC_UNDECIDED;
-        verbose5("'%s' is a function implementation (or re-definition).\n"
-                 "\n"
-                 "           Originally defined at line %u,\n"
-                 "           This is where eventual extern declarations\n"
-                 "           will be inserted\n"
-                 "           And in %s:%lu\n"
-                 "           Braces depth: %d\n",
-                 token_name(token),
-                 token->definition->line,
-                 token_file_name(token->file), token->file_line,
-                 lexer.brace_depth);
-      }
-    }
-  }
   return 0;
 }
 
 static int is_datatype_style_token_node(token_node_t* node) {
-  token_node_t* prev = prev(node);
-
-  /*
-  debug1("node->token.definition: %p", node->token.definition);
-  if (node->token.definition) {
-    debug1("node->token.definition->datatype: %d",
-           node->token.definition->datatype);
-    debug2("%s:%lu", token_file_name(node->token.definition->file),
-           node->token.definition->file_line);
-  }
-  debug1("node->token.datatype: %d", node->token.datatype);
-  */
   return (node->token.datatype ||
           (T_AUTO == node->token.type) ||
           (T_CHAR == node->token.type) ||
@@ -596,7 +524,7 @@ static int is_datatype_style_token_node(token_node_t* node) {
           (T_LBRACKET == node->token.type) ||
           (T_RBRACKET == node->token.type) ||
           ((T_INTEGER == node->token.type) &&
-           (T_LBRACKET == prev->token.type)) ||
+           (T_LBRACKET == prev(node)->token.type)) ||
           /* Variadic */
           (T_VARIADIC == node->token.type));
 }
@@ -615,10 +543,15 @@ static token_type_node_t* _token_type_node_new(token_t* token) {
     ok = 0,
     node_malloc_failed = -1
   } retval = ok;
+
   token_type_node_t* node;
+
   node = node_malloc(sizeof(*node)) else ret(node_malloc_failed);
+
   node->token = token;
+
  node_malloc_failed:
+
   return (ok == retval) ? node : NULL;
 }
 
@@ -628,6 +561,7 @@ static int _parse_return_type(token_node_t* node) {
     ok = 0,
     token_type_node_new_failed = -1
   } retval = ok;
+
   token_type_node_t* t_node;
   token_node_t* n = prev(node);
   token_type_list_t* t_list = &node->token.return_type_list;
@@ -683,6 +617,7 @@ static int parse_function_prototype(token_t* token, token_list_t* list) {
     ok = 0,
     parse_return_type_failed = -1,
   } retval = ok;
+
   token_node_t* last = last(list);
   token_t* prev_token = &last->token;
   token_node_t* next_to_last = prev(last);
@@ -690,13 +625,16 @@ static int parse_function_prototype(token_t* token, token_list_t* list) {
 
   int datatype;
 
+  const int too_little_history = ((NULL == prev_token) ||
+                                  (NULL == prev_prev_token));
+
   /* Bail out if there is not enough history before the current token */
-  if ((NULL == prev_token) || (NULL == prev_prev_token)) return ok;
+  if (too_little_history) return ok;
 
   /* Since this function only should be called if the current token is a
    * left-parenthesis, here is an assumption that the token left to that
    * parenthesis must be an identifier (function name). */
-  if (T_IDENT != prev_token->type) return ok;
+  if (token_is_not_an_identifier(prev_token)) return ok;
 
   /* It's most likely that the token left of the function name is a datatype
    * describing the return type. (or an asterisk, maybe, if the function
@@ -712,6 +650,7 @@ static int parse_function_prototype(token_t* token, token_list_t* list) {
               (T_SIGNED == prev_prev_token->type) ||
               (T_UNSIGNED == prev_prev_token->type) ||
               (T_VOID == prev_prev_token->type));
+
   if ((datatype) ||
       (T_CONST == prev_prev_token->type) ||
       (T_STAR == prev_prev_token->type)) {
@@ -1037,31 +976,18 @@ static int _parse_line_directive(token_t* filename_token,
   return retval;
 }
 
-int token_list_init(token_list_t* list, const file_t* file) {
+#define tokenize(list) __safeicall(_tokenize(list))
+static int _tokenize(token_list_t* list) {
   enum {
     ok = 0,
     token_node_new_failed = -1,
     parse_line_directive_failed = -2,
     token_usage_node_new_failed = -3,
-    parse_return_type_failed = -4,
-    parse_argument_list_failed = -5
   } retval = ok;
 
   token_node_t* node;
   token_t* prev_prev_token = NULL; /* These are used for parsing, by  */
   token_t* prev_token = NULL;      /* looking backwards a few tokens. */
-  int used_functions = 0;
-
-  verbose0("token_list_init()");
-
-  list->filename = file->filename;
-  list->filesize = file->len;
-
-  lexer_init(file->buf, file->buf + file->len);
-
-  debug0("");
-  debug0("PASS 1 - Tokenizing **********************************************");
-  debug0("");
 
   while (text_left(&lexer) > 1) {
     token_t token;
@@ -1151,7 +1077,7 @@ int token_list_init(token_list_t* list, const file_t* file) {
     list_add(list, node);
 
     prev_token = &last(list)->token;
-
+    /*
     if (prev_token->definition) {
       token_usage_list_t* l = &prev_token->definition->usage_list;
       token_usage_node_t* n;
@@ -1160,63 +1086,132 @@ int token_list_init(token_list_t* list, const file_t* file) {
 
       list_add(l, n);
     }
+    */
   }
 
-  debug0("");
-  debug0("PASS 2 - Classifying usage ***************************************");
-  debug0("");
+  goto ok;
+
+ token_node_new_failed:
+ parse_line_directive_failed:
+ ok:
+
+  return retval;
+}
+
+#define classify_token_usage(list) __safeicall(_classify_token_usage(list))
+static int _classify_token_usage(token_list_t* list) {
+  enum {
+    ok = 0,
+    token_usage_node_new_failed = -1,
+    token_usage_loop_failed = -2
+  } retval = ok;
+
+  token_node_t* node;
+  int used_functions = 0;
 
   for (each(list, node)) {
     token_t* t = &node->token;
 
-    if (T_IDENT != t->type) continue;
+    const int token_is_not_an_identifier = (T_IDENT != t->type);
+
+    if (token_is_not_an_identifier) continue;
 
     t->definition = find_previous_token_definition(prev(node), t);
 
     if (NULL == t->definition) continue;
 
     switch (t->definition->class) {
-    case TC_FUNCTION_PROTOTYPE:
+    case TC_FUNCTION_PROTOTYPE: {
+      token_usage_node_t* u_node;
       /* TODO: Make this C++ compatible (e.g. namespace / class) */
-      if (0 == t->brace_depth) continue;
+      const int not_inside_a_function_body = (0 == t->brace_depth);
 
-      t->function_prototype = t->definition->function_prototype;
+      if (not_inside_a_function_body) continue;
+
       t->class = TC_FUNCTION_CALL;
       used_functions += (!t->definition->used);
       t->definition->used++;
+
+      debug4("%s:%lu '%s' %d",
+             token_file_name(t->file),
+             t->file_line,
+             token_name(t),
+             t->definition->used);
+
+      /* For easy lookup of all usages from the definition node */
+      u_node = token_usage_node_new(t) else ret(token_usage_node_new_failed);
+
+      list_add(&t->definition->usage_list, u_node);
+
+      break;
+    }
+    case TC_DATATYPE:
+      t->datatype = t->definition->datatype;
+      t->class = TC_TYPE_REFERENCE;
+      t->definition->used++;
+
       debug4("%s:%lu '%s' %d",
              token_file_name(t->file),
              t->file_line,
              token_name(t),
              t->definition->used);
       break;
-    case TC_DATATYPE:
-      t->datatype = t->definition->datatype;
-      t->class = TC_TYPE_REFERENCE;
-      t->definition->used++;
+    default:
+      warning1("Unsupported usage of '%s'", token_name(t));
       break;
     }
+
+    continue;
+
+  token_usage_node_new_failed:
+    list_cleanup(&t->definition->usage_list, free);
+    ret(token_usage_loop_failed);
   }
 
   debug0("");
   debug1("Functions actually used %d", used_functions);
 
-  debug0("");
-  debug0("PASS 3 - Parse function prototypes *******************************");
-  debug0("");
+  goto ok;
 
-  /* Second pass - find all the function arguments for each used function */
+ token_usage_loop_failed:
+ ok:
+
+  return retval;
+}
+
+#define parse_used_functions(list) __safeicall(_parse_used_functions(list))
+static int _parse_used_functions(token_list_t* list) {
+  enum {
+    ok = 0,
+    parse_return_type_failed = -1,
+    parse_argument_list_failed = -2
+  } retval = ok;
+
+  token_node_t* node;
+
   for (each(list, node)) {
-    if (!node->token.used) continue;
-    if (!node->token.function_prototype) continue;
+    const token_t* t = &node->token;
+
+    const int not_a_function_prototype = (TC_FUNCTION_PROTOTYPE != t->class);
+    const int is_unused = (0 == t->used);
+
+    if (not_a_function_prototype || is_unused) continue;
+
     parse_return_type(node) else ret(parse_return_type_failed);
     parse_argument_list(node) else ret(parse_argument_list_failed);
   }
 
-  debug0("");
-  debug0("PASS 4 ***********************************************************");
-  debug0("");
+  goto ok;
 
+ parse_argument_list_failed:
+ parse_return_type_failed:
+ ok:
+
+  return retval;
+}
+
+static void print_prototypes(token_list_t* list) {
+  token_node_t* node;
   /* Clear text log of all the symbols we care about */
   for (each(list, node)) {
     token_argument_list_t* arg_list;
@@ -1228,7 +1223,9 @@ int token_list_init(token_list_t* list, const file_t* file) {
     if (!node->token.used) continue; /* Only care about used tokens */
     if (!node->token.function_prototype) continue;
 
-    printf("%s:%lu ", token_file_name(node->token.file), node->token.file_line);
+    if (__tarsio_verbose_print) {
+      printf("%s:%lu ", token_file_name(node->token.file), node->token.file_line);
+    }
 
     rt_list = &node->token.return_type_list;
     arg_list = &node->token.argument_list;
@@ -1280,16 +1277,59 @@ int token_list_init(token_list_t* list, const file_t* file) {
 
     printf(");\n");
 
-    for (each(usage_list, usage_node)) {
-      printf("   %s:%lu\n", token_file_name(usage_node->token->file), usage_node->token->file_line);
+    if (__tarsio_verbose_print) {
+      for (each(usage_list, usage_node)) {
+        printf("   %s:%lu\n",
+               token_file_name(usage_node->token->file),
+               usage_node->token->file_line);
+      }
     }
-
   }
- parse_argument_list_failed:
- parse_return_type_failed:
- token_usage_node_new_failed:
- parse_line_directive_failed:
- token_node_new_failed:
+}
+
+int token_list_init(token_list_t* list, const file_t* file) {
+  enum {
+    ok = 0,
+    tokenize_failed = -1,
+    classify_token_usage_failed = -2,
+    parse_used_functions_failed = -3
+  } retval = ok;
+
+  verbose0("token_list_init()");
+
+  list->filename = file->filename;
+  list->filesize = file->len;
+
+  lexer_init(file->buf, file->buf + file->len);
+
+  debug0("");
+  debug0("PASS 1 - Tokenizing **********************************************");
+  debug0("");
+
+  tokenize(list) else ret(tokenize_failed);
+
+  debug0("");
+  debug0("PASS 2 - Classifying usage ***************************************");
+  debug0("");
+
+  classify_token_usage(list) else ret(classify_token_usage_failed);
+
+  debug0("");
+  debug0("PASS 3 - Parse function prototypes *******************************");
+  debug0("");
+
+  parse_used_functions(list) else ret(parse_used_functions_failed);
+
+  debug0("");
+  debug0("All relevant functions processed!");
+  debug0("");
+
+  print_prototypes(list);
+
+ parse_used_functions_failed:
+ classify_token_usage_failed:
+ tokenize_failed:
+
   return retval;
 }
 

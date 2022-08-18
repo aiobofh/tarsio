@@ -243,6 +243,7 @@ typedef struct token_s {
   unsigned int line;
   unsigned int column;
   token_class_t class;
+
   token_datatype_t datatype;
   int function_prototype;
   struct token_s* definition;
