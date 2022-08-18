@@ -134,6 +134,18 @@ typedef struct __list_s __list_t;
     _list_compile_array((__list_t*)l, (__node_t***)a, sizeof(*a), malloc); \
   } while (0)
 
+#define list_cleanup(l, f)                                              \
+  do {                                                                  \
+    __node_t* n;                                                        \
+    assert(LIST_TYPE_LIST == (l)->__type);                              \
+    n = (__node_t*)first(l);                                            \
+    while (n) {                                                         \
+      __node_t* next = next(n);                                         \
+      f((void*)n);                                                      \
+      n = next;                                                         \
+    }                                                                   \
+  } while (0)
+
 /*
  * Helper functions with short names to make for-loops using lists become
  * nicer for the eyes.

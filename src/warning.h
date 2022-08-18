@@ -35,5 +35,8 @@
 
 #define warning0(STR) fprintf(stderr, "WARNING: " STR "\n");
 #define warning1(FMT, ARG1) fprintf(stderr, "WARNING: " FMT "\n", ARG1);
+#define warning2(FMT, ARG1, ARG2) fprintf(stderr, "WARNING: " FMT "\n", ARG1, ARG2);
+#define warning3(FMT, ARG1, ARG2, ARG3) fprintf(stderr, "WARNING: " FMT "\n", ARG1, ARG2, ARG3);
+#define warning4(FMT, ARG1, ARG2, ARG3, ARG4) fprintf(stderr, "WARNING: " FMT "\n", ARG1, ARG2, ARG3, ARG4);
 
 #endif

@@ -47,6 +47,14 @@
 #define debug5(FMT, ARG1, ARG2, ARG3, ARG4, ARG5)
 #define debug6(FMT, ARG1, ARG2, ARG3, ARG4, ARG5, ARG6)
 #define debug7(FMT, ARG1, ARG2, ARG3, ARG4, ARG5, ARG6, ARG7)
+#define verbose0(STR)
+#define verbose1(FMT, ARG1)
+#define verbose2(FMT, ARG1, ARG2)
+#define verbose3(FMT, ARG1, ARG2, ARG3)
+#define verbose4(FMT, ARG1, ARG2, ARG3, ARG4)
+#define verbose5(FMT, ARG1, ARG2, ARG3, ARG4, ARG5)
+#define verbose6(FMT, ARG1, ARG2, ARG3, ARG4, ARG5, ARG6)
+#define verbose7(FMT, ARG1, ARG2, ARG3, ARG4, ARG5, ARG6, ARG7)
 #else
 #define todo(STR) if (__tarsio_debug_print) { fprintf(stderr, "TODO: " STR "\n"); }
 #define debug0(STR) if (__tarsio_debug_print) { fprintf(stderr, "DEBUG: " STR "\n"); }
@@ -57,8 +65,17 @@
 #define debug5(FMT, ARG1, ARG2, ARG3, ARG4, ARG5) if (__tarsio_debug_print) { fprintf(stderr, "DEBUG: " FMT "\n", ARG1, ARG2, ARG3, ARG4, ARG5); }
 #define debug6(FMT, ARG1, ARG2, ARG3, ARG4, ARG5, ARG6) if (__tarsio_debug_print) { fprintf(stderr, "DEBUG: " FMT "\n", ARG1, ARG2, ARG3, ARG4, ARG5, ARG6); }
 #define debug7(FMT, ARG1, ARG2, ARG3, ARG4, ARG5, ARG6, ARG7) if (__tarsio_debug_print) { fprintf(stderr, "DEBUG: " FMT "\n", ARG1, ARG2, ARG3, ARG4, ARG5, ARG6, ARG7); }
+#define verbose0(STR) if (__tarsio_verbose_print) debug0(STR)
+#define verbose1(STR, ARG1) if (__tarsio_verbose_print) debug1(STR, ARG1)
+#define verbose2(STR, ARG1, ARG2) if (__tarsio_verbose_print) debug2(STR, ARG1, ARG2)
+#define verbose3(STR, ARG1, ARG2, ARG3) if (__tarsio_verbose_print) debug3(STR, ARG1, ARG2, ARG3)
+#define verbose4(STR, ARG1, ARG2, ARG3, ARG4) if (__tarsio_verbose_print) debug4(STR, ARG1, ARG2, ARG3, ARG4)
+#define verbose5(STR, ARG1, ARG2, ARG3, ARG4, ARG5) if (__tarsio_verbose_print) debug5(STR, ARG1, ARG2, ARG3, ARG4, ARG5)
+#define verbose6(STR, ARG1, ARG2, ARG3, ARG4, ARG5, ARG6) if (__tarsio_verbose_print) debug6(STR, ARG1, ARG2, ARG3, ARG4, ARG5, ARG6)
+#define verbose7(STR, ARG1, ARG2, ARG3, ARG4, ARG5, ARG6, ARG7) if (__tarsio_verbose_print) debug7(STR, ARG1, ARG2, ARG3, ARG4, ARG5, ARG6, ARG7)
 #endif
 
 extern int __tarsio_debug_print;
+extern int __tarsio_verbose_print;
 
 #endif

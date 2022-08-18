@@ -221,14 +221,28 @@ typedef struct token_file_list_s token_file_list_t;
 
 #define TOKEN_FILE_LIST_EMPTY LIST_INIT, NULL
 
+enum token_class_e {
+  TC_NONE,
+  TC_DATATYPE,
+  TC_FUNCTION_PROTOTYPE,
+  TC_UNDECIDED,
+  TC_REDEFINITION,
+  TC_TYPE_REFERENCE,
+  TC_FUNCTION_CALL,
+  TC_FUNCTION_REFERENCE
+};
+typedef enum token_class_e token_class_t;
+
 /* The complete representation of a token. */
 typedef struct token_s {
   int len;
   char* ptr;
+  int brace_depth;
   token_type_t type;
   size_t offset;
   unsigned int line;
   unsigned int column;
+  token_class_t class;
   token_datatype_t datatype;
   int function_prototype;
   struct token_s* definition;
@@ -258,6 +272,7 @@ typedef struct {
   int struct_scan;
   int attribute_scan;
   int file_scan;
+  int argument_list_scan;
   int brace_depth;
   int paren_depth;
   token_file_list_t file_list;
@@ -271,6 +286,7 @@ typedef struct {
     NULL,                                       \
     NULL,                                       \
     NULL,                                       \
+    0,                                          \
     0,                                          \
     0,                                          \
     0,                                          \

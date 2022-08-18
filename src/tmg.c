@@ -44,6 +44,7 @@ static char version[] = VERSION;
 static char timestamp[] = __DATE__ " " __TIME__;
 
 int __tarsio_debug_print = 0;
+int __tarsio_verbose_print = 0;
 
 /****************************************************************************
  * Program usage

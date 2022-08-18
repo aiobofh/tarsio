@@ -53,6 +53,7 @@ static char version[] = VERSION;
 static char timestamp[] = __DATE__ " " __TIME__;
 
 int __tarsio_debug_print = 0;
+int __tarsio_verbose_print = 0;
 
 /****************************************************************************
  * Program usage
@@ -410,6 +411,8 @@ int main(int argc, char* argv[])
       goto prototypes_init_failed;
     }
 
+    exit(1);
+
     if (0 != prototype_usage_from_tokens(&prototype_list, &token_list)) {
       retval = EXIT_FAILURE;
       goto prototypes_usage_failed;
@@ -456,6 +459,7 @@ int main(int argc, char* argv[])
     }
   }
 
+  exit(1);
 
   if (0 != generate_symbol_cache(&prototype_list, &cpp_list, options.output_filename)) {
     retval = EXIT_FAILURE;
