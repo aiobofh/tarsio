@@ -981,20 +981,37 @@ int prototype_list_init_from_tokens(prototype_list_t* list,
   return 0;
 }
 
-static int prototype_usage_from_token(prototype_node_t* prototype_node,
-                                      token_list_t* list)
-{
+static int prototype_usage_from_token(prototype_node_t* prototype_node) {
+  /*
   symbol_usage_list_t* usage_list = &prototype_node->info.symbol_usage_list;
-  token_node_t* node;
+  */
+  /* All info is in here
+  token_t* token = &prototype->node->info.token_node->token;
+  */
 
+  /*
+   * TODO: Implement stuff here
+   */
+
+  /*
   list->brace_depth = 0;
   list->current = first(list);
 
   for (each(list, node)) {
-    symbol_usage_node_t* usage;
-    if ((!node->token.used) || (!node->token.function_prototype)) continue;
+    token_usage_node_t* u_node;
+  */
+    /*
+    if (token_is_unused(&node->token)) continue;
+    if (token_is_not_a_function_prototype(token)) continue;
+    */
+  /*
+    debug1("'%s'", token_name(&node->token));
 
-    usage = symbol_usage_new_from_token(node, prototype_node);
+    for (each(&node->token->usage_list, u_node)) {
+      symbol_usage_node_t* usage;
+      usage = symbol_usage_new_from_token(u_node->token->node, prototype_node);
+    }
+
 
     if (NULL == usage) {
       error0("Out of memory");
@@ -1004,14 +1021,14 @@ static int prototype_usage_from_token(prototype_node_t* prototype_node,
     symbol_usage_list_append_node(usage_list, usage);
   }
   return 0;
+  */
+  return -1;
 }
 
-int prototype_usage_from_tokens(prototype_list_t* list,
-                                token_list_t* token_list)
-{
+int prototype_usage_from_tokens(prototype_list_t* list) {
   prototype_node_t* node = list->first;
   for (node = list->first; NULL != node; node = node->next) {
-    if (0 != prototype_usage_from_token(node, token_list)) {
+    if (0 != prototype_usage_from_token(node)) {
       error0("Could not find usage due to errors");
       return -1;
     }

@@ -118,8 +118,7 @@ int prototype_list_init(prototype_list_t* list, const file_t* file);
 int prototype_list_init_from_tokens(prototype_list_t* list,
                                     const token_list_t* token_list);
 int prototype_usage(prototype_list_t* list, const file_t* file);
-int prototype_usage_from_tokens(prototype_list_t* list,
-                                token_list_t* token_list);
+int prototype_usage_from_tokens(prototype_list_t* list);
 int prototype_remove_unused(prototype_list_t* list);
 int prototype_extract_return_types(prototype_list_t* list);
 int prototype_extract_return_types_from_tokens(prototype_list_t* list,

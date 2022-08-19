@@ -155,6 +155,7 @@ typedef struct token_usage_node_s token_usage_node_t;
 
 struct token_usage_list_s {
   LIST_STRUCT(token_usage_node_t);
+  token_usage_node_t* current;
 };
 typedef struct token_usage_list_s token_usage_list_t;
 
@@ -326,5 +327,19 @@ const
 token_node_t* token_list_find_beginning_of_statement(const token_node_t* node);
 const
 token_node_t* token_list_find_end_of_argument_list(const token_node_t* node);
+
+/* Some macros to make it easier to understand various early-exit or continue
+ * expressions */
+#define token_is_not_an_identifier(token) (T_IDENT != (token)->type)
+#define token_is_not_a_function_prototype(token)        \
+  (TC_FUNCTION_PROTOTYPE != (token)->class)
+#define token_is_unused(token) (0 == (token)->used)
+#define token_length_mismatch(token1, token2) ((token1)->len != (token2)->len)
+#define token_has_no_previous_definition(token) (NULL == (token)->definition)
+#define token_has_a_previous_definition(token) (NULL != (token)->definition)
+#define token_is_not_referencing_a_datatype_nor_a_prototype(token)      \
+  (token_has_a_previous_definition(token) &&                            \
+   (((token)->definition->class != TC_DATATYPE) &&                      \
+    ((token)->definition->class != TC_FUNCTION_PROTOTYPE)))
 
 #endif

@@ -172,6 +172,7 @@ typedef struct __list_s __list_t;
 /*
 #define each(l, n) (n) = (void*)first((l)); (n); (n) = (void*)next((n))
 */
+#define each_from(n) ; (n); (n) = next((n))
 #define each(l, n) (n) = first((l)); (n); (n) = next((n))
 #define is_empty(l) (NULL == first(l))
 

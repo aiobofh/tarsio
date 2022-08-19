@@ -90,7 +90,7 @@ void symbol_usage_list_cleanup(symbol_usage_list_t* list) {
  * THE NEW STUFF
  */
 symbol_usage_node_t*
-symbol_usage_new_from_token(token_node_t* token_node, void* prototype_node)
+symbol_usage_new_from_token(token_t* token, void* prototype_node)
 {
   symbol_usage_node_t* node = malloc(sizeof(*node));
   if (NULL == node) {
@@ -98,10 +98,9 @@ symbol_usage_new_from_token(token_node_t* token_node, void* prototype_node)
     return NULL;
   }
   memset(node, 0, sizeof(*node));
-  node->info.line = token_node->token.line;
-  node->info.col = token_node->token.column;
-  node->info.offset = token_node->token.offset;
-  node->info.token_node = token_node;
+  node->info.line = token->line;
+  node->info.col = token->column;
+  node->info.offset = token->offset;
   /*
   node->info.last_function_start = last_function_start;
   node->info.last_function_line = last_function_line;
@@ -116,16 +115,6 @@ void
 symbol_usage_list_append_node(symbol_usage_list_t* list,
                               symbol_usage_node_t* node)
 {
-  char* buf = malloc(node->info.token_node->token.len);
-  memcpy(buf, node->info.token_node->token.ptr, node->info.token_node->token.len);
-  buf[node->info.token_node->token.len] = '\0';
-
-  debug4("Symbol '%s' usage at line %u col %u offset %lu",
-         buf,
-         node->info.token_node->token.line,
-         node->info.token_node->token.column,
-         node->info.token_node->token.offset);
-  free(buf);
   if (NULL == list->first) {
     list->first = node;
   }

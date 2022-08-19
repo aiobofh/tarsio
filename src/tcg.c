@@ -411,12 +411,12 @@ int main(int argc, char* argv[])
       goto prototypes_init_failed;
     }
 
-    exit(1);
-
-    if (0 != prototype_usage_from_tokens(&prototype_list, &token_list)) {
+    if (0 != prototype_usage_from_tokens(&prototype_list)) {
       retval = EXIT_FAILURE;
       goto prototypes_usage_failed;
     }
+
+    exit(1);
   }
 
   /*
@@ -458,8 +458,6 @@ int main(int argc, char* argv[])
       goto prototype_extract_arguments_failed;
     }
   }
-
-  exit(1);
 
   if (0 != generate_symbol_cache(&prototype_list, &cpp_list, options.output_filename)) {
     retval = EXIT_FAILURE;
